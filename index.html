@@ -414,6 +414,14 @@
                     <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Código de Barras</label>
                     <div class="flex gap-2">
                         <input type="text" id="p-code" placeholder="ESCRIBE O ESCANEA..." class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-mono font-bold outline-none focus:border-red-500 uppercase">
+                    <button type="button"
+        onclick="openScanner('stock')"
+        class="bg-gray-800 hover:bg-black text-white px-4 py-3 rounded-xl font-bold transition btn-action flex items-center justify-center gap-2 shadow-md border-b-4 border-gray-900 active:border-b-0 active:translate-y-[2px]">
+
+    <i class="fas fa-camera text-lg"></i>
+    <span class="hidden sm:inline">ESCANEAR</span>
+
+</button>
                     </div>
                 </div>
 
@@ -445,6 +453,7 @@
                 </div>
                 
                 <div class="pt-4 flex gap-3">
+        
                     <button type="button" onclick="closeModal('product-modal')" class="flex-1 bg-gray-200 text-gray-600 py-4 rounded-xl font-black uppercase text-xs btn-action">CANCELAR</button>
                     <button type="submit" class="flex-[2] bg-gray-800 text-white py-4 rounded-xl font-black uppercase text-sm hover:bg-black transition shadow-md btn-action">GUARDAR DATOS</button>
                 </div>
@@ -1137,5 +1146,113 @@
         function closeScanner() { document.getElementById('scanner-modal').classList.add('hidden'); }
 
     </script>
+    <script>
+let html5QrCode;
+let scannerTarget = null;
+
+// Abrir escáner
+function openScanner(target) {
+    scannerTarget = target;
+    document.getElementById("scanner-modal").classList.remove("hidden");
+
+    html5QrCode = new Html5Qrcode("reader");
+
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 120 },
+        aspectRatio: 1.7778,
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.CODE_93,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E
+        ]
+    };
+
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+
+            // buscar cámara trasera
+            let cameraId = cameras[0].id;
+            cameras.forEach(cam => {
+                if (cam.label.toLowerCase().includes("back") ||
+                    cam.label.toLowerCase().includes("trasera")) {
+                    cameraId = cam.id;
+                }
+            });
+
+            html5QrCode.start(
+                cameraId,
+                config,
+                onScanSuccess
+            );
+
+        } else {
+            alert("No se encontró cámara");
+        }
+    }).catch(err => {
+        console.error(err);
+        alert("Error al abrir cámara");
+    });
+}
+function onScanSuccess(decodedText) {
+
+    closeScanner();
+
+    // POS
+    if (scannerTarget === "pos") {
+
+        const input = document.getElementById("barcode-scanner");
+        input.value = decodedText;
+        searchProduct(decodedText);
+
+    }
+
+    // NUEVO PRODUCTO / STOCK
+    if (scannerTarget === "stock") {
+
+        const input = document.getElementById("p-code");
+        input.value = decodedText;
+
+        // buscar si ya existe producto
+        if (typeof products !== "undefined") {
+
+            const producto = products.find(p => p.code === decodedText);
+
+            if (producto) {
+
+                document.getElementById("p-name").value = producto.name;
+                document.getElementById("p-cost").value = producto.cost;
+                document.getElementById("p-price").value = producto.price;
+                document.getElementById("p-stock").value = producto.stock;
+
+            }
+
+        }
+
+    }
+
+}
+
+
+// Cerrar escáner
+function closeScanner() {
+
+    document.getElementById("scanner-modal").classList.add("hidden");
+
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
+}
+</script>
 </body>
 </html>
+
