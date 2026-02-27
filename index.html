@@ -6,6 +6,7 @@
     <title>Sistema POS - Mini Super Carlitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;600;700&family=Courier+Prime&display=swap');
@@ -64,14 +65,6 @@
             .cart-panel { width: 100% !important; height: 55vh !important; border-width: 2px 0 0 0; border-radius: 1rem 1rem 0 0; }
             .grid-products { grid-template-columns: repeat(2, 1fr) !important; }
             .header-info { display: none; }
-        }
-
-        @media print {
-            body * { visibility: hidden; }
-            #ticket-modal, #ticket-modal * { visibility: visible; }
-            #ticket-modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; box-shadow: none; background: white; border: none; padding: 0; margin: 0; }
-            #ticket-modal .ticket-content { box-shadow: none; border: none; max-width: 100%; width: 100%; margin: 0; padding: 0;}
-            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -181,14 +174,14 @@
                     <div class="bg-red-600 text-white p-3 rounded-lg flex items-center justify-center">
                         <i class="fas fa-barcode text-lg"></i>
                     </div>
-                    <input type="text" id="barcode-scanner" oninput="searchProduct(this.value)" placeholder="BUSCAR PRODUCTO (NOMBRE O CÓDIGO)..." class="flex-1 text-base md:text-xl font-black outline-none uppercase placeholder:text-gray-300 px-2 bg-transparent">
+                    <input type="text" id="barcode-scanner" oninput="searchProduct(this.value)" placeholder="BUSCAR PRODUCTO..." class="flex-1 text-base md:text-xl font-black outline-none uppercase placeholder:text-gray-300 px-2 bg-transparent">
                     <button onclick="document.getElementById('barcode-scanner').value=''; searchProduct('');" class="text-gray-400 hover:text-red-600 p-2">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
                 <div id="pos-grid" class="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3 overflow-y-auto custom-scroll pr-1 content-start grid-products pb-20 md:pb-0">
-                    <!-- Productos inyectados por JS -->
+                    <!-- Productos inyectados -->
                 </div>
             </div>
 
@@ -221,6 +214,58 @@
             </div>
         </div>
 
+        <!-- RECARGAS -->
+        <div id="view-recargas" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-blue-600 mb-6">
+                    <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Recargas Telefónicas</h2>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SELECCIONA COMPAÑÍA Y MONTO</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">1. Compañía</h3>
+                        <div class="grid grid-cols-3 gap-3" id="company-selector">
+                            <button onclick="selectCompany('Telcel')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 flex flex-col items-center gap-2 transition">
+                                <i class="fas fa-signal text-blue-600 text-2xl"></i>
+                                <span class="text-xs font-bold text-gray-700">Telcel</span>
+                            </button>
+                            <button onclick="selectCompany('Movistar')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-green-500 flex flex-col items-center gap-2 transition">
+                                <i class="fas fa-signal text-green-500 text-2xl"></i>
+                                <span class="text-xs font-bold text-gray-700">Movistar</span>
+                            </button>
+                            <button onclick="selectCompany('AT&T')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-orange-500 flex flex-col items-center gap-2 transition">
+                                <i class="fas fa-signal text-orange-500 text-2xl"></i>
+                                <span class="text-xs font-bold text-gray-700">AT&T</span>
+                            </button>
+                        </div>
+
+                        <h3 class="font-black text-gray-700 mb-4 mt-6 uppercase text-sm border-b pb-2">2. Número a 10 dígitos</h3>
+                        <input type="tel" id="recarga-phone" maxlength="10" placeholder="Ej: 5512345678" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold text-center text-xl tracking-[0.3em] outline-none focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">3. Monto</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-6" id="amount-selector">
+                            <button onclick="selectAmount(20)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$20</button>
+                            <button onclick="selectAmount(50)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$50</button>
+                            <button onclick="selectAmount(100)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$100</button>
+                            <button onclick="selectAmount(200)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$200</button>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center mb-4">
+                            <span class="text-[10px] font-black text-gray-400 uppercase block">Resumen</span>
+                            <div class="text-lg font-bold text-gray-800 mt-1" id="recarga-summary">Selecciona opciones</div>
+                        </div>
+
+                        <button onclick="processRecarga()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 uppercase tracking-widest btn-action flex items-center justify-center gap-2 disabled:opacity-50" id="btn-process-recarga">
+                            <i class="fas fa-bolt"></i> ENVIAR RECARGA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- FIADOS (Clientes) -->
         <div id="view-fiados" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
             <div class="max-w-6xl mx-auto">
@@ -229,7 +274,8 @@
                         <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Clientes / Fiados</h2>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GESTIÓN DE CUENTAS POR COBRAR</p>
                     </div>
-                    <button onclick="openModal('customer-add-modal')" class="w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
+                    <!-- Botón oculto para empleados mediante JS -->
+                    <button id="btn-new-customer" onclick="openModal('customer-add-modal')" class="w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
                         <i class="fas fa-user-plus"></i> NUEVO CLIENTE
                     </button>
                 </div>
@@ -254,9 +300,6 @@
                         <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">ADMINISTRACIÓN DE PRODUCTOS</p>
                     </div>
                     <div class="flex w-full sm:w-auto gap-2">
-                        <button onclick="sendLowStockWhatsApp()" class="flex-1 sm:flex-none bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-emerald-700 flex items-center justify-center gap-2 transition">
-                            <i class="fab fa-whatsapp text-lg"></i> <span class="hidden sm:inline">PEDIR STOCK</span>
-                        </button>
                         <button onclick="openProductModal()" class="flex-1 sm:flex-none bg-red-600 text-white px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-red-700 flex items-center justify-center gap-2 transition">
                             <i class="fas fa-plus"></i> PRODUCTO
                         </button>
@@ -371,9 +414,6 @@
                     <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Código de Barras</label>
                     <div class="flex gap-2">
                         <input type="text" id="p-code" placeholder="ESCRIBE O ESCANEA..." class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-mono font-bold outline-none focus:border-red-500 uppercase">
-                        <button type="button" onclick="openScanner('product')" class="bg-gray-800 text-white px-5 rounded-xl font-bold hover:bg-black transition btn-action">
-                            <i class="fas fa-camera text-lg"></i>
-                        </button>
                     </div>
                 </div>
 
@@ -472,700 +512,630 @@
                 </div>
             </div>
 
-            <div id="customer-footer-actions" class="p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3">
-                <button onclick="liquidarCuenta()" class="bg-gray-800 text-white py-3 rounded-xl font-black text-[10px] md:text-xs uppercase hover:bg-black btn-action flex items-center justify-center gap-2">
-                    <i class="fas fa-check-double"></i> LIQUIDAR TODO
-                </button>
-                <button onclick="eliminarCliente()" class="bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-black text-[10px] md:text-xs uppercase hover:bg-red-100 btn-action flex items-center justify-center gap-2">
-                    <i class="fas fa-trash-alt"></i> BORRAR CLIENTE
-                </button>
+            <div id="customer-footer-actions" class="p-4 border-t border-gray-200 bg-white grid gap-3">
+                <!-- Se inyectan dinámicamente según si es empleado o dueño -->
             </div>
         </div>
     </div>
 
-    <!-- Modal Ticket (Para Imprimir) -->
-    <div id="ticket-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[700] flex items-center justify-center p-4">
-        <div class="ticket-content bg-white p-6 max-w-[320px] w-full ticket-font text-[12px] shadow-2xl rounded-xl border-t-8 border-gray-800 overflow-y-auto max-h-[90vh]">
-            <div class="text-center mb-4">
-                <i class="fas fa-store text-2xl text-gray-800 mb-2"></i>
-                <div class="text-xl font-bold uppercase font-['Oswald'] leading-tight">MINI SUPER<br>CARLITOS</div>
-                <div class="text-[10px] mt-1">Tu tienda de confianza</div>
-                <div id="ticket-date" class="mt-3 text-[10px] opacity-80 border-b border-dashed border-gray-300 pb-2"></div>
-            </div>
-            
-            <div class="border-b border-dashed border-gray-400 py-3 my-3 space-y-2" id="ticket-items">
-                <!-- Items -->
-            </div>
-            
-            <div class="flex justify-between font-black text-sm my-2">
-                <span>TOTAL:</span>
-                <span id="ticket-total"></span>
-            </div>
-            
-            <div id="ticket-payment-info" class="text-[10px] mb-4 border-b border-dashed border-gray-400 pb-3 space-y-1">
-                <!-- Info pago -->
-            </div>
-
-            <div class="text-center mt-6 space-y-4">
-                <p class="text-[10px] font-bold">¡GRACIAS POR SU COMPRA!</p>
-                <div class="flex flex-col gap-2 no-print">
-                    <button onclick="window.print()" class="bg-gray-800 text-white w-full py-3 rounded-xl font-bold text-xs uppercase btn-action flex items-center justify-center gap-2">
-                        <i class="fas fa-print"></i> IMPRIMIR TICKET
-                    </button>
-                    <button onclick="closeModal('ticket-modal')" class="bg-red-600 text-white w-full py-3 rounded-xl font-bold text-xs uppercase btn-action">
-                        CERRAR
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast de Notificaciones -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transform translate-y-4 transition-all duration-300 z-[3000] pointer-events-none font-black uppercase text-xs text-center min-w-[200px] border-2 border-gray-700"></div>
-
-<script>
-// ===============================
-// VARIABLES GLOBALES Y BD
-// ===============================
-let products = [];
-let sales = [];
-let customers = [];
-let cart = [];
-let currentRole = null;
-let selectedRoleAttempt = null;
-let saleType = "cash";
-let selectedCustomerId = null;
-let html5QrCode = null;
-let currentScannerTarget = null; // 'pos' o 'product'
-
-const DB = {
-    save() {
-        localStorage.setItem("pos_products", JSON.stringify(products));
-        localStorage.setItem("pos_sales", JSON.stringify(sales));
-        localStorage.setItem("pos_customers", JSON.stringify(customers));
-    },
-    load() {
-        products = JSON.parse(localStorage.getItem("pos_products")) || [];
-        sales = JSON.parse(localStorage.getItem("pos_sales")) || [];
-        customers = JSON.parse(localStorage.getItem("pos_customers")) || [];
+    <!-- Script de Lógica Principal -->
+    <script>
+        // --- BASE DE DATOS SIMULADA ---
+        let currentRole = null;
+        let selectedRoleForLogin = null;
         
-        // Datos de prueba iniciales si está vacío
-        if(products.length === 0) {
-            products = [
-                {id: 1, code: '7501055310883', name: 'COCA COLA 600ML', cost: 12, price: 18, stock: 24},
-                {id: 2, code: '7501000111200', name: 'BIMBO PAN BLANCO', cost: 35, price: 45, stock: 10},
-                {id: 3, code: '7501011115322', name: 'SABRITAS SAL 40G', cost: 13, price: 17, stock: 15}
+        let products = [
+            { id: 1, code: '7501055300075', name: 'COCA COLA 600ML', cost: 12.00, price: 18.00, stock: 24 },
+            { id: 2, code: '7501000111202', name: 'BIMBO PAN BLANCO', cost: 35.00, price: 45.00, stock: 10 },
+            { id: 3, code: '7501030434559', name: 'SABRITAS SAL 40G', cost: 13.00, price: 17.00, stock: 3 },
+            { id: 4, code: '7501020434551', name: 'LECHE LALA 1L', cost: 22.00, price: 28.00, stock: 15 },
+        ];
+
+        let customers = [
+            { id: 1, name: 'DOÑA MARÍA', phone: '5512345678', balance: 150.50, history: [{ date: '2023-10-01 10:00', desc: 'Compra a crédito', amount: 150.50, type: 'cargo' }] },
+            { id: 2, name: 'JUAN PÉREZ', phone: '', balance: 45.00, history: [{ date: '2023-10-02 12:00', desc: 'Compra a crédito', amount: 45.00, type: 'cargo' }] }
+        ];
+
+        let cart = [];
+        let dailyStats = { sales: 0, fiados: 0 };
+        let activeCheckoutMode = 'cash';
+        let activeCustomerId = null;
+
+        // --- ESTADOS DE RECARGAS ---
+        let selectedRecargaCompany = null;
+        let selectedRecargaAmount = null;
+
+        // --- RELOJ ---
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        }, 1000);
+
+        // --- LOGIN ---
+        function selectRole(role) {
+            selectedRoleForLogin = role;
+            document.getElementById('role-selection').classList.add('hidden');
+            document.getElementById('password-entry').classList.remove('hidden');
+            document.getElementById('login-pass').value = '';
+            document.getElementById('login-pass').focus();
+        }
+
+        function backToRoles() {
+            document.getElementById('password-entry').classList.add('hidden');
+            document.getElementById('role-selection').classList.remove('hidden');
+        }
+
+        function attemptLogin() {
+            const pass = document.getElementById('login-pass').value;
+            if ((selectedRoleForLogin === 'owner' && pass === 'admin123') || 
+                (selectedRoleForLogin === 'employee' && pass === 'user123')) {
+                currentRole = selectedRoleForLogin;
+                initApp();
+            } else {
+                Swal.fire({ icon: 'error', title: 'PIN Incorrecto', text: 'Intenta nuevamente', confirmButtonColor: '#dc2626' });
+            }
+        }
+
+        function logout() {
+            currentRole = null;
+            document.getElementById('login-overlay').classList.remove('hidden');
+            backToRoles();
+        }
+
+        // --- INICIALIZACIÓN DE APP ---
+        function initApp() {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('role-indicator').innerText = currentRole === 'owner' ? 'Dueño' : 'Empleado';
+            document.getElementById('role-indicator').className = `text-[8px] md:text-[10px] px-2 py-1 rounded font-bold uppercase hidden md:inline-block ${currentRole === 'owner' ? 'bg-yellow-500 text-yellow-900' : 'bg-gray-200 text-gray-800'}`;
+            
+            // Restricciones visuales directas
+            document.getElementById('btn-new-customer').style.display = currentRole === 'owner' ? 'flex' : 'none';
+
+            buildNavigation();
+            updateDashboard();
+            renderPOS();
+            renderCustomers();
+            if(currentRole === 'owner') renderInventory();
+            
+            // Switch al primer tab permitido
+            const firstTab = currentRole === 'owner' ? 'dashboard' : 'pos';
+            switchView(firstTab);
+        }
+
+        function buildNavigation() {
+            const nav = document.getElementById('nav-bar');
+            nav.innerHTML = '';
+            
+            const tabs = [
+                { id: 'dashboard', icon: 'fas fa-chart-pie', label: 'Dashboard', roles: ['owner'] },
+                { id: 'pos', icon: 'fas fa-cash-register', label: 'Caja', roles: ['owner', 'employee'] },
+                { id: 'recargas', icon: 'fas fa-mobile-alt', label: 'Recargas', roles: ['owner', 'employee'] },
+                { id: 'fiados', icon: 'fas fa-book', label: 'Fiados', roles: ['owner', 'employee'] },
+                { id: 'inventory', icon: 'fas fa-box', label: 'Inventario', roles: ['owner'] }
             ];
-            DB.save();
+
+            tabs.forEach(tab => {
+                if(tab.roles.includes(currentRole)) {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => switchView(tab.id);
+                    btn.className = `nav-btn px-4 py-3 text-xs md:text-sm font-bold text-gray-500 rounded-t-xl hover:bg-gray-100 transition flex items-center gap-2 tracking-wide uppercase`;
+                    btn.setAttribute('data-target', tab.id);
+                    btn.innerHTML = `<i class="${tab.icon}"></i> <span class="hidden sm:inline">${tab.label}</span>`;
+                    nav.appendChild(btn);
+                }
+            });
         }
-    }
-};
 
-window.onload = () => {
-    DB.load();
-    updateClock();
-    setInterval(updateClock, 1000);
-};
-
-// ===============================
-// UTILIDADES E INTERFAZ
-// ===============================
-function updateClock() {
-    const el = document.getElementById("clock");
-    if (el) el.innerText = new Date().toLocaleTimeString('es-MX', {hour12: true});
-}
-
-function showToast(msg, isSuccess = true) {
-    const toast = document.getElementById("toast");
-    toast.innerHTML = isSuccess ? `<i class="fas fa-check-circle text-emerald-400 mr-2"></i> ${msg}` : `<i class="fas fa-exclamation-circle text-red-400 mr-2"></i> ${msg}`;
-    toast.style.borderColor = isSuccess ? '#059669' : '#dc2626';
-    toast.classList.remove("opacity-0", "translate-y-4");
-    setTimeout(() => toast.classList.add("opacity-0", "translate-y-4"), 2500);
-}
-
-function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
-
-// ===============================
-// AUTENTICACIÓN
-// ===============================
-function selectRole(role) {
-    selectedRoleAttempt = role;
-    document.getElementById('role-selection').classList.add('hidden');
-    document.getElementById('password-entry').classList.remove('hidden');
-    document.getElementById('login-pass').value = "";
-    document.getElementById('login-pass').focus();
-}
-
-function backToRoles() {
-    document.getElementById('role-selection').classList.remove('hidden');
-    document.getElementById('password-entry').classList.add('hidden');
-}
-
-function attemptLogin() {
-    const pass = document.getElementById('login-pass').value;
-    const valid = selectedRoleAttempt === "owner" ? "admin123" : "user123";
-
-    if (pass === valid) {
-        currentRole = selectedRoleAttempt;
-        document.getElementById("login-overlay").classList.add("hidden");
-        
-        const indicator = document.getElementById("role-indicator");
-        indicator.innerText = currentRole === "owner" ? "Dueño" : "Empleado";
-        indicator.className = `text-[8px] md:text-[10px] px-2 py-1 rounded border font-bold uppercase hidden md:inline-block ${currentRole === 'owner' ? 'bg-white text-red-600 border-white' : 'bg-gray-800 text-white border-gray-800'}`;
-        
-        initTabs();
-    } else {
-        showToast("PIN INCORRECTO", false);
-        document.getElementById('login-pass').value = "";
-    }
-}
-
-function logout() { location.reload(); }
-
-// ===============================
-// NAVEGACIÓN
-// ===============================
-function initTabs() {
-    const tabs = currentRole === "owner" 
-        ? [{id:'dashboard', name:'RESUMEN', icon:'fa-chart-pie'}, {id:'pos', name:'CAJA POS', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}, {id:'inventory', name:'INVENTARIO', icon:'fa-boxes'}]
-        : [{id:'pos', name:'CAJA POS', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}];
-
-    const nav = document.getElementById("nav-bar");
-    nav.innerHTML = "";
-    tabs.forEach(t => {
-        const btn = document.createElement("button");
-        btn.id = `tab-${t.id}`;
-        btn.className = "px-4 md:px-6 py-3 bg-gray-300 rounded-t-xl text-[10px] md:text-xs font-bold text-gray-500 transition flex items-center gap-2 whitespace-nowrap flex-shrink-0 hover:bg-gray-200 hover:text-gray-800";
-        btn.innerHTML = `<i class="fas ${t.icon}"></i> ${t.name}`;
-        btn.onclick = () => switchTab(t.id);
-        nav.appendChild(btn);
-    });
-    switchTab(tabs[0].id);
-}
-
-function switchTab(tabId) {
-    document.querySelectorAll("main > div").forEach(v => v.classList.add("hidden"));
-    document.getElementById("view-" + tabId).classList.remove("hidden");
-    
-    document.querySelectorAll("#nav-bar button").forEach(b => b.classList.remove("tab-active"));
-    document.getElementById("tab-" + tabId).classList.add("tab-active");
-
-    if (tabId === "dashboard") renderDashboard();
-    if (tabId === "pos") renderPOS();
-    if (tabId === "fiados") renderCustomers();
-    if (tabId === "inventory") renderInventory();
-}
-
-// ===============================
-// ESCÁNER (Librería HTML5-QRCode)
-// ===============================
-function openScanner(target) {
-    currentScannerTarget = target;
-    openModal("scanner-modal");
-    
-    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-
-    // Timeout ligero para permitir que el modal se dibuje antes de abrir cámara
-    setTimeout(() => {
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 },
-            (decodedText) => {
-                if(navigator.vibrate) navigator.vibrate(100);
-                handleScanResult(decodedText);
-            },
-            (err) => { /* Ignorar errores de frame vacío */ }
-        ).catch(err => {
-            showToast("Error de cámara: " + err, false);
-            closeScanner();
-        });
-    }, 200);
-}
-
-function closeScanner() {
-    closeModal("scanner-modal");
-    if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => html5QrCode.clear()).catch(e => console.error(e));
-    }
-}
-
-function handleScanResult(code) {
-    closeScanner();
-    if (currentScannerTarget === 'pos') {
-        document.getElementById("barcode-scanner").value = code;
-        searchProduct(code);
-        // Autoseleccionar si hay coincidencia exacta
-        const p = products.find(prod => prod.code === code);
-        if(p) addToCart(p);
-    } else if (currentScannerTarget === 'product') {
-        document.getElementById("p-code").value = code;
-    }
-}
-
-// ===============================
-// DASHBOARD
-// ===============================
-function renderDashboard() {
-    const today = new Date().toDateString();
-    const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
-    const totalDay = todaySales.reduce((acc, s) => acc + s.total, 0);
-    const totalDebt = customers.reduce((acc, c) => acc + (c.balance || 0), 0);
-    const lowStock = products.filter(p => p.stock < 5).length;
-
-    document.getElementById("profit-day").innerText = `$${totalDay.toFixed(2)}`;
-    document.getElementById("total-fiados").innerText = `$${totalDebt.toFixed(2)}`;
-    document.getElementById("low-stock-count").innerText = lowStock;
-}
-
-// ===============================
-// CAJA (POS)
-// ===============================
-function renderPOS(filter = "") {
-    const grid = document.getElementById("pos-grid");
-    grid.innerHTML = "";
-    const term = filter.toLowerCase();
-    
-    const filtered = products.filter(p => 
-        p.name.toLowerCase().includes(term) || 
-        p.code.toLowerCase().includes(term)
-    );
-    
-    if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 font-bold uppercase text-xs"><i class="fas fa-box-open text-3xl mb-2 block"></i> No se encontraron productos</div>`;
-        return;
-    }
-
-    filtered.forEach(p => {
-        const isLow = p.stock < 5;
-        const btn = document.createElement("button");
-        btn.className = `bg-white p-3 rounded-xl shadow-sm hover:shadow-md border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 transition text-left flex flex-col justify-between h-28 md:h-32 relative overflow-hidden ${p.stock <= 0 ? 'opacity-50 grayscale' : ''}`;
-        
-        btn.innerHTML = `
-            ${isLow && p.stock > 0 ? `<div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[8px] font-black px-2 py-0.5 rounded-bl-lg">¡POCO!</div>` : ''}
-            ${p.stock <= 0 ? `<div class="absolute inset-0 bg-white/60 flex items-center justify-center z-10"><span class="bg-red-600 text-white font-black text-[10px] px-2 py-1 rounded">AGOTADO</span></div>` : ''}
-            <span class="text-[9px] md:text-[10px] font-black text-gray-600 uppercase leading-tight line-clamp-2 pr-4">${p.name}</span>
-            <div class="flex flex-col mt-2">
-                <span class="text-[9px] font-bold ${p.stock <= 0 ? 'text-red-500' : 'text-gray-400'}">Stock: ${p.stock}</span>
-                <span class="text-lg md:text-xl font-black text-red-600 leading-none">$${p.price.toFixed(2)}</span>
-            </div>`;
-        
-        btn.onclick = () => addToCart(p);
-        grid.appendChild(btn);
-    });
-}
-
-function searchProduct(val) { renderPOS(val); }
-
-function addToCart(product) {
-    if (product.stock <= 0) { showToast("PRODUCTO AGOTADO", false); return; }
-    
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-        if (existing.qty < product.stock) {
-            existing.qty++;
-            if(navigator.vibrate) navigator.vibrate(50);
-        } else {
-            showToast("LÍMITE DE STOCK ALCANZADO", false);
+        function switchView(viewId) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                if(btn.getAttribute('data-target') === viewId) btn.classList.add('tab-active');
+            });
         }
-    } else {
-        cart.push({ ...product, qty: 1 });
-        if(navigator.vibrate) navigator.vibrate(50);
-    }
-    renderCart();
-}
 
-function renderCart() {
-    const list = document.getElementById("cart-list");
-    list.innerHTML = "";
-    let total = 0;
-    
-    if (cart.length === 0) {
-        list.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300"><i class="fas fa-shopping-basket text-4xl mb-2"></i><span class="text-[10px] font-bold uppercase">CARRITO VACÍO</span></div>`;
-    } else {
-        cart.forEach((item, index) => {
-            const subtotal = item.price * item.qty;
-            total += subtotal;
-            list.innerHTML += `
-                <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-0 bg-white px-2 rounded mb-1 shadow-sm">
-                    <div class="flex-1 overflow-hidden pr-2">
-                        <div class="uppercase font-bold text-gray-800 text-[10px] truncate w-full">${item.name}</div>
-                        <div class="text-[9px] text-gray-500 font-bold">${item.qty} x $${item.price.toFixed(2)}</div>
+        // --- FUNCIONALIDAD CAJA (POS) ---
+        function renderPOS(query = '') {
+            const grid = document.getElementById('pos-grid');
+            grid.innerHTML = '';
+            
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.includes(query));
+            
+            filtered.forEach(p => {
+                const stockColor = p.stock > 5 ? 'text-gray-500' : 'text-red-500 font-bold';
+                const card = document.createElement('button');
+                card.onclick = () => addToCart(p.id);
+                card.className = `bg-white p-3 rounded-xl border border-gray-200 hover:border-red-400 hover:shadow-md transition text-left flex flex-col justify-between h-28 btn-action ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`;
+                card.innerHTML = `
+                    <div class="text-[10px] text-gray-400 font-mono">${p.code}</div>
+                    <div class="font-bold text-gray-800 text-sm leading-tight uppercase line-clamp-2">${p.name}</div>
+                    <div class="flex justify-between items-end mt-2">
+                        <span class="font-black text-red-600">$${p.price.toFixed(2)}</span>
+                        <span class="text-[9px] ${stockColor} uppercase">Stock: ${p.stock}</span>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-black text-red-600 text-xs">$${subtotal.toFixed(2)}</span>
-                        <button onclick="removeFromCart(${index})" class="text-gray-300 hover:text-red-500 transition px-1"><i class="fas fa-trash-alt"></i></button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function searchProduct(val) { renderPOS(val); }
+
+        function addToCart(id) {
+            const p = products.find(x => x.id === id);
+            if(p.stock <= 0) {
+                Swal.fire({ icon: 'warning', title: 'Sin Stock', text: 'No hay unidades disponibles.', timer: 1500, showConfirmButton: false });
+                return;
+            }
+
+            const item = cart.find(x => x.id === id);
+            if(item) {
+                if(item.qty >= p.stock) return Swal.fire({ icon: 'warning', title: 'Límite de Stock', timer: 1000, showConfirmButton: false });
+                item.qty++;
+            } else {
+                cart.push({ ...p, qty: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-list');
+            list.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price * item.qty;
+                const div = document.createElement('div');
+                div.className = 'bg-white p-2 rounded border border-gray-100 flex justify-between items-center shadow-sm';
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-bold truncate w-40 sm:w-48">${item.name}</div>
+                        <div class="text-gray-400">$${item.price.toFixed(2)} x ${item.qty}</div>
                     </div>
-                </div>`;
-        });
-    }
-    document.getElementById("cart-total").innerText = `$${total.toFixed(2)}`;
-}
+                    <div class="font-black text-gray-800 mr-3">$${(item.price * item.qty).toFixed(2)}</div>
+                    <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
+                `;
+                list.appendChild(div);
+            });
 
-function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
-function clearCart() { cart = []; renderCart(); }
-
-// ===============================
-// CHECKOUT Y COBRO
-// ===============================
-function openCheckout(type) {
-    if (cart.length === 0) return showToast("CARRITO VACÍO", false);
-    saleType = type;
-    const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    
-    document.getElementById("checkout-total-display").innerText = `$${total.toFixed(2)}`;
-    document.getElementById("checkout-title").innerText = type === "cash" ? "PAGO EN EFECTIVO" : "REGISTRAR FIADO";
-    
-    document.getElementById("cash-payment-fields").classList.toggle("hidden", type !== "cash");
-    document.getElementById("fiado-fields").classList.toggle("hidden", type !== "fiado");
-    
-    if (type === "fiado") {
-        const select = document.getElementById("customer-select");
-        select.innerHTML = `<option value="" disabled selected>-- SELECCIONA UN CLIENTE --</option>` + 
-                           customers.map(c => `<option value="${c.id}">${c.name.toUpperCase()}</option>`).join("");
-        if (customers.length === 0) { 
-            showToast("PRIMERO REGISTRA UN CLIENTE EN 'FIADOS'", false); 
-            closeModal("checkout-modal");
-            return; 
+            document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
         }
-    } else {
-        document.getElementById("cash-received").value = "";
-        document.getElementById("cash-change").innerText = "$0.00";
-        document.getElementById("cash-change").className = "text-2xl font-black text-gray-400";
-        setTimeout(() => document.getElementById("cash-received").focus(), 100);
-    }
-    openModal("checkout-modal");
-}
 
-function calcChange() {
-    const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    const received = parseFloat(document.getElementById("cash-received").value) || 0;
-    const change = received - total;
-    
-    const changeEl = document.getElementById("cash-change");
-    if (change >= 0 && received > 0) {
-        changeEl.innerText = `$${change.toFixed(2)}`;
-        changeEl.className = "text-2xl font-black text-emerald-600";
-    } else {
-        changeEl.innerText = "$0.00";
-        changeEl.className = "text-2xl font-black text-gray-400";
-    }
-}
-
-function finalizeSale() {
-    const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    let paymentInfo = "";
-
-    if (saleType === "cash") {
-        const received = parseFloat(document.getElementById("cash-received").value) || 0;
-        if (received < total) {
-            showToast("EFECTIVO INSUFICIENTE", false);
-            return;
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
         }
-        paymentInfo = `<div>PAGÓ CON: $${received.toFixed(2)}</div><div>CAMBIO: $${(received - total).toFixed(2)}</div>`;
-    } else if (saleType === "fiado") {
-        const customerId = document.getElementById("customer-select").value;
-        if (!customerId) {
-            showToast("SELECCIONA UN CLIENTE", false);
-            return;
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
         }
-        const customer = customers.find(c => c.id == customerId);
-        customer.balance = (customer.balance || 0) + total;
-        if (!customer.history) customer.history = [];
-        customer.history.push({ 
-            id: Date.now(),
-            date: new Date().toISOString(), 
-            type: 'cargo', 
-            amount: total, 
-            desc: `Venta (${cart.length} art.)` 
-        });
-        paymentInfo = `<div>CARGADO A CUENTA: ${customer.name.toUpperCase()}</div><div>NUEVA DEUDA: $${customer.balance.toFixed(2)}</div>`;
-    }
 
-    // Descontar inventario
-    cart.forEach(item => {
-        const p = products.find(prod => prod.id === item.id);
-        if(p) p.stock -= item.qty;
-    });
+        // --- CHECKOUT ---
+        function openCheckout(mode) {
+            if(cart.length === 0) return Swal.fire({ icon: 'info', title: 'Carrito vacío', timer: 1000, showConfirmButton: false });
+            
+            activeCheckoutMode = mode;
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            
+            document.getElementById('checkout-title').innerText = mode === 'cash' ? 'COBRO EN EFECTIVO' : 'VENTA A CRÉDITO (FIADO)';
+            document.getElementById('checkout-total-display').innerText = `$${total.toFixed(2)}`;
+            
+            document.getElementById('cash-payment-fields').classList.add('hidden');
+            document.getElementById('fiado-fields').classList.add('hidden');
+            
+            if(mode === 'cash') {
+                document.getElementById('cash-payment-fields').classList.remove('hidden');
+                document.getElementById('cash-received').value = '';
+                document.getElementById('cash-change').innerText = '$0.00';
+                setTimeout(() => document.getElementById('cash-received').focus(), 100);
+            } else {
+                document.getElementById('fiado-fields').classList.remove('hidden');
+                populateCustomerSelect();
+            }
+            
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
 
-    // Guardar venta
-    const newSale = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        items: [...cart],
-        total: total,
-        type: saleType
-    };
-    sales.push(newSale);
-    
-    DB.save();
-    
-    showToast("VENTA REGISTRADA CON ÉXITO");
-    closeModal('checkout-modal');
-    generateTicket(newSale, paymentInfo); // Genera e imprime
-    clearCart();
-    renderPOS();
-    if(currentRole === 'owner') renderDashboard();
-}
+        function calcChange() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const received = parseFloat(document.getElementById('cash-received').value) || 0;
+            const change = received - total;
+            const changeEl = document.getElementById('cash-change');
+            
+            if(change >= 0) {
+                changeEl.innerText = `$${change.toFixed(2)}`;
+                changeEl.className = 'text-2xl font-black text-emerald-600';
+            } else {
+                changeEl.innerText = `Faltan $${Math.abs(change).toFixed(2)}`;
+                changeEl.className = 'text-lg font-black text-red-500';
+            }
+        }
 
-function generateTicket(sale, paymentInfoHtml) {
-    document.getElementById("ticket-date").innerText = new Date(sale.date).toLocaleString('es-MX');
-    
-    let itemsHtml = "";
-    sale.items.forEach(item => {
-        itemsHtml += `
-            <div class="flex justify-between items-start">
-                <div class="flex-1 pr-2 uppercase">${item.qty}x ${item.name}</div>
-                <div>$${(item.price * item.qty).toFixed(2)}</div>
-            </div>`;
-    });
-    
-    document.getElementById("ticket-items").innerHTML = itemsHtml;
-    document.getElementById("ticket-total").innerText = `$${sale.total.toFixed(2)}`;
-    document.getElementById("ticket-payment-info").innerHTML = paymentInfoHtml;
-    
-    openModal("ticket-modal");
-}
+        function finalizeSale() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            
+            if(activeCheckoutMode === 'cash') {
+                const received = parseFloat(document.getElementById('cash-received').value) || 0;
+                if(received < total) return Swal.fire({ icon: 'error', title: 'Efectivo insuficiente', confirmButtonColor: '#dc2626' });
+                dailyStats.sales += total;
+            } else {
+                const cid = parseInt(document.getElementById('customer-select').value);
+                if(!cid) return Swal.fire({ icon: 'error', title: 'Selecciona un cliente', confirmButtonColor: '#dc2626' });
+                
+                const c = customers.find(x => x.id === cid);
+                c.balance += total;
+                c.history.unshift({ date: new Date().toLocaleString(), desc: 'Compra a crédito', amount: total, type: 'cargo' });
+                dailyStats.fiados += total;
+            }
 
-// ===============================
-// CLIENTES Y FIADOS
-// ===============================
-function renderCustomers(filter = "") {
-    const grid = document.getElementById("customers-grid");
-    grid.innerHTML = "";
-    const term = filter.toLowerCase();
-    
-    const filtered = customers.filter(c => c.name.toLowerCase().includes(term));
+            // Reducir stock
+            cart.forEach(item => {
+                const p = products.find(x => x.id === item.id);
+                if(p) p.stock -= item.qty;
+            });
 
-    if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 font-bold uppercase text-xs">No hay clientes registrados</div>`;
-        return;
-    }
+            closeModal('checkout-modal');
+            clearCart();
+            updateDashboard();
+            renderPOS();
+            if(currentRole === 'owner') renderInventory();
+            renderCustomers();
 
-    filtered.forEach(c => {
-        const btn = document.createElement("button");
-        btn.className = "bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 text-left transition relative overflow-hidden btn-action";
-        btn.innerHTML = `
-            ${c.balance > 0 ? '<div class="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">CON DEUDA</div>' : '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">AL CORRIENTE</div>'}
-            <div class="flex items-center gap-3 mb-3 mt-1">
-                <div class="bg-gray-100 p-2 rounded-full text-gray-500"><i class="fas fa-user"></i></div>
-                <div class="font-black text-gray-800 uppercase text-sm truncate">${c.name}</div>
-            </div>
-            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Saldo Actual</div>
-            <div class="text-2xl font-black ${c.balance > 0 ? 'text-red-600' : 'text-gray-400'} mt-1">$${(c.balance || 0).toFixed(2)}</div>
-        `;
-        btn.onclick = () => openCustomerDetail(c.id);
-        grid.appendChild(btn);
-    });
-}
+            Swal.fire({
+                icon: 'success',
+                title: 'Venta Registrada',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
 
-function saveNewCustomer() {
-    const name = document.getElementById("new-cust-name").value.trim();
-    const phone = document.getElementById("new-cust-phone").value.trim();
-    if (!name) return showToast("INGRESA UN NOMBRE", false);
-    
-    customers.push({ id: Date.now(), name, phone, balance: 0, history: [] });
-    DB.save();
-    showToast("CLIENTE REGISTRADO");
-    closeModal("customer-add-modal");
-    document.getElementById("new-cust-name").value = "";
-    document.getElementById("new-cust-phone").value = "";
-    renderCustomers();
-    if(currentRole === 'owner') renderDashboard();
-}
+        // --- RECARGAS (Nuevo Módulo) ---
+        function selectCompany(name) {
+            selectedRecargaCompany = name;
+            document.querySelectorAll('.company-btn').forEach(btn => btn.classList.remove('border-blue-500', 'bg-blue-50'));
+            event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
+            updateRecargaSummary();
+        }
 
-function openCustomerDetail(id) {
-    selectedCustomerId = id;
-    const c = customers.find(x => x.id === id);
-    if(!c) return;
+        function selectAmount(amount) {
+            selectedRecargaAmount = amount;
+            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('border-red-500', 'bg-red-50'));
+            event.currentTarget.classList.add('border-red-500', 'bg-red-50');
+            updateRecargaSummary();
+        }
 
-    document.getElementById("det-cust-name").innerText = c.name;
-    document.getElementById("det-cust-balance").innerText = `$${(c.balance || 0).toFixed(2)}`;
-    document.getElementById("abono-monto").value = "";
-    
-    const histContainer = document.getElementById("customer-history");
-    histContainer.innerHTML = "";
-    
-    if(!c.history || c.history.length === 0) {
-        histContainer.innerHTML = `<div class="text-center text-gray-400 text-xs py-4 font-bold">Sin movimientos</div>`;
-    } else {
-        [...c.history].reverse().forEach(h => {
-            const isAbono = h.type === 'abono';
-            histContainer.innerHTML += `
-                <div class="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center text-xs">
-                    <div>
-                        <span class="font-black uppercase block ${isAbono ? 'text-emerald-600' : 'text-red-600'}">${isAbono ? 'ABONO' : 'CARGO'}</span>
-                        <span class="text-[9px] text-gray-400 block">${new Date(h.date).toLocaleDateString()} - ${h.desc || ''}</span>
+        function updateRecargaSummary() {
+            const phone = document.getElementById('recarga-phone').value;
+            const summaryEl = document.getElementById('recarga-summary');
+            
+            if (selectedRecargaCompany && selectedRecargaAmount && phone.length === 10) {
+                summaryEl.innerHTML = `<span class="text-blue-600">${selectedRecargaCompany}</span> - $${selectedRecargaAmount} al <span class="tracking-wider">${phone}</span>`;
+            } else {
+                summaryEl.innerText = 'Faltan datos para recarga';
+            }
+        }
+
+        document.getElementById('recarga-phone').addEventListener('input', updateRecargaSummary);
+
+        function processRecarga() {
+            const phone = document.getElementById('recarga-phone').value;
+            if (!selectedRecargaCompany) return Swal.fire('Atención', 'Selecciona una compañía', 'warning');
+            if (phone.length !== 10) return Swal.fire('Atención', 'Ingresa un número de 10 dígitos', 'warning');
+            if (!selectedRecargaAmount) return Swal.fire('Atención', 'Selecciona un monto', 'warning');
+
+            const btn = document.getElementById('btn-process-recarga');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+            btn.disabled = true;
+
+            // Simular proceso de 2 segundos
+            setTimeout(() => {
+                // Registrar como venta
+                dailyStats.sales += selectedRecargaAmount;
+                updateDashboard();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Recarga Exitosa',
+                    html: `Se abonaron <b>$${selectedRecargaAmount}</b> a <b>${phone}</b> (${selectedRecargaCompany})`,
+                    confirmButtonColor: '#2563eb'
+                });
+
+                // Limpiar
+                document.getElementById('recarga-phone').value = '';
+                selectedRecargaCompany = null;
+                selectedRecargaAmount = null;
+                document.querySelectorAll('.company-btn, .amount-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50', 'border-red-500', 'bg-red-50'));
+                updateRecargaSummary();
+                
+                btn.innerHTML = '<i class="fas fa-bolt"></i> ENVIAR RECARGA';
+                btn.disabled = false;
+
+            }, 2000);
+        }
+
+        // --- FIADOS Y CLIENTES ---
+        function renderCustomers(query = '') {
+            const grid = document.getElementById('customers-grid');
+            grid.innerHTML = '';
+            
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
+            
+            filtered.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-red-300 transition relative overflow-hidden group';
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-1 h-full ${c.balance > 0 ? 'bg-red-500' : 'bg-emerald-500'}"></div>
+                    <h4 class="font-black text-gray-800 uppercase pl-2 text-lg truncate">${c.name}</h4>
+                    <p class="text-[10px] text-gray-400 font-bold ml-2 uppercase mb-4"><i class="fas fa-phone"></i> ${c.phone || 'SIN TELÉFONO'}</p>
+                    <div class="ml-2 bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase text-gray-500">Deuda</span>
+                        <span class="font-black text-xl ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}">$${c.balance.toFixed(2)}</span>
                     </div>
-                    <span class="font-black ${isAbono ? 'text-emerald-600' : 'text-red-600'} text-sm">${isAbono ? '+' : '-'}$${h.amount.toFixed(2)}</span>
-                </div>
-            `;
-        });
-    }
-    openModal("customer-detail-modal");
-}
-
-function registerAbono() {
-    const amount = parseFloat(document.getElementById("abono-monto").value);
-    if (!amount || amount <= 0) return showToast("INGRESA UN MONTO VÁLIDO", false);
-    
-    const c = customers.find(x => x.id === selectedCustomerId);
-    if (amount > c.balance) return showToast("EL ABONO EXCEDE LA DEUDA", false);
-
-    c.balance -= amount;
-    if(!c.history) c.history = [];
-    c.history.push({ id: Date.now(), date: new Date().toISOString(), type: 'abono', amount: amount, desc: 'Abono en efectivo' });
-    
-    DB.save();
-    showToast("ABONO REGISTRADO");
-    openCustomerDetail(selectedCustomerId); // Refresh modal
-    renderCustomers();
-    if(currentRole === 'owner') renderDashboard();
-}
-
-function liquidarCuenta() {
-    const c = customers.find(x => x.id === selectedCustomerId);
-    if (c.balance === 0) return showToast("LA CUENTA YA ESTÁ EN CEROS", false);
-    
-    if(confirm(`¿Liquidar la deuda total de $${c.balance.toFixed(2)} de ${c.name}?`)) {
-        c.history.push({ id: Date.now(), date: new Date().toISOString(), type: 'abono', amount: c.balance, desc: 'Liquidación total' });
-        c.balance = 0;
-        DB.save();
-        showToast("CUENTA LIQUIDADA");
-        openCustomerDetail(selectedCustomerId);
-        renderCustomers();
-        if(currentRole === 'owner') renderDashboard();
-    }
-}
-
-function eliminarCliente() {
-    const c = customers.find(x => x.id === selectedCustomerId);
-    if (c.balance > 0) return showToast("NO PUEDES BORRAR CLIENTES CON DEUDA", false);
-    
-    if(confirm(`¿Estás seguro de eliminar a ${c.name}?`)) {
-        customers = customers.filter(x => x.id !== selectedCustomerId);
-        DB.save();
-        showToast("CLIENTE ELIMINADO");
-        closeModal("customer-detail-modal");
-        renderCustomers();
-    }
-}
-
-// ===============================
-// INVENTARIO
-// ===============================
-function renderInventory(filter = "") {
-    const tbody = document.getElementById("inventory-body");
-    tbody.innerHTML = "";
-    const term = filter.toLowerCase();
-    
-    const filtered = products.filter(p => 
-        p.name.toLowerCase().includes(term) || 
-        p.code.toLowerCase().includes(term)
-    );
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold uppercase text-xs">No hay productos registrados</td></tr>`;
-        return;
-    }
-
-    filtered.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
-        tr.innerHTML = `
-            <td class="p-4 font-mono text-[10px] text-gray-400">${p.code || '-'}</td>
-            <td class="p-4 uppercase font-bold text-gray-800 text-xs">${p.name}</td>
-            <td class="p-4 text-right text-xs">$${parseFloat(p.cost).toFixed(2)}</td>
-            <td class="p-4 text-right font-black text-red-600 text-sm">$${parseFloat(p.price).toFixed(2)}</td>
-            <td class="p-4 text-center">
-                <span class="px-2 py-1 rounded text-xs font-black ${p.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-700'}">${p.stock}</span>
-            </td>
-            <td class="p-4 text-center">
-                <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-3 px-2 py-1"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-600 px-2 py-1"><i class="fas fa-trash-alt"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function openProductModal() {
-    document.getElementById("product-form").reset();
-    document.getElementById("p-id").value = "";
-    document.getElementById("product-modal-title").innerText = "NUEVO PRODUCTO";
-    openModal("product-modal");
-}
-
-function editProduct(id) {
-    const p = products.find(x => x.id === id);
-    if(!p) return;
-    
-    document.getElementById("p-id").value = p.id;
-    document.getElementById("p-code").value = p.code || "";
-    document.getElementById("p-name").value = p.name;
-    document.getElementById("p-cost").value = p.cost;
-    document.getElementById("p-price").value = p.price;
-    document.getElementById("p-stock").value = p.stock;
-    
-    document.getElementById("product-modal-title").innerText = "EDITAR PRODUCTO";
-    openModal("product-modal");
-}
-
-function handleProductSubmit(e) {
-    e.preventDefault();
-    const id = document.getElementById("p-id").value;
-    const code = document.getElementById("p-code").value.trim();
-    const name = document.getElementById("p-name").value.trim();
-    const cost = parseFloat(document.getElementById("p-cost").value) || 0;
-    const price = parseFloat(document.getElementById("p-price").value) || 0;
-    const stock = parseInt(document.getElementById("p-stock").value) || 0;
-
-    if(price <= cost) {
-        if(!confirm("Advertencia: El precio de venta es igual o menor al costo. ¿Deseas continuar?")) return;
-    }
-
-    if (id) {
-        // Editar
-        const index = products.findIndex(x => x.id == id);
-        if(index > -1) {
-            products[index] = { ...products[index], code, name, cost, price, stock };
-            showToast("PRODUCTO ACTUALIZADO");
+                    <button onclick="openCustomerDetail(${c.id})" class="w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-bold text-xs transition">
+                        VER DETALLES / ABONAR
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Actualizar total en dashboard
+            document.getElementById('total-fiados').innerText = `$${customers.reduce((s, c) => s + c.balance, 0).toFixed(2)}`;
         }
-    } else {
-        // Nuevo
-        products.push({ id: Date.now(), code, name, cost, price, stock });
-        showToast("PRODUCTO AGREGADO");
-    }
 
-    DB.save();
-    closeModal("product-modal");
-    renderInventory();
-    renderPOS();
-    renderDashboard();
-}
+        function populateCustomerSelect() {
+            const sel = document.getElementById('customer-select');
+            sel.innerHTML = '<option value="">-- SELECCIONA --</option>';
+            customers.forEach(c => {
+                sel.innerHTML += `<option value="${c.id}">${c.name} (Deuda actual: $${c.balance.toFixed(2)})</option>`;
+            });
+        }
 
-function deleteProduct(id) {
-    if(confirm("¿Estás seguro de eliminar este producto?")) {
-        products = products.filter(x => x.id !== id);
-        DB.save();
-        showToast("PRODUCTO ELIMINADO");
-        renderInventory();
-        renderPOS();
-    }
-}
+        function saveNewCustomer() {
+            const name = document.getElementById('new-cust-name').value.toUpperCase();
+            const phone = document.getElementById('new-cust-phone').value;
+            
+            if(!name) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
+            
+            customers.push({ id: Date.now(), name, phone, balance: 0, history: [] });
+            closeModal('customer-add-modal');
+            document.getElementById('new-cust-name').value = '';
+            document.getElementById('new-cust-phone').value = '';
+            renderCustomers();
+            Swal.fire({icon: 'success', title: 'Cliente Registrado', timer: 1000, showConfirmButton: false});
+        }
 
-function sendLowStockWhatsApp() {
-    const lowStockItems = products.filter(p => p.stock < 5);
-    if(lowStockItems.length === 0) return showToast("EL STOCK ESTÁ AL CORRIENTE", true);
-    
-    let text = "Hola, necesito resurtir los siguientes productos en el Mini Super:\n\n";
-    lowStockItems.forEach(p => {
-        text += `- ${p.name} (Quedan: ${p.stock})\n`;
-    });
-    
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-}
-</script>
+        function openCustomerDetail(id) {
+            activeCustomerId = id;
+            const c = customers.find(x => x.id === id);
+            
+            document.getElementById('det-cust-name').innerText = c.name;
+            document.getElementById('det-cust-balance').innerText = `$${c.balance.toFixed(2)}`;
+            document.getElementById('abono-monto').value = '';
+            
+            const hist = document.getElementById('customer-history');
+            hist.innerHTML = c.history.length === 0 ? '<div class="text-xs text-center text-gray-400 py-4">Sin movimientos</div>' : '';
+            c.history.forEach(h => {
+                hist.innerHTML += `
+                    <div class="flex justify-between items-center p-2 border-b border-gray-100 text-xs">
+                        <div>
+                            <span class="block font-bold text-gray-700">${h.desc}</span>
+                            <span class="text-[9px] text-gray-400">${h.date}</span>
+                        </div>
+                        <span class="font-black ${h.type === 'abono' ? 'text-emerald-500' : 'text-red-500'}">
+                            ${h.type === 'abono' ? '+' : '-'}$${h.amount.toFixed(2)}
+                        </span>
+                    </div>
+                `;
+            });
+
+            // Lógica de Permisos de Botones de Acción (Dueño vs Empleado)
+            const actionsFooter = document.getElementById('customer-footer-actions');
+            actionsFooter.innerHTML = ''; // Limpiar botones
+
+            if(currentRole === 'owner') {
+                actionsFooter.className = "p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3";
+                actionsFooter.innerHTML = `
+                    <button onclick="liquidarDeuda()" class="bg-gray-800 text-white py-3 rounded-xl font-bold uppercase text-xs hover:bg-black transition btn-action flex items-center justify-center gap-2">
+                        <i class="fas fa-check-double"></i> LIQUIDAR DEUDA
+                    </button>
+                    <button onclick="deleteCustomer()" class="bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-bold uppercase text-xs hover:bg-red-100 transition btn-action flex items-center justify-center gap-2">
+                        <i class="fas fa-trash"></i> ELIMINAR CLIENTE
+                    </button>
+                `;
+            } else {
+                // Empleado solo puede cerrar la ventana (el abono se hace arriba)
+                actionsFooter.className = "p-4 border-t border-gray-200 bg-white flex justify-center";
+                actionsFooter.innerHTML = `
+                    <button onclick="closeModal('customer-detail-modal')" class="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-bold uppercase text-xs hover:bg-gray-300 transition btn-action">
+                        CERRAR VENTANA
+                    </button>
+                `;
+            }
+            
+            document.getElementById('customer-detail-modal').classList.remove('hidden');
+        }
+
+        function registerAbono() {
+            const monto = parseFloat(document.getElementById('abono-monto').value);
+            if(!monto || monto <= 0) return Swal.fire('Error', 'Ingresa un monto válido', 'warning');
+            
+            const c = customers.find(x => x.id === activeCustomerId);
+            if(monto > c.balance && currentRole === 'employee') {
+                 return Swal.fire('Error', 'El abono no puede superar la deuda', 'warning');
+            }
+            
+            c.balance = Math.max(0, c.balance - monto);
+            c.history.unshift({ date: new Date().toLocaleString(), desc: 'Abono recibido', amount: monto, type: 'abono' });
+            
+            dailyStats.sales += monto; // Abonos entran como venta/ingreso al cajón
+            
+            updateDashboard();
+            renderCustomers();
+            openCustomerDetail(activeCustomerId); // refrescar modal
+            Swal.fire({icon: 'success', title: 'Abono Registrado', timer: 1000, showConfirmButton: false});
+        }
+
+        function liquidarDeuda() {
+            const c = customers.find(x => x.id === activeCustomerId);
+            if(c.balance === 0) return Swal.fire('Info', 'La deuda ya está en cero', 'info');
+
+            Swal.fire({
+                title: '¿Liquidar deuda?',
+                text: `¿El cliente ha pagado los $${c.balance.toFixed(2)} restantes?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, liquidar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const monto = c.balance;
+                    c.balance = 0;
+                    c.history.unshift({ date: new Date().toLocaleString(), desc: 'Liquidación total', amount: monto, type: 'abono' });
+                    dailyStats.sales += monto;
+                    updateDashboard();
+                    renderCustomers();
+                    openCustomerDetail(activeCustomerId);
+                    Swal.fire('Liquidado!', 'La deuda quedó en ceros.', 'success');
+                }
+            });
+        }
+
+        function deleteCustomer() {
+            Swal.fire({
+                title: '¿Eliminar cliente?',
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    customers = customers.filter(x => x.id !== activeCustomerId);
+                    renderCustomers();
+                    closeModal('customer-detail-modal');
+                    Swal.fire('Eliminado!', 'El cliente ha sido borrado.', 'success');
+                }
+            });
+        }
+
+        // --- INVENTARIO ---
+        function renderInventory(query = '') {
+            const tbody = document.getElementById('inventory-body');
+            tbody.innerHTML = '';
+            
+            let lowStock = 0;
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.includes(query));
+            
+            filtered.forEach(p => {
+                if(p.stock < 5) lowStock++;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4 text-center font-mono text-xs text-gray-500">${p.code}</td>
+                    <td class="p-4 font-bold uppercase">${p.name}</td>
+                    <td class="p-4 text-right text-gray-500">$${p.cost.toFixed(2)}</td>
+                    <td class="p-4 text-right font-black text-red-600">$${p.price.toFixed(2)}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${p.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}">${p.stock}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mx-1"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 mx-1"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('low-stock-count').innerText = lowStock;
+        }
+
+        function openProductModal() {
+            document.getElementById('product-form').reset();
+            document.getElementById('p-id').value = '';
+            document.getElementById('product-modal-title').innerText = 'NUEVO PRODUCTO';
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function editProduct(id) {
+            const p = products.find(x => x.id === id);
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-code').value = p.code;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-cost').value = p.cost;
+            document.getElementById('p-price').value = p.price;
+            document.getElementById('p-stock').value = p.stock;
+            document.getElementById('product-modal-title').innerText = 'EDITAR PRODUCTO';
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function handleProductSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('p-id').value;
+            const pData = {
+                code: document.getElementById('p-code').value || Math.floor(Math.random() * 1000000000000).toString(),
+                name: document.getElementById('p-name').value.toUpperCase(),
+                cost: parseFloat(document.getElementById('p-cost').value),
+                price: parseFloat(document.getElementById('p-price').value),
+                stock: parseInt(document.getElementById('p-stock').value)
+            };
+
+            if(id) {
+                const idx = products.findIndex(x => x.id == id);
+                products[idx] = { ...products[idx], ...pData };
+            } else {
+                products.push({ id: Date.now(), ...pData });
+            }
+
+            closeModal('product-modal');
+            renderInventory();
+            renderPOS();
+            Swal.fire({icon: 'success', title: 'Guardado', timer: 1000, showConfirmButton: false});
+        }
+
+        function deleteProduct(id) {
+            Swal.fire({
+                title: '¿Borrar producto?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, borrar',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    products = products.filter(x => x.id !== id);
+                    renderInventory();
+                    renderPOS();
+                }
+            });
+        }
+
+        // --- DASHBOARD ---
+        function updateDashboard() {
+            document.getElementById('profit-day').innerText = `$${dailyStats.sales.toFixed(2)}`;
+        }
+
+        // --- MODALES UTILS ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- SIMULADOR DE ESCÁNER (Mockup para web) ---
+        function openScanner(target) {
+            Swal.fire({
+                title: 'Simulación de Escáner',
+                text: 'En un entorno web real usaría la cámara con html5-qrcode. Aquí simularemos escanear la Coca Cola (7501055300075).',
+                icon: 'info',
+                confirmButtonText: 'Simular Escaneo'
+            }).then(() => {
+                if(target === 'pos') {
+                    searchProduct('7501055300075');
+                    document.getElementById('barcode-scanner').value = '7501055300075';
+                } else {
+                    document.getElementById('p-code').value = '7501055300075';
+                }
+            });
+        }
+        function closeScanner() { document.getElementById('scanner-modal').classList.add('hidden'); }
+
+    </script>
 </body>
 </html>
