@@ -6,6 +6,7 @@
     <title>Sistema POS - Mini Super Carlitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;600;700&family=Courier+Prime&display=swap');
         
@@ -30,9 +31,10 @@
             border-bottom: 4px solid #991b1b;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px;}
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         .tab-active { 
             background-color: white !important; 
@@ -45,22 +47,21 @@
         .ticket-font { font-family: 'Courier Prime', monospace; }
         
         .bg-store-gradient {
-            background: linear-gradient(rgba(220, 38, 38, 0.9), rgba(153, 27, 27, 0.9)), 
+            background: linear-gradient(rgba(220, 38, 38, 0.95), rgba(153, 27, 27, 0.95)), 
                         url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&q=80&w=1000');
             background-size: cover;
             background-position: center;
         }
 
         .btn-action {
-            transition: all 0.2s;
-            border-radius: 8px;
+            transition: all 0.15s ease-in-out;
         }
-        .btn-action:active { transform: scale(0.95); }
+        .btn-action:active { transform: scale(0.96); }
 
         /* Optimizaciones para móvil */
         @media (max-width: 768px) {
             .pos-layout { flex-direction: column !important; }
-            .cart-panel { width: 100% !important; height: 50vh !important; }
+            .cart-panel { width: 100% !important; height: 55vh !important; border-width: 2px 0 0 0; border-radius: 1rem 1rem 0 0; }
             .grid-products { grid-template-columns: repeat(2, 1fr) !important; }
             .header-info { display: none; }
         }
@@ -68,278 +69,464 @@
         @media print {
             body * { visibility: hidden; }
             #ticket-modal, #ticket-modal * { visibility: visible; }
-            #ticket-modal { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
-            #ticket-modal button { display: none; }
+            #ticket-modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; box-shadow: none; background: white; border: none; padding: 0; margin: 0; }
+            #ticket-modal .ticket-content { box-shadow: none; border: none; max-width: 100%; width: 100%; margin: 0; padding: 0;}
+            .no-print { display: none !important; }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="h-screen flex flex-col">
 
     <!-- Login Overlay -->
-    <div id="login-overlay" class="fixed inset-0 bg-store-gradient z-[500] flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-sm w-full border-t-8 border-red-600">
+    <div id="login-overlay" class="fixed inset-0 bg-store-gradient z-[1000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full border-t-8 border-red-600">
             <div class="text-center mb-6 md:mb-8">
                 <div class="inline-block p-4 bg-red-50 rounded-full mb-4">
                     <i class="fas fa-store text-4xl text-red-600"></i>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-black text-gray-800 font-['Oswald'] uppercase tracking-tight">MINI SUPER CARLITOS</h2>
-                <p class="text-gray-500 text-xs font-bold">ACCESO AL SISTEMA</p>
+                <p class="text-gray-500 text-xs font-bold mt-1">SISTEMA POS</p>
             </div>
             
             <div id="role-selection" class="space-y-3">
-                <button onclick="selectRole('owner')" class="w-full flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl hover:border-red-500 hover:bg-red-50 transition group">
+                <button onclick="selectRole('owner')" class="w-full flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl hover:border-red-500 hover:bg-red-50 transition group btn-action">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-user-shield text-red-600"></i>
+                        <i class="fas fa-user-shield text-red-600 text-xl"></i>
                         <span class="font-bold text-gray-700">DUEÑO</span>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-red-600"></i>
                 </button>
-                <button onclick="selectRole('employee')" class="w-full flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl hover:border-gray-800 hover:bg-gray-50 transition group">
+                <button onclick="selectRole('employee')" class="w-full flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl hover:border-gray-800 hover:bg-gray-50 transition group btn-action">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-cash-register text-gray-700"></i>
+                        <i class="fas fa-cash-register text-gray-700 text-xl"></i>
                         <span class="font-bold text-gray-700">EMPLEADO</span>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-gray-800"></i>
                 </button>
+                <div class="text-[10px] text-center text-gray-400 mt-4">
+                    PIN Dueño: admin123 | PIN Empleado: user123
+                </div>
             </div>
 
             <div id="password-entry" class="hidden space-y-4">
-                <button onclick="backToRoles()" class="text-xs text-red-600 font-bold mb-2 flex items-center gap-1">
+                <button onclick="backToRoles()" class="text-xs text-red-600 font-bold mb-2 flex items-center gap-1 hover:text-red-800">
                     <i class="fas fa-arrow-left"></i> VOLVER
                 </button>
                 <input type="password" id="login-pass" placeholder="PIN" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-red-600 outline-none text-center text-2xl tracking-widest font-bold">
-                <button onclick="attemptLogin()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-red-700">ENTRAR</button>
+                <button onclick="attemptLogin()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-red-700 btn-action">ENTRAR</button>
             </div>
         </div>
     </div>
 
     <!-- Header -->
-    <header class="header-brand p-3 md:p-4 flex justify-between items-center shadow-lg">
+    <header class="header-brand p-3 md:p-4 flex justify-between items-center shadow-md z-10 relative">
         <div class="flex items-center gap-3 md:gap-6">
             <div class="flex flex-col">
                 <h1 class="text-xl md:text-2xl font-black leading-none tracking-tighter">MINI SUPER CARLITOS</h1>
                 <span class="text-[8px] md:text-[10px] font-bold opacity-80">TECNOLOGÍA EN TU BARRIO</span>
             </div>
-            <span id="role-indicator" class="text-[8px] md:text-[10px] px-2 py-1 rounded border border-white font-bold uppercase"></span>
+            <span id="role-indicator" class="text-[8px] md:text-[10px] px-2 py-1 rounded border border-white font-bold uppercase hidden md:inline-block"></span>
         </div>
         <div class="flex items-center gap-4 md:gap-6">
-            <div id="clock" class="text-xs md:text-sm font-mono font-bold header-info">00:00:00</div>
-            <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition border border-white/20">
-                <i class="fas fa-power-off"></i>
+            <div id="clock" class="text-xs md:text-sm font-mono font-bold header-info tracking-widest bg-black/20 px-3 py-1 rounded-lg">00:00:00</div>
+            <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition border border-white/20 flex items-center gap-2">
+                <i class="fas fa-power-off"></i> <span class="text-xs font-bold hidden md:inline-block">SALIR</span>
             </button>
         </div>
     </header>
 
     <!-- Navegación -->
-    <nav id="nav-bar" class="bg-gray-200 border-b flex px-2 md:px-4 gap-1 pt-2 shadow-inner overflow-x-auto no-scrollbar"></nav>
+    <nav id="nav-bar" class="bg-gray-200 border-b flex px-2 md:px-4 gap-1 pt-2 shadow-inner overflow-x-auto custom-scroll z-10 relative"></nav>
 
-    <main class="flex-1 overflow-hidden relative">
-        <!-- DASHBOARD -->
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-hidden relative bg-gray-100">
+        
+        <!-- DASHBOARD (Solo Dueño) -->
         <div id="view-dashboard" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                <div class="bg-white p-5 rounded-xl shadow-md border-l-8 border-emerald-500">
-                    <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Ventas de Hoy</span>
-                    <div id="profit-day" class="text-3xl md:text-4xl font-black text-emerald-600">$0.00</div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-md border-l-8 border-red-600">
-                    <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Fiados Pendientes</span>
-                    <div id="total-fiados" class="text-3xl md:text-4xl font-black text-red-600">$0.00</div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-md border-l-8 border-gray-800">
-                    <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Stock Crítico</span>
-                    <div id="low-stock-count" class="text-3xl md:text-4xl font-black text-gray-800">0</div>
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-black text-gray-800 font-['Oswald'] uppercase mb-6 border-l-4 border-red-600 pl-3">Resumen del Día</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-emerald-500">
+                        <div class="flex justify-between items-start">
+                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Ventas de Hoy</span>
+                            <i class="fas fa-chart-line text-emerald-100 text-2xl"></i>
+                        </div>
+                        <div id="profit-day" class="text-4xl md:text-5xl font-black text-emerald-600 mt-2">$0.00</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-red-600">
+                        <div class="flex justify-between items-start">
+                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Fiados Pendientes</span>
+                            <i class="fas fa-book-open text-red-100 text-2xl"></i>
+                        </div>
+                        <div id="total-fiados" class="text-4xl md:text-5xl font-black text-red-600 mt-2">$0.00</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-gray-800">
+                        <div class="flex justify-between items-start">
+                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Stock Crítico (< 5)</span>
+                            <i class="fas fa-exclamation-triangle text-gray-200 text-2xl"></i>
+                        </div>
+                        <div id="low-stock-count" class="text-4xl md:text-5xl font-black text-gray-800 mt-2">0</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- POS -->
+        <!-- POS (Caja) -->
         <div id="view-pos" class="hidden h-full flex flex-col lg:flex-row p-2 md:p-4 gap-2 md:gap-4 pos-layout">
             <div class="flex-1 flex flex-col gap-2 md:gap-4 overflow-hidden">
-                <div class="bg-white p-3 md:p-4 rounded-xl shadow-md flex items-center gap-3 border-2 border-red-100">
-                    <div class="bg-red-600 text-white p-2 md:p-3 rounded-lg">
-                        <i class="fas fa-barcode text-lg md:text-xl"></i>
+                <div class="bg-white p-2 md:p-3 rounded-xl shadow-sm flex items-center gap-2 border-2 border-transparent focus-within:border-red-300 transition">
+                    <button onclick="openScanner('pos')" class="bg-gray-800 text-white p-3 rounded-lg hover:bg-black transition btn-action flex items-center justify-center">
+                        <i class="fas fa-camera text-lg"></i>
+                    </button>
+                    <div class="bg-red-600 text-white p-3 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-barcode text-lg"></i>
                     </div>
-                    <input type="text" id="barcode-scanner" oninput="searchProduct(this.value)" placeholder="BUSCAR PRODUCTO..." class="flex-1 text-lg md:text-2xl font-black outline-none uppercase placeholder:text-gray-300">
+                    <input type="text" id="barcode-scanner" oninput="searchProduct(this.value)" placeholder="BUSCAR PRODUCTO (NOMBRE O CÓDIGO)..." class="flex-1 text-base md:text-xl font-black outline-none uppercase placeholder:text-gray-300 px-2 bg-transparent">
+                    <button onclick="document.getElementById('barcode-scanner').value=''; searchProduct('');" class="text-gray-400 hover:text-red-600 p-2">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-                <div id="pos-grid" class="flex-1 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3 overflow-y-auto custom-scroll pr-1 content-start grid-products"></div>
+                
+                <div id="pos-grid" class="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3 overflow-y-auto custom-scroll pr-1 content-start grid-products pb-20 md:pb-0">
+                    <!-- Productos inyectados por JS -->
+                </div>
             </div>
 
-            <div class="w-full lg:w-[400px] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden border-2 border-gray-800 cart-panel">
-                <div class="p-3 bg-gray-800 text-white flex justify-between items-center">
-                    <h3 class="font-bold text-xs tracking-widest uppercase"><i class="fas fa-shopping-basket mr-2"></i> CARRITO</h3>
-                    <button onclick="clearCart()" class="text-[9px] bg-red-600 px-2 py-1 rounded font-bold hover:bg-red-700">VACIAR</button>
+            <div class="w-full lg:w-[350px] xl:w-[400px] bg-white rounded-xl shadow-xl flex flex-col overflow-hidden border border-gray-200 cart-panel z-20 flex-shrink-0">
+                <div class="p-3 bg-gray-800 text-white flex justify-between items-center shadow-md z-10">
+                    <h3 class="font-bold text-xs tracking-widest uppercase"><i class="fas fa-shopping-basket mr-2 text-red-400"></i> CARRITO</h3>
+                    <button onclick="clearCart()" class="text-[10px] bg-red-600/80 px-3 py-1.5 rounded font-bold hover:bg-red-600 transition">VACIAR</button>
                 </div>
-                <div id="cart-list" class="flex-1 overflow-y-auto p-3 space-y-1 custom-scroll bg-[#fcfcfc] ticket-font text-xs"></div>
-                <div class="p-4 md:p-6 bg-gray-50 border-t-2 border-dashed border-gray-300">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-gray-500 font-bold uppercase text-[10px] md:text-xs">Total</span>
-                        <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600">$0.00</span>
+                
+                <div id="cart-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll bg-gray-50 ticket-font text-xs">
+                    <!-- Items carrito -->
+                </div>
+                
+                <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
+                    <div class="flex justify-between items-end mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <span class="text-gray-500 font-black uppercase text-[10px] tracking-widest">Total a Pagar</span>
+                        <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600 leading-none">$0.00</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 md:gap-3">
-                        <button onclick="openCheckout('cash')" class="bg-emerald-600 text-white p-3 md:p-4 rounded-xl font-bold hover:bg-emerald-700 shadow-md flex flex-col items-center btn-action">
-                            <i class="fas fa-money-bill-alt text-xl mb-1"></i> EFECTIVO
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openCheckout('cash')" class="bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1">
+                            <i class="fas fa-money-bill-wave text-2xl mb-1 opacity-80"></i> 
+                            <span class="text-[10px] tracking-widest">EFECTIVO</span>
                         </button>
-                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 md:p-4 rounded-xl font-bold hover:bg-red-700 shadow-md flex flex-col items-center btn-action">
-                            <i class="fas fa-user-clock text-xl mb-1"></i> FIAR
+                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1">
+                            <i class="fas fa-book text-2xl mb-1 opacity-80"></i> 
+                            <span class="text-[10px] tracking-widest">FIAR</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- FIADOS -->
+        <!-- FIADOS (Clientes) -->
         <div id="view-fiados" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="max-w-5xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-5 rounded-xl shadow-sm border-t-4 border-red-600">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-5 rounded-2xl shadow-sm border-l-8 border-red-600">
                     <div>
-                        <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Clientes</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">CUENTAS POR COBRAR</p>
+                        <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Clientes / Fiados</h2>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GESTIÓN DE CUENTAS POR COBRAR</p>
                     </div>
-                    <button id="add-customer-btn" onclick="openModal('customer-add-modal')" class="w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-black transition">+ NUEVO CLIENTE</button>
+                    <button onclick="openModal('customer-add-modal')" class="w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
+                        <i class="fas fa-user-plus"></i> NUEVO CLIENTE
+                    </button>
                 </div>
-                <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                
+                <div class="mb-4 relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-customer" oninput="renderCustomers(this.value)" placeholder="BUSCAR CLIENTE..." class="w-full bg-white p-4 pl-12 rounded-xl shadow-sm outline-none font-bold uppercase border-2 border-transparent focus:border-red-300 transition">
+                </div>
+
+                <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Clientes inyectados -->
+                </div>
             </div>
         </div>
 
-        <!-- INVENTARIO -->
+        <!-- INVENTARIO (Solo Dueño) -->
         <div id="view-inventory" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="bg-white rounded-xl shadow-lg max-w-6xl mx-auto overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-sm max-w-6xl mx-auto overflow-hidden flex flex-col h-full md:h-auto">
                 <div class="p-4 md:p-6 bg-gray-800 text-white flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                    <h2 class="text-lg font-black uppercase tracking-widest">Inventario</h2>
+                    <div>
+                        <h2 class="text-xl font-black uppercase font-['Oswald'] tracking-wide">Inventario</h2>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">ADMINISTRACIÓN DE PRODUCTOS</p>
+                    </div>
                     <div class="flex w-full sm:w-auto gap-2">
-                        <button onclick="sendLowStockWhatsApp()" class="flex-1 sm:flex-none bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-green-700 flex items-center justify-center gap-2">
-                            <i class="fab fa-whatsapp"></i> STOCK
+                        <button onclick="sendLowStockWhatsApp()" class="flex-1 sm:flex-none bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-emerald-700 flex items-center justify-center gap-2 transition">
+                            <i class="fab fa-whatsapp text-lg"></i> <span class="hidden sm:inline">PEDIR STOCK</span>
                         </button>
-                        <button onclick="openProductModal()" class="flex-1 sm:flex-none bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-700">+ PRODUCTO</button>
+                        <button onclick="openProductModal()" class="flex-1 sm:flex-none bg-red-600 text-white px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-red-700 flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-plus"></i> PRODUCTO
+                        </button>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[600px]">
-                        <thead class="bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-tighter border-b">
+                
+                <div class="p-4 bg-gray-50 border-b border-gray-200">
+                    <div class="relative max-w-md">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-inventory" oninput="renderInventory(this.value)" placeholder="BUSCAR EN INVENTARIO..." class="w-full bg-white p-3 pl-10 rounded-lg outline-none font-bold uppercase border border-gray-300 focus:border-red-500 text-sm">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full min-w-[700px] text-left">
+                        <thead class="bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest border-b">
                             <tr>
-                                <th class="p-4 text-left">Producto</th>
-                                <th class="p-4 text-left">Precio</th>
+                                <th class="p-4 w-16 text-center">Código</th>
+                                <th class="p-4">Producto</th>
+                                <th class="p-4 text-right">Costo</th>
+                                <th class="p-4 text-right">Precio Venta</th>
                                 <th class="p-4 text-center">Stock</th>
-                                <th class="p-4 text-right">Acciones</th>
+                                <th class="p-4 text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="inventory-body" class="divide-y divide-gray-100"></tbody>
+                        <tbody id="inventory-body" class="divide-y divide-gray-100 bg-white text-sm font-medium text-gray-700">
+                            <!-- Inventario inyectado -->
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- MODALES VARIOS (MODIFICADOS PARA MÓVIL) -->
-    <div id="ticket-modal" class="hidden fixed inset-0 bg-black/90 z-[700] flex items-center justify-center p-4">
-        <div class="bg-white p-6 max-w-[320px] w-full ticket-font text-[12px] shadow-2xl rounded-xl border-t-8 border-red-600 overflow-y-auto max-h-[90vh]">
-            <div class="text-center mb-4">
-                <div class="text-lg font-bold uppercase font-['Oswald']">MINI SUPER CARLITOS</div>
-                <div id="ticket-date" class="mt-1 text-[9px] opacity-60"></div>
+    <!-- ========================================== -->
+    <!-- MODALES -->
+    <!-- ========================================== -->
+
+    <!-- Modal Escáner Genérico -->
+    <div id="scanner-modal" class="hidden fixed inset-0 bg-black/95 z-[2000] flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="w-full max-w-md bg-white rounded-2xl overflow-hidden shadow-2xl relative">
+            <div class="p-4 bg-red-600 text-white text-center font-black uppercase tracking-widest flex justify-between items-center">
+                <span>Escanear Código</span>
+                <button onclick="closeScanner()" class="text-white hover:text-red-200 p-1"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="border-t border-b border-dashed border-gray-400 py-3 my-3 space-y-1" id="ticket-items"></div>
-            <div class="flex justify-between font-black text-base">
-                <span>TOTAL:</span>
-                <span id="ticket-total"></span>
-            </div>
-            <div class="text-center mt-6 space-y-3">
-                <p class="text-[9px]">¡GRACIAS POR SU COMPRA!</p>
-                <div class="flex flex-col gap-2 no-print">
-                    <button onclick="window.print()" class="bg-gray-800 text-white w-full py-3 rounded-lg font-bold text-xs">IMPRIMIR</button>
-                    <button onclick="closeModal('ticket-modal')" class="bg-red-600 text-white w-full py-3 rounded-lg font-bold text-xs uppercase">CERRAR</button>
-                </div>
+            <div id="reader" class="w-full bg-black min-h-[300px]"></div>
+            <div class="p-4 bg-gray-50 text-center">
+                <p class="text-xs text-gray-500 font-bold mb-3 uppercase">Apunta la cámara al código de barras</p>
+                <button onclick="closeScanner()" class="w-full bg-gray-800 text-white py-3 rounded-xl font-bold uppercase text-xs btn-action">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <div id="checkout-modal" class="hidden fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 md:p-8 border-t-8 border-red-600">
-            <h3 id="checkout-title" class="text-lg font-black text-center uppercase mb-4 tracking-widest"></h3>
-            <div id="checkout-total-display" class="text-5xl font-black text-center text-red-600 mb-6 font-['Oswald']"></div>
+    <!-- Modal Checkout -->
+    <div id="checkout-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 border-t-8 border-red-600 shadow-2xl transform transition-all scale-100">
+            <div class="flex justify-between items-start mb-4">
+                <h3 id="checkout-title" class="text-lg font-black uppercase tracking-widest text-gray-800">COBRAR</h3>
+                <button onclick="closeModal('checkout-modal')" class="text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100 text-center">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">TOTAL A COBRAR</span>
+                <div id="checkout-total-display" class="text-5xl font-black text-red-600 font-['Oswald']"></div>
+            </div>
             
             <div id="cash-payment-fields" class="space-y-4 hidden">
-                <input type="number" id="cash-received" oninput="calcChange()" placeholder="PAGA CON..." class="w-full p-4 bg-gray-50 border-2 rounded-xl text-3xl text-center font-black focus:border-emerald-500 outline-none">
-                <div class="bg-gray-100 p-3 rounded-xl border-2 border-dashed border-gray-300 text-center">
-                    <span class="text-[10px] text-gray-500 font-black uppercase">Cambio</span>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Efectivo Recibido</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-2xl">$</span>
+                        <input type="number" id="cash-received" oninput="calcChange()" placeholder="0.00" class="w-full p-4 pl-10 bg-white border-2 border-gray-200 rounded-xl text-3xl text-right font-black focus:border-emerald-500 outline-none transition">
+                    </div>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border-2 border-emerald-100 flex justify-between items-center">
+                    <span class="text-[10px] text-emerald-800 font-black uppercase">Cambio</span>
                     <div id="cash-change" class="text-2xl font-black text-emerald-600">$0.00</div>
                 </div>
             </div>
 
-            <div id="fiado-fields" class="space-y-3 hidden">
-                <label class="text-[10px] font-black text-gray-400 uppercase">Seleccionar Cliente</label>
-                <select id="customer-select" class="w-full p-4 bg-gray-50 border-2 rounded-xl font-bold text-lg outline-none"></select>
+            <div id="fiado-fields" class="space-y-4 hidden">
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Seleccionar Cliente</label>
+                    <select id="customer-select" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-500 transition">
+                        <!-- Opciones -->
+                    </select>
+                </div>
+                <div class="text-[10px] text-center text-gray-500 bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+                    Esta venta se registrará como deuda en la cuenta del cliente seleccionado.
+                </div>
             </div>
 
-            <div class="pt-4 space-y-2">
-                <button onclick="finalizeSale()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-red-700 uppercase tracking-widest btn-action">CONFIRMAR</button>
-                <button onclick="closeModal('checkout-modal')" class="w-full text-gray-400 font-bold text-xs py-2 uppercase">CANCELAR</button>
+            <div class="pt-6 space-y-3">
+                <button onclick="finalizeSale()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-red-700 uppercase tracking-widest btn-action flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> CONFIRMAR VENTA
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="product-modal" class="hidden fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4">
-        <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-md border-t-8 border-red-600 overflow-y-auto max-h-[90vh]">
-            <h3 class="font-black mb-4 text-lg uppercase tracking-widest">PRODUCTO</h3>
-            <form id="product-form" class="space-y-3" onsubmit="handleProductSubmit(event)">
+    <!-- Modal Producto (Crear/Editar) -->
+    <div id="product-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md border-t-8 border-gray-800 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+            <button onclick="closeModal('product-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
+            
+            <h3 id="product-modal-title" class="font-black mb-6 text-xl uppercase tracking-widest text-gray-800">NUEVO PRODUCTO</h3>
+            
+            <form id="product-form" class="space-y-4" onsubmit="handleProductSubmit(event)">
                 <input type="hidden" id="p-id">
-                <input type="text" id="p-code" placeholder="CÓDIGO DE BARRAS" class="w-full p-3 border-2 rounded-xl font-mono outline-none">
-                <input type="text" id="p-name" required placeholder="NOMBRE / DESCRIPCIÓN" class="w-full p-3 border-2 rounded-xl font-bold uppercase outline-none">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="p-cost" step="0.01" placeholder="COSTO" class="w-full p-3 border-2 rounded-xl outline-none">
-                    <input type="number" id="p-price" step="0.01" required placeholder="PRECIO VENTA" class="w-full p-3 border-2 rounded-xl font-bold text-red-600 outline-none">
+                
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Código de Barras</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="p-code" placeholder="ESCRIBE O ESCANEA..." class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-mono font-bold outline-none focus:border-red-500 uppercase">
+                        <button type="button" onclick="openScanner('product')" class="bg-gray-800 text-white px-5 rounded-xl font-bold hover:bg-black transition btn-action">
+                            <i class="fas fa-camera text-lg"></i>
+                        </button>
+                    </div>
                 </div>
-                <input type="number" id="p-stock" required placeholder="STOCK" class="w-full p-3 border-2 rounded-xl outline-none">
-                <button type="submit" class="w-full bg-gray-800 text-white py-4 rounded-xl font-black mt-2 uppercase hover:bg-black transition">GUARDAR</button>
-                <button type="button" onclick="closeModal('product-modal')" class="w-full text-gray-400 text-[10px] font-bold uppercase">CANCELAR</button>
+
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Nombre del Producto</label>
+                    <input type="text" id="p-name" required placeholder="EJ: COCA COLA 600ML" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold uppercase outline-none focus:border-red-500">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Costo Compra</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                            <input type="number" id="p-cost" step="0.01" min="0" required placeholder="0.00" class="w-full p-3 pl-8 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-red-500 text-right">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-red-500 uppercase ml-1">Precio Venta</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-red-400 font-bold">$</span>
+                            <input type="number" id="p-price" step="0.01" min="0" required placeholder="0.00" class="w-full p-3 pl-8 bg-red-50 border-2 border-red-200 rounded-xl font-black text-red-600 outline-none focus:border-red-500 text-right">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Stock Actual</label>
+                    <input type="number" id="p-stock" required min="0" placeholder="0" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-black text-center text-xl outline-none focus:border-red-500">
+                </div>
+                
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal('product-modal')" class="flex-1 bg-gray-200 text-gray-600 py-4 rounded-xl font-black uppercase text-xs btn-action">CANCELAR</button>
+                    <button type="submit" class="flex-[2] bg-gray-800 text-white py-4 rounded-xl font-black uppercase text-sm hover:bg-black transition shadow-md btn-action">GUARDAR DATOS</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="customer-add-modal" class="hidden fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-sm border-t-8 border-gray-800">
-            <h3 class="text-lg font-black mb-4 uppercase tracking-widest">NUEVO CLIENTE</h3>
-            <input type="text" id="new-cust-name" placeholder="NOMBRE COMPLETO" class="w-full p-4 bg-gray-50 border-2 rounded-xl mb-4 font-bold outline-none">
-            <button onclick="saveNewCustomer()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-red-700">REGISTRAR</button>
-            <button onclick="closeModal('customer-add-modal')" class="w-full text-gray-400 text-[10px] font-bold mt-4 uppercase text-center w-full">Cerrar</button>
+    <!-- Modal Agregar Cliente -->
+    <div id="customer-add-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm border-t-8 border-gray-800 shadow-2xl relative">
+            <button onclick="closeModal('customer-add-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-xl font-black mb-6 uppercase tracking-widest text-gray-800">NUEVO CLIENTE</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Nombre Completo / Apodo</label>
+                    <input type="text" id="new-cust-name" placeholder="EJ: DOÑA MARÍA" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold uppercase outline-none focus:border-gray-800">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Teléfono (Opcional)</label>
+                    <input type="text" id="new-cust-phone" placeholder="000 000 0000" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-gray-800">
+                </div>
+                <button onclick="saveNewCustomer()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-red-700 uppercase btn-action mt-2">REGISTRAR CLIENTE</button>
+            </div>
         </div>
     </div>
 
-    <div id="customer-detail-modal" class="hidden fixed inset-0 bg-black/90 z-[650] flex items-center justify-center p-2 md:p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[95vh] shadow-2xl">
-            <div class="p-4 bg-red-600 text-white flex justify-between items-center">
-                <h3 id="det-cust-name" class="text-xl font-black font-['Oswald'] uppercase truncate pr-4"></h3>
-                <button onclick="closeModal('customer-detail-modal')" class="text-xl"><i class="fas fa-times"></i></button>
+    <!-- Modal Detalle Cliente (Abonos) -->
+    <div id="customer-detail-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[650] flex items-center justify-center p-2 md:p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
+            <div class="p-4 bg-red-600 text-white flex justify-between items-center shadow-md z-10">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="bg-white/20 p-2 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <h3 id="det-cust-name" class="text-lg font-black font-['Oswald'] uppercase truncate"></h3>
+                </div>
+                <button onclick="closeModal('customer-detail-modal')" class="text-white hover:text-red-200 p-2"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="p-6 bg-red-50 text-center border-b-2 border-dashed border-red-200">
-                <span class="text-[9px] font-black text-red-400 uppercase tracking-widest">Deuda Actual</span>
-                <div id="det-cust-balance" class="text-5xl font-black text-red-600 font-['Oswald']"></div>
+            
+            <div class="p-6 bg-gradient-to-b from-red-50 to-white text-center border-b border-gray-100 relative">
+                <span class="text-[10px] font-black text-red-400 uppercase tracking-widest block mb-1">Deuda Total Actual</span>
+                <div id="det-cust-balance" class="text-5xl font-black text-red-600 font-['Oswald'] tracking-tight"></div>
             </div>
             
             <div class="p-4 flex-1 overflow-y-auto custom-scroll space-y-4 bg-gray-50">
-                <div class="bg-white border-2 border-gray-200 p-4 rounded-xl">
-                    <p class="text-[9px] font-black text-gray-400 uppercase mb-2">Abonar</p>
+                <!-- Zona de Abono -->
+                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                    <p class="text-[10px] font-black text-gray-500 uppercase mb-3 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-emerald-500"></i> Registrar Abono</p>
                     <div class="flex gap-2">
-                        <input type="number" id="abono-monto" placeholder="$0.00" class="flex-1 p-3 bg-gray-50 border rounded-xl font-black text-lg outline-none">
-                        <button onclick="registerAbono()" class="bg-emerald-600 text-white px-4 rounded-xl font-black uppercase text-xs">OK</button>
+                        <div class="relative flex-1">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                            <input type="number" id="abono-monto" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-gray-50 border-2 border-gray-200 rounded-xl font-black text-lg outline-none focus:border-emerald-500">
+                        </div>
+                        <button onclick="registerAbono()" class="bg-emerald-600 text-white px-6 rounded-xl font-black uppercase text-sm hover:bg-emerald-700 btn-action shadow-md">OK</button>
                     </div>
                 </div>
-                <div id="customer-history" class="space-y-2"></div>
+
+                <!-- Historial -->
+                <div>
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Historial de Movimientos</h4>
+                    <div id="customer-history" class="space-y-2">
+                        <!-- Movimientos -->
+                    </div>
+                </div>
             </div>
 
-            <div id="customer-footer-actions" class="p-4 border-t bg-white grid grid-cols-2 gap-2">
-                <button onclick="liquidarCuenta()" class="bg-gray-800 text-white py-3 rounded-lg font-black text-[10px] uppercase">LIQUIDAR</button>
-                <button onclick="eliminarCliente()" class="bg-red-100 text-red-600 py-3 rounded-lg font-black text-[10px] uppercase">ELIMINAR</button>
+            <div id="customer-footer-actions" class="p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3">
+                <button onclick="liquidarCuenta()" class="bg-gray-800 text-white py-3 rounded-xl font-black text-[10px] md:text-xs uppercase hover:bg-black btn-action flex items-center justify-center gap-2">
+                    <i class="fas fa-check-double"></i> LIQUIDAR TODO
+                </button>
+                <button onclick="eliminarCliente()" class="bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-black text-[10px] md:text-xs uppercase hover:bg-red-100 btn-action flex items-center justify-center gap-2">
+                    <i class="fas fa-trash-alt"></i> BORRAR CLIENTE
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-all z-[1000] pointer-events-none font-black uppercase text-xs text-center min-w-[200px]"></div>
+    <!-- Modal Ticket (Para Imprimir) -->
+    <div id="ticket-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[700] flex items-center justify-center p-4">
+        <div class="ticket-content bg-white p-6 max-w-[320px] w-full ticket-font text-[12px] shadow-2xl rounded-xl border-t-8 border-gray-800 overflow-y-auto max-h-[90vh]">
+            <div class="text-center mb-4">
+                <i class="fas fa-store text-2xl text-gray-800 mb-2"></i>
+                <div class="text-xl font-bold uppercase font-['Oswald'] leading-tight">MINI SUPER<br>CARLITOS</div>
+                <div class="text-[10px] mt-1">Tu tienda de confianza</div>
+                <div id="ticket-date" class="mt-3 text-[10px] opacity-80 border-b border-dashed border-gray-300 pb-2"></div>
+            </div>
+            
+            <div class="border-b border-dashed border-gray-400 py-3 my-3 space-y-2" id="ticket-items">
+                <!-- Items -->
+            </div>
+            
+            <div class="flex justify-between font-black text-sm my-2">
+                <span>TOTAL:</span>
+                <span id="ticket-total"></span>
+            </div>
+            
+            <div id="ticket-payment-info" class="text-[10px] mb-4 border-b border-dashed border-gray-400 pb-3 space-y-1">
+                <!-- Info pago -->
+            </div>
+
+            <div class="text-center mt-6 space-y-4">
+                <p class="text-[10px] font-bold">¡GRACIAS POR SU COMPRA!</p>
+                <div class="flex flex-col gap-2 no-print">
+                    <button onclick="window.print()" class="bg-gray-800 text-white w-full py-3 rounded-xl font-bold text-xs uppercase btn-action flex items-center justify-center gap-2">
+                        <i class="fas fa-print"></i> IMPRIMIR TICKET
+                    </button>
+                    <button onclick="closeModal('ticket-modal')" class="bg-red-600 text-white w-full py-3 rounded-xl font-bold text-xs uppercase btn-action">
+                        CERRAR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Notificaciones -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transform translate-y-4 transition-all duration-300 z-[3000] pointer-events-none font-black uppercase text-xs text-center min-w-[200px] border-2 border-gray-700"></div>
 
 <script>
 // ===============================
-// LÓGICA DEL SISTEMA
+// VARIABLES GLOBALES Y BD
 // ===============================
-
 let products = [];
 let sales = [];
 let customers = [];
@@ -348,6 +535,8 @@ let currentRole = null;
 let selectedRoleAttempt = null;
 let saleType = "cash";
 let selectedCustomerId = null;
+let html5QrCode = null;
+let currentScannerTarget = null; // 'pos' o 'product'
 
 const DB = {
     save() {
@@ -359,6 +548,16 @@ const DB = {
         products = JSON.parse(localStorage.getItem("pos_products")) || [];
         sales = JSON.parse(localStorage.getItem("pos_sales")) || [];
         customers = JSON.parse(localStorage.getItem("pos_customers")) || [];
+        
+        // Datos de prueba iniciales si está vacío
+        if(products.length === 0) {
+            products = [
+                {id: 1, code: '7501055310883', name: 'COCA COLA 600ML', cost: 12, price: 18, stock: 24},
+                {id: 2, code: '7501000111200', name: 'BIMBO PAN BLANCO', cost: 35, price: 45, stock: 10},
+                {id: 3, code: '7501011115322', name: 'SABRITAS SAL 40G', cost: 13, price: 17, stock: 15}
+            ];
+            DB.save();
+        }
     }
 };
 
@@ -368,11 +567,28 @@ window.onload = () => {
     setInterval(updateClock, 1000);
 };
 
+// ===============================
+// UTILIDADES E INTERFAZ
+// ===============================
 function updateClock() {
     const el = document.getElementById("clock");
-    if (el) el.innerText = new Date().toLocaleTimeString();
+    if (el) el.innerText = new Date().toLocaleTimeString('es-MX', {hour12: true});
 }
 
+function showToast(msg, isSuccess = true) {
+    const toast = document.getElementById("toast");
+    toast.innerHTML = isSuccess ? `<i class="fas fa-check-circle text-emerald-400 mr-2"></i> ${msg}` : `<i class="fas fa-exclamation-circle text-red-400 mr-2"></i> ${msg}`;
+    toast.style.borderColor = isSuccess ? '#059669' : '#dc2626';
+    toast.classList.remove("opacity-0", "translate-y-4");
+    setTimeout(() => toast.classList.add("opacity-0", "translate-y-4"), 2500);
+}
+
+function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
+function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+// ===============================
+// AUTENTICACIÓN
+// ===============================
 function selectRole(role) {
     selectedRoleAttempt = role;
     document.getElementById('role-selection').classList.add('hidden');
@@ -396,27 +612,31 @@ function attemptLogin() {
         
         const indicator = document.getElementById("role-indicator");
         indicator.innerText = currentRole === "owner" ? "Dueño" : "Empleado";
-        indicator.className = `text-[8px] md:text-[10px] px-2 py-1 rounded border font-bold uppercase ${currentRole === 'owner' ? 'bg-white text-red-600' : 'bg-black text-white'}`;
+        indicator.className = `text-[8px] md:text-[10px] px-2 py-1 rounded border font-bold uppercase hidden md:inline-block ${currentRole === 'owner' ? 'bg-white text-red-600 border-white' : 'bg-gray-800 text-white border-gray-800'}`;
         
         initTabs();
     } else {
-        showToast("PIN INCORRECTO");
+        showToast("PIN INCORRECTO", false);
+        document.getElementById('login-pass').value = "";
     }
 }
 
 function logout() { location.reload(); }
 
+// ===============================
+// NAVEGACIÓN
+// ===============================
 function initTabs() {
     const tabs = currentRole === "owner" 
-        ? [{id:'dashboard', name:'INICIO', icon:'fa-chart-pie'}, {id:'pos', name:'CAJA', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}, {id:'inventory', name:'STOCK', icon:'fa-boxes'}]
-        : [{id:'pos', name:'CAJA', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}];
+        ? [{id:'dashboard', name:'RESUMEN', icon:'fa-chart-pie'}, {id:'pos', name:'CAJA POS', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}, {id:'inventory', name:'INVENTARIO', icon:'fa-boxes'}]
+        : [{id:'pos', name:'CAJA POS', icon:'fa-cash-register'}, {id:'fiados', name:'FIADOS', icon:'fa-users'}];
 
     const nav = document.getElementById("nav-bar");
     nav.innerHTML = "";
     tabs.forEach(t => {
         const btn = document.createElement("button");
         btn.id = `tab-${t.id}`;
-        btn.className = "px-4 md:px-6 py-3 bg-gray-300 rounded-t-xl text-[10px] md:text-xs font-bold text-gray-600 transition flex items-center gap-2 whitespace-nowrap flex-shrink-0";
+        btn.className = "px-4 md:px-6 py-3 bg-gray-300 rounded-t-xl text-[10px] md:text-xs font-bold text-gray-500 transition flex items-center gap-2 whitespace-nowrap flex-shrink-0 hover:bg-gray-200 hover:text-gray-800";
         btn.innerHTML = `<i class="fas ${t.icon}"></i> ${t.name}`;
         btn.onclick = () => switchTab(t.id);
         nav.appendChild(btn);
@@ -437,6 +657,55 @@ function switchTab(tabId) {
     if (tabId === "inventory") renderInventory();
 }
 
+// ===============================
+// ESCÁNER (Librería HTML5-QRCode)
+// ===============================
+function openScanner(target) {
+    currentScannerTarget = target;
+    openModal("scanner-modal");
+    
+    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+
+    // Timeout ligero para permitir que el modal se dibuje antes de abrir cámara
+    setTimeout(() => {
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 },
+            (decodedText) => {
+                if(navigator.vibrate) navigator.vibrate(100);
+                handleScanResult(decodedText);
+            },
+            (err) => { /* Ignorar errores de frame vacío */ }
+        ).catch(err => {
+            showToast("Error de cámara: " + err, false);
+            closeScanner();
+        });
+    }, 200);
+}
+
+function closeScanner() {
+    closeModal("scanner-modal");
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => html5QrCode.clear()).catch(e => console.error(e));
+    }
+}
+
+function handleScanResult(code) {
+    closeScanner();
+    if (currentScannerTarget === 'pos') {
+        document.getElementById("barcode-scanner").value = code;
+        searchProduct(code);
+        // Autoseleccionar si hay coincidencia exacta
+        const p = products.find(prod => prod.code === code);
+        if(p) addToCart(p);
+    } else if (currentScannerTarget === 'product') {
+        document.getElementById("p-code").value = code;
+    }
+}
+
+// ===============================
+// DASHBOARD
+// ===============================
 function renderDashboard() {
     const today = new Date().toDateString();
     const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
@@ -449,19 +718,38 @@ function renderDashboard() {
     document.getElementById("low-stock-count").innerText = lowStock;
 }
 
+// ===============================
+// CAJA (POS)
+// ===============================
 function renderPOS(filter = "") {
     const grid = document.getElementById("pos-grid");
     grid.innerHTML = "";
-    const filtered = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()) || p.code.toLowerCase().includes(filter.toLowerCase()));
+    const term = filter.toLowerCase();
+    
+    const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(term) || 
+        p.code.toLowerCase().includes(term)
+    );
+    
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 font-bold uppercase text-xs"><i class="fas fa-box-open text-3xl mb-2 block"></i> No se encontraron productos</div>`;
+        return;
+    }
+
     filtered.forEach(p => {
+        const isLow = p.stock < 5;
         const btn = document.createElement("button");
-        btn.className = "bg-white p-3 rounded-xl shadow hover:shadow-lg border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 transition text-left flex flex-col justify-between h-28 md:h-32";
+        btn.className = `bg-white p-3 rounded-xl shadow-sm hover:shadow-md border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 transition text-left flex flex-col justify-between h-28 md:h-32 relative overflow-hidden ${p.stock <= 0 ? 'opacity-50 grayscale' : ''}`;
+        
         btn.innerHTML = `
-            <span class="text-[9px] md:text-[10px] font-black text-gray-500 uppercase leading-tight line-clamp-2">${p.name}</span>
-            <div class="flex flex-col">
-                <span class="text-[8px] font-bold text-gray-400">Stock: ${p.stock}</span>
+            ${isLow && p.stock > 0 ? `<div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[8px] font-black px-2 py-0.5 rounded-bl-lg">¡POCO!</div>` : ''}
+            ${p.stock <= 0 ? `<div class="absolute inset-0 bg-white/60 flex items-center justify-center z-10"><span class="bg-red-600 text-white font-black text-[10px] px-2 py-1 rounded">AGOTADO</span></div>` : ''}
+            <span class="text-[9px] md:text-[10px] font-black text-gray-600 uppercase leading-tight line-clamp-2 pr-4">${p.name}</span>
+            <div class="flex flex-col mt-2">
+                <span class="text-[9px] font-bold ${p.stock <= 0 ? 'text-red-500' : 'text-gray-400'}">Stock: ${p.stock}</span>
                 <span class="text-lg md:text-xl font-black text-red-600 leading-none">$${p.price.toFixed(2)}</span>
             </div>`;
+        
         btn.onclick = () => addToCart(p);
         grid.appendChild(btn);
     });
@@ -470,12 +758,20 @@ function renderPOS(filter = "") {
 function searchProduct(val) { renderPOS(val); }
 
 function addToCart(product) {
-    if (product.stock <= 0) { showToast("SIN EXISTENCIAS"); return; }
+    if (product.stock <= 0) { showToast("PRODUCTO AGOTADO", false); return; }
+    
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-        if (existing.qty < product.stock) existing.qty++;
-        else showToast("STOCK MÁXIMO");
-    } else cart.push({ ...product, qty: 1 });
+        if (existing.qty < product.stock) {
+            existing.qty++;
+            if(navigator.vibrate) navigator.vibrate(50);
+        } else {
+            showToast("LÍMITE DE STOCK ALCANZADO", false);
+        }
+    } else {
+        cart.push({ ...product, qty: 1 });
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
     renderCart();
 }
 
@@ -483,42 +779,60 @@ function renderCart() {
     const list = document.getElementById("cart-list");
     list.innerHTML = "";
     let total = 0;
-    cart.forEach((item, index) => {
-        const subtotal = item.price * item.qty;
-        total += subtotal;
-        list.innerHTML += `
-            <div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                <div class="flex-1">
-                    <div class="uppercase font-bold text-gray-800 text-[10px] truncate w-32">${item.name}</div>
-                    <div class="text-[8px] text-gray-400">${item.qty} x $${item.price.toFixed(2)}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="font-bold">$${subtotal.toFixed(2)}</span>
-                    <button onclick="removeFromCart(${index})" class="text-red-500 px-1"><i class="fas fa-times-circle"></i></button>
-                </div>
-            </div>`;
-    });
+    
+    if (cart.length === 0) {
+        list.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300"><i class="fas fa-shopping-basket text-4xl mb-2"></i><span class="text-[10px] font-bold uppercase">CARRITO VACÍO</span></div>`;
+    } else {
+        cart.forEach((item, index) => {
+            const subtotal = item.price * item.qty;
+            total += subtotal;
+            list.innerHTML += `
+                <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-0 bg-white px-2 rounded mb-1 shadow-sm">
+                    <div class="flex-1 overflow-hidden pr-2">
+                        <div class="uppercase font-bold text-gray-800 text-[10px] truncate w-full">${item.name}</div>
+                        <div class="text-[9px] text-gray-500 font-bold">${item.qty} x $${item.price.toFixed(2)}</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-red-600 text-xs">$${subtotal.toFixed(2)}</span>
+                        <button onclick="removeFromCart(${index})" class="text-gray-300 hover:text-red-500 transition px-1"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>`;
+        });
+    }
     document.getElementById("cart-total").innerText = `$${total.toFixed(2)}`;
 }
 
 function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
 function clearCart() { cart = []; renderCart(); }
 
+// ===============================
+// CHECKOUT Y COBRO
+// ===============================
 function openCheckout(type) {
-    if (cart.length === 0) return showToast("VACÍO");
+    if (cart.length === 0) return showToast("CARRITO VACÍO", false);
     saleType = type;
     const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+    
     document.getElementById("checkout-total-display").innerText = `$${total.toFixed(2)}`;
-    document.getElementById("checkout-title").innerText = type === "cash" ? "PAGO EFECTIVO" : "REGISTRAR FIADO";
+    document.getElementById("checkout-title").innerText = type === "cash" ? "PAGO EN EFECTIVO" : "REGISTRAR FIADO";
+    
     document.getElementById("cash-payment-fields").classList.toggle("hidden", type !== "cash");
     document.getElementById("fiado-fields").classList.toggle("hidden", type !== "fiado");
+    
     if (type === "fiado") {
         const select = document.getElementById("customer-select");
-        select.innerHTML = customers.map(c => `<option value="${c.id}">${c.name.toUpperCase()}</option>`).join("");
-        if (customers.length === 0) { showToast("NO HAY CLIENTES"); return; }
+        select.innerHTML = `<option value="" disabled selected>-- SELECCIONA UN CLIENTE --</option>` + 
+                           customers.map(c => `<option value="${c.id}">${c.name.toUpperCase()}</option>`).join("");
+        if (customers.length === 0) { 
+            showToast("PRIMERO REGISTRA UN CLIENTE EN 'FIADOS'", false); 
+            closeModal("checkout-modal");
+            return; 
+        }
     } else {
         document.getElementById("cash-received").value = "";
         document.getElementById("cash-change").innerText = "$0.00";
+        document.getElementById("cash-change").className = "text-2xl font-black text-gray-400";
+        setTimeout(() => document.getElementById("cash-received").focus(), 100);
     }
     openModal("checkout-modal");
 }
@@ -526,185 +840,331 @@ function openCheckout(type) {
 function calcChange() {
     const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
     const received = parseFloat(document.getElementById("cash-received").value) || 0;
-    document.getElementById("cash-change").innerText = `$${Math.max(0, received - total).toFixed(2)}`;
+    const change = received - total;
+    
+    const changeEl = document.getElementById("cash-change");
+    if (change >= 0 && received > 0) {
+        changeEl.innerText = `$${change.toFixed(2)}`;
+        changeEl.className = "text-2xl font-black text-emerald-600";
+    } else {
+        changeEl.innerText = "$0.00";
+        changeEl.className = "text-2xl font-black text-gray-400";
+    }
 }
 
 function finalizeSale() {
     const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+    let paymentInfo = "";
+
     if (saleType === "cash") {
         const received = parseFloat(document.getElementById("cash-received").value) || 0;
-        if (received < total) return showToast("PAGO INSUFICIENTE");
-    }
-    const sale = { 
-        id: crypto.randomUUID(), 
-        date: new Date().toISOString(), 
-        items: [...cart], 
-        total: total, 
-        type: saleType, 
-        customerId: saleType === "fiado" ? document.getElementById("customer-select").value : null 
-    };
-    cart.forEach(item => { const p = products.find(x => x.id === item.id); if (p) p.stock -= item.qty; });
-    if (saleType === "fiado") {
-        const customer = customers.find(c => c.id === sale.customerId);
-        if (customer) {
-            customer.balance = (customer.balance || 0) + total;
-            customer.history = customer.history || [];
-            customer.history.unshift({ date: new Date().toISOString(), type: 'deuda', amount: total, details: cart.map(i => i.name).join(", ") });
+        if (received < total) {
+            showToast("EFECTIVO INSUFICIENTE", false);
+            return;
         }
+        paymentInfo = `<div>PAGÓ CON: $${received.toFixed(2)}</div><div>CAMBIO: $${(received - total).toFixed(2)}</div>`;
+    } else if (saleType === "fiado") {
+        const customerId = document.getElementById("customer-select").value;
+        if (!customerId) {
+            showToast("SELECCIONA UN CLIENTE", false);
+            return;
+        }
+        const customer = customers.find(c => c.id == customerId);
+        customer.balance = (customer.balance || 0) + total;
+        if (!customer.history) customer.history = [];
+        customer.history.push({ 
+            id: Date.now(),
+            date: new Date().toISOString(), 
+            type: 'cargo', 
+            amount: total, 
+            desc: `Venta (${cart.length} art.)` 
+        });
+        paymentInfo = `<div>CARGADO A CUENTA: ${customer.name.toUpperCase()}</div><div>NUEVA DEUDA: $${customer.balance.toFixed(2)}</div>`;
     }
-    sales.unshift(sale); DB.save(); showToast("VENTA OK"); closeModal("checkout-modal"); showTicket(sale); clearCart(); renderPOS();
+
+    // Descontar inventario
+    cart.forEach(item => {
+        const p = products.find(prod => prod.id === item.id);
+        if(p) p.stock -= item.qty;
+    });
+
+    // Guardar venta
+    const newSale = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        items: [...cart],
+        total: total,
+        type: saleType
+    };
+    sales.push(newSale);
+    
+    DB.save();
+    
+    showToast("VENTA REGISTRADA CON ÉXITO");
+    closeModal('checkout-modal');
+    generateTicket(newSale, paymentInfo); // Genera e imprime
+    clearCart();
+    renderPOS();
+    if(currentRole === 'owner') renderDashboard();
 }
 
-function renderCustomers() {
+function generateTicket(sale, paymentInfoHtml) {
+    document.getElementById("ticket-date").innerText = new Date(sale.date).toLocaleString('es-MX');
+    
+    let itemsHtml = "";
+    sale.items.forEach(item => {
+        itemsHtml += `
+            <div class="flex justify-between items-start">
+                <div class="flex-1 pr-2 uppercase">${item.qty}x ${item.name}</div>
+                <div>$${(item.price * item.qty).toFixed(2)}</div>
+            </div>`;
+    });
+    
+    document.getElementById("ticket-items").innerHTML = itemsHtml;
+    document.getElementById("ticket-total").innerText = `$${sale.total.toFixed(2)}`;
+    document.getElementById("ticket-payment-info").innerHTML = paymentInfoHtml;
+    
+    openModal("ticket-modal");
+}
+
+// ===============================
+// CLIENTES Y FIADOS
+// ===============================
+function renderCustomers(filter = "") {
     const grid = document.getElementById("customers-grid");
     grid.innerHTML = "";
-    document.getElementById("add-customer-btn").style.display = currentRole === "owner" ? "block" : "none";
+    const term = filter.toLowerCase();
+    
+    const filtered = customers.filter(c => c.name.toLowerCase().includes(term));
 
-    customers.forEach(c => {
-        const card = document.createElement("div");
-        card.className = "bg-white p-4 rounded-xl shadow cursor-pointer border-l-4 " + (c.balance > 0 ? "border-red-500" : "border-emerald-500");
-        card.onclick = () => openCustomerDetail(c.id);
-        card.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <h4 class="font-bold text-gray-800 uppercase text-xs truncate w-40">${c.name}</h4>
-                <i class="fas fa-chevron-right text-gray-200 text-xs"></i>
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 font-bold uppercase text-xs">No hay clientes registrados</div>`;
+        return;
+    }
+
+    filtered.forEach(c => {
+        const btn = document.createElement("button");
+        btn.className = "bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 text-left transition relative overflow-hidden btn-action";
+        btn.innerHTML = `
+            ${c.balance > 0 ? '<div class="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">CON DEUDA</div>' : '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">AL CORRIENTE</div>'}
+            <div class="flex items-center gap-3 mb-3 mt-1">
+                <div class="bg-gray-100 p-2 rounded-full text-gray-500"><i class="fas fa-user"></i></div>
+                <div class="font-black text-gray-800 uppercase text-sm truncate">${c.name}</div>
             </div>
-            <div class="text-[8px] font-black text-gray-400 uppercase">Saldo</div>
-            <div class="text-2xl font-black ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'} font-['Oswald']">$${(c.balance || 0).toFixed(2)}</div>`;
-        grid.appendChild(card);
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Saldo Actual</div>
+            <div class="text-2xl font-black ${c.balance > 0 ? 'text-red-600' : 'text-gray-400'} mt-1">$${(c.balance || 0).toFixed(2)}</div>
+        `;
+        btn.onclick = () => openCustomerDetail(c.id);
+        grid.appendChild(btn);
     });
 }
 
+function saveNewCustomer() {
+    const name = document.getElementById("new-cust-name").value.trim();
+    const phone = document.getElementById("new-cust-phone").value.trim();
+    if (!name) return showToast("INGRESA UN NOMBRE", false);
+    
+    customers.push({ id: Date.now(), name, phone, balance: 0, history: [] });
+    DB.save();
+    showToast("CLIENTE REGISTRADO");
+    closeModal("customer-add-modal");
+    document.getElementById("new-cust-name").value = "";
+    document.getElementById("new-cust-phone").value = "";
+    renderCustomers();
+    if(currentRole === 'owner') renderDashboard();
+}
+
 function openCustomerDetail(id) {
-    const c = customers.find(x => x.id === id);
-    if (!c) return;
     selectedCustomerId = id;
+    const c = customers.find(x => x.id === id);
+    if(!c) return;
+
     document.getElementById("det-cust-name").innerText = c.name;
     document.getElementById("det-cust-balance").innerText = `$${(c.balance || 0).toFixed(2)}`;
-    document.getElementById("customer-footer-actions").style.display = currentRole === "owner" ? "grid" : "none";
-
-    const history = document.getElementById("customer-history");
-    history.innerHTML = (c.history || []).slice(0, 5).map(h => `
-        <div class="p-3 bg-white border rounded-xl text-[10px]">
-            <div class="flex justify-between font-bold text-gray-400 uppercase">
-                <span>${new Date(h.date).toLocaleDateString()}</span>
-                <span class="${h.type === 'abono' ? 'text-emerald-600' : 'text-red-600'}">${h.type}</span>
-            </div>
-            <div class="font-black text-sm">$${h.amount.toFixed(2)}</div>
-        </div>`).join("");
+    document.getElementById("abono-monto").value = "";
     
+    const histContainer = document.getElementById("customer-history");
+    histContainer.innerHTML = "";
+    
+    if(!c.history || c.history.length === 0) {
+        histContainer.innerHTML = `<div class="text-center text-gray-400 text-xs py-4 font-bold">Sin movimientos</div>`;
+    } else {
+        [...c.history].reverse().forEach(h => {
+            const isAbono = h.type === 'abono';
+            histContainer.innerHTML += `
+                <div class="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-black uppercase block ${isAbono ? 'text-emerald-600' : 'text-red-600'}">${isAbono ? 'ABONO' : 'CARGO'}</span>
+                        <span class="text-[9px] text-gray-400 block">${new Date(h.date).toLocaleDateString()} - ${h.desc || ''}</span>
+                    </div>
+                    <span class="font-black ${isAbono ? 'text-emerald-600' : 'text-red-600'} text-sm">${isAbono ? '+' : '-'}$${h.amount.toFixed(2)}</span>
+                </div>
+            `;
+        });
+    }
     openModal("customer-detail-modal");
 }
 
 function registerAbono() {
     const amount = parseFloat(document.getElementById("abono-monto").value);
-    if (!amount || amount <= 0) return showToast("INVALIDO");
-    const c = customers.find(x => x.id === selectedCustomerId);
-    if (amount > c.balance) return showToast("EXCEDE DEUDA");
+    if (!amount || amount <= 0) return showToast("INGRESA UN MONTO VÁLIDO", false);
     
+    const c = customers.find(x => x.id === selectedCustomerId);
+    if (amount > c.balance) return showToast("EL ABONO EXCEDE LA DEUDA", false);
+
     c.balance -= amount;
-    c.history.unshift({ date: new Date().toISOString(), type: 'abono', amount: amount, details: 'Abono en caja' });
-    DB.save(); showToast("ABONO OK"); openCustomerDetail(c.id); renderCustomers();
+    if(!c.history) c.history = [];
+    c.history.push({ id: Date.now(), date: new Date().toISOString(), type: 'abono', amount: amount, desc: 'Abono en efectivo' });
+    
+    DB.save();
+    showToast("ABONO REGISTRADO");
+    openCustomerDetail(selectedCustomerId); // Refresh modal
+    renderCustomers();
+    if(currentRole === 'owner') renderDashboard();
 }
 
 function liquidarCuenta() {
-    if (!confirm("¿LIQUIDAR?")) return;
     const c = customers.find(x => x.id === selectedCustomerId);
-    if (c.balance <= 0) return;
-    c.history.unshift({ date: new Date().toISOString(), type: 'abono', amount: c.balance, details: 'Liquidación' });
-    c.balance = 0; DB.save(); closeModal("customer-detail-modal"); renderCustomers();
+    if (c.balance === 0) return showToast("LA CUENTA YA ESTÁ EN CEROS", false);
+    
+    if(confirm(`¿Liquidar la deuda total de $${c.balance.toFixed(2)} de ${c.name}?`)) {
+        c.history.push({ id: Date.now(), date: new Date().toISOString(), type: 'abono', amount: c.balance, desc: 'Liquidación total' });
+        c.balance = 0;
+        DB.save();
+        showToast("CUENTA LIQUIDADA");
+        openCustomerDetail(selectedCustomerId);
+        renderCustomers();
+        if(currentRole === 'owner') renderDashboard();
+    }
 }
 
 function eliminarCliente() {
-    if (!confirm("¿ELIMINAR?")) return;
-    customers = customers.filter(x => x.id !== selectedCustomerId);
-    DB.save(); closeModal("customer-detail-modal"); renderCustomers();
+    const c = customers.find(x => x.id === selectedCustomerId);
+    if (c.balance > 0) return showToast("NO PUEDES BORRAR CLIENTES CON DEUDA", false);
+    
+    if(confirm(`¿Estás seguro de eliminar a ${c.name}?`)) {
+        customers = customers.filter(x => x.id !== selectedCustomerId);
+        DB.save();
+        showToast("CLIENTE ELIMINADO");
+        closeModal("customer-detail-modal");
+        renderCustomers();
+    }
 }
 
-function saveNewCustomer() {
-    const name = document.getElementById("new-cust-name").value.trim();
-    if (!name) return;
-    customers.push({ id: crypto.randomUUID(), name: name, balance: 0, history: [] });
-    DB.save(); document.getElementById("new-cust-name").value = ""; closeModal("customer-add-modal"); renderCustomers();
-}
+// ===============================
+// INVENTARIO
+// ===============================
+function renderInventory(filter = "") {
+    const tbody = document.getElementById("inventory-body");
+    tbody.innerHTML = "";
+    const term = filter.toLowerCase();
+    
+    const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(term) || 
+        p.code.toLowerCase().includes(term)
+    );
 
-function renderInventory() {
-    const body = document.getElementById("inventory-body");
-    body.innerHTML = "";
-    products.forEach(p => {
-        const row = document.createElement("tr");
-        row.className = p.stock < 5 ? "bg-red-50" : "";
-        row.innerHTML = `
-            <td class="p-4"><div class="text-xs font-bold uppercase truncate w-32">${p.name}</div></td>
-            <td class="p-4 font-black text-red-600 text-xs">$${p.price.toFixed(2)}</td>
-            <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg font-black text-[10px] ${p.stock < 5 ? 'bg-red-600 text-white' : 'bg-gray-100'}">${p.stock}</span></td>
-            <td class="p-4 text-right">
-                <div class="flex justify-end gap-3">
-                    <button onclick='editProduct("${p.id}")' class="text-blue-500"><i class="fas fa-edit"></i></button>
-                    <button onclick='deleteProduct("${p.id}")' class="text-red-400"><i class="fas fa-trash"></i></button>
-                </div>
-            </td>`;
-        body.appendChild(row);
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold uppercase text-xs">No hay productos registrados</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+        tr.innerHTML = `
+            <td class="p-4 font-mono text-[10px] text-gray-400">${p.code || '-'}</td>
+            <td class="p-4 uppercase font-bold text-gray-800 text-xs">${p.name}</td>
+            <td class="p-4 text-right text-xs">$${parseFloat(p.cost).toFixed(2)}</td>
+            <td class="p-4 text-right font-black text-red-600 text-sm">$${parseFloat(p.price).toFixed(2)}</td>
+            <td class="p-4 text-center">
+                <span class="px-2 py-1 rounded text-xs font-black ${p.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-700'}">${p.stock}</span>
+            </td>
+            <td class="p-4 text-center">
+                <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-3 px-2 py-1"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-600 px-2 py-1"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
+}
+
+function openProductModal() {
+    document.getElementById("product-form").reset();
+    document.getElementById("p-id").value = "";
+    document.getElementById("product-modal-title").innerText = "NUEVO PRODUCTO";
+    openModal("product-modal");
+}
+
+function editProduct(id) {
+    const p = products.find(x => x.id === id);
+    if(!p) return;
+    
+    document.getElementById("p-id").value = p.id;
+    document.getElementById("p-code").value = p.code || "";
+    document.getElementById("p-name").value = p.name;
+    document.getElementById("p-cost").value = p.cost;
+    document.getElementById("p-price").value = p.price;
+    document.getElementById("p-stock").value = p.stock;
+    
+    document.getElementById("product-modal-title").innerText = "EDITAR PRODUCTO";
+    openModal("product-modal");
 }
 
 function handleProductSubmit(e) {
     e.preventDefault();
     const id = document.getElementById("p-id").value;
-    const data = { 
-        id: id || crypto.randomUUID(), 
-        code: document.getElementById("p-code").value, 
-        name: document.getElementById("p-name").value.toUpperCase(), 
-        cost: parseFloat(document.getElementById("p-cost").value) || 0, 
-        price: parseFloat(document.getElementById("p-price").value), 
-        stock: parseInt(document.getElementById("p-stock").value) 
-    };
-    if (id) { const idx = products.findIndex(x => x.id === id); products[idx] = data; }
-    else products.push(data);
-    DB.save(); closeModal("product-modal"); renderInventory();
+    const code = document.getElementById("p-code").value.trim();
+    const name = document.getElementById("p-name").value.trim();
+    const cost = parseFloat(document.getElementById("p-cost").value) || 0;
+    const price = parseFloat(document.getElementById("p-price").value) || 0;
+    const stock = parseInt(document.getElementById("p-stock").value) || 0;
+
+    if(price <= cost) {
+        if(!confirm("Advertencia: El precio de venta es igual o menor al costo. ¿Deseas continuar?")) return;
+    }
+
+    if (id) {
+        // Editar
+        const index = products.findIndex(x => x.id == id);
+        if(index > -1) {
+            products[index] = { ...products[index], code, name, cost, price, stock };
+            showToast("PRODUCTO ACTUALIZADO");
+        }
+    } else {
+        // Nuevo
+        products.push({ id: Date.now(), code, name, cost, price, stock });
+        showToast("PRODUCTO AGREGADO");
+    }
+
+    DB.save();
+    closeModal("product-modal");
+    renderInventory();
+    renderPOS();
+    renderDashboard();
 }
 
-function editProduct(id) {
-    const p = products.find(x => x.id === id);
-    document.getElementById("p-id").value = p.id;
-    document.getElementById("p-code").value = p.code;
-    document.getElementById("p-name").value = p.name;
-    document.getElementById("p-cost").value = p.cost;
-    document.getElementById("p-price").value = p.price;
-    document.getElementById("p-stock").value = p.stock;
-    openModal("product-modal");
-}
-
-function deleteProduct(id) { if (confirm("¿ELIMINAR?")) { products = products.filter(x => x.id !== id); DB.save(); renderInventory(); } }
-
-function openProductModal() { 
-    document.getElementById("product-form").reset(); 
-    document.getElementById("p-id").value = ""; 
-    openModal("product-modal"); 
+function deleteProduct(id) {
+    if(confirm("¿Estás seguro de eliminar este producto?")) {
+        products = products.filter(x => x.id !== id);
+        DB.save();
+        showToast("PRODUCTO ELIMINADO");
+        renderInventory();
+        renderPOS();
+    }
 }
 
 function sendLowStockWhatsApp() {
-    const lowStock = products.filter(p => p.stock < 5);
-    if (lowStock.length === 0) return showToast("TODO OK");
-    let msg = "*⚠️ REPORTE STOCK - CARLITOS*\n\n";
-    lowStock.forEach(p => msg += `• ${p.name}: ${p.stock}\n`);
-    window.open(`https://wa.me/2371062600?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-function showTicket(sale) {
-    document.getElementById("ticket-date").innerText = new Date(sale.date).toLocaleString();
-    document.getElementById("ticket-items").innerHTML = sale.items.map(i => `<div class="flex justify-between"><span>${i.qty}x ${i.name.substring(0,15)}</span><span>$${(i.qty * i.price).toFixed(2)}</span></div>`).join("");
-    document.getElementById("ticket-total").innerText = `$${sale.total.toFixed(2)}`;
-    openModal("ticket-modal");
-}
-
-function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
-
-function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.innerText = msg; t.classList.add("opacity-100", "bottom-14");
-    setTimeout(() => t.classList.remove("opacity-100", "bottom-14"), 2000);
+    const lowStockItems = products.filter(p => p.stock < 5);
+    if(lowStockItems.length === 0) return showToast("EL STOCK ESTÁ AL CORRIENTE", true);
+    
+    let text = "Hola, necesito resurtir los siguientes productos en el Mini Super:\n\n";
+    lowStockItems.forEach(p => {
+        text += `- ${p.name} (Quedan: ${p.stock})\n`;
+    });
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
 }
 </script>
 </body>
