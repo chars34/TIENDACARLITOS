@@ -1362,7 +1362,14 @@ function openScanner(context){
 
         if(devices && devices.length){
 
-            const cameraId = devices[0].id;
+            // Seleccionar cámara trasera
+            let camera = devices.find(device => 
+                device.label.toLowerCase().includes("back") ||
+                device.label.toLowerCase().includes("rear") ||
+                device.label.toLowerCase().includes("environment")
+            );
+
+            const cameraId = camera ? camera.id : devices[devices.length - 1].id;
 
             html5QrCode.start(
                 cameraId,
