@@ -13,6 +13,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;600;700&family=Courier+Prime&display=swap');
         
@@ -1345,15 +1346,66 @@ function getSalesSummary(){
 
         // --- SCANNER STUB ---
         // Se deja como stub para no abrir cámara automáticamente, requiere https:// para funcionar en producción
-        let html5QrcodeScanner = null;
-        function openScanner(context) {
-            openModal('scanner-modal');
-            // Aquí iría la inicialización real del Html5Qrcode
-            document.getElementById('reader').innerHTML = '<div class="text-white flex items-center justify-center h-full text-xs">Cámara simulada (Requiere HTTPS)</div>';
+       let html5QrCode;
+
+function openScanner(context){
+
+    openModal('scanner-modal');
+
+    const reader = document.getElementById("reader");
+
+    reader.innerHTML = "";
+
+    html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras().then(devices => {
+
+        if(devices && devices.length){
+
+            const cameraId = devices[0].id;
+
+            html5QrCode.start(
+                cameraId,
+                {
+                    fps: 10,
+                    qrbox: 250
+                },
+                (decodedText) => {
+
+                    if(context === "stock"){
+                        document.getElementById("p-code").value = decodedText;
+                    }
+
+                    if(context === "pos"){
+                        document.getElementById("barcode-scanner").value = decodedText;
+                        searchProductPOS(decodedText);
+                    }
+
+                    closeScanner();
+
+                }
+            );
+
         }
-        function closeScanner() {
-            closeModal('scanner-modal');
-        }
+
+    }).catch(err => {
+
+        alert("Error al abrir cámara: " + err);
+
+    });
+
+}
+       function closeScanner(){
+
+    if(html5QrCode){
+        html5QrCode.stop().then(()=>{
+            html5QrCode.clear();
+        });
+    }
+
+    closeModal('scanner-modal');
+
+}
 renderCustomers();
     </script>
 </body>
