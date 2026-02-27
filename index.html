@@ -1196,86 +1196,93 @@ function deleteCustomer(id){
             openModal('product-modal');
         }
 
-        function deleteProduct(id) {
-            Swal.fire({
-                title: '¿Eliminar Producto?',
-                text: "Esta acción no se puede deshacer",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    db.products = db.products.filter(p => p.id !== id);
-                    saveData();
-                    renderInventory(document.getElementById('search-inventory').value);
-                    Swal.fire('Eliminado', '', 'success');
-                }
-            })
-        }
+      function handleProductSubmit(e) {
 
-     function handleProductSubmit(e) {
     e.preventDefault();
 
     const id = document.getElementById('p-id').value;
+
+    const productId = id ? parseInt(id) : null;
+
     const code = document.getElementById('p-code').value.trim();
+
     const name = document.getElementById('p-name').value;
+
     const cost = parseFloat(document.getElementById('p-cost').value);
+
     const price = parseFloat(document.getElementById('p-price').value);
+
     const stock = parseInt(document.getElementById('p-stock').value);
+
 
     // VALIDAR CODIGO DUPLICADO
     const existe = db.products.find(p => 
-        p.code === code && p.id != id
+        p.code === code && p.id !== productId
     );
 
-    if(existe){
+    if (existe) {
+
         Swal.fire({
             icon: "error",
             title: "Código duplicado",
             text: "Este código de barras ya está registrado",
             confirmButtonColor: "#dc2626"
         });
+
         return;
     }
 
-    const productId = id ? parseInt(id) : null;
 
-// Validar código duplicado
-const existe = db.products.find(p => 
-    p.code === code && p.id !== productId
-);
+    const product = {
 
-if (existe) {
+        code,
+        name,
+        cost,
+        price,
+        stock
+
+    };
+
+
+    if (productId) {
+
+        const idx = db.products.findIndex(p => p.id === productId);
+
+        db.products[idx] = {
+
+            ...product,
+            id: productId
+
+        };
+
+    } else {
+
+        db.products.push({
+
+            ...product,
+            id: Date.now()
+
+        });
+
+    }
+
+
+    saveData();
+
+    closeModal('product-modal');
+
+    renderInventory(document.getElementById('search-inventory').value);
+
     Swal.fire({
-        icon: "error",
-        title: "Código duplicado",
-        text: "Este código de barras ya está registrado",
-        confirmButtonColor: "#dc2626"
+
+        icon: "success",
+        title: "Producto guardado",
+        timer: 1200,
+        showConfirmButton: false
+
     });
-    return;
+
 }
-
-const product = {
-    code,
-    name,
-    cost,
-    price,
-    stock
-};
-
-if (productId) {
-    const idx = db.products.findIndex(p => p.id === productId);
-    db.products[idx] = { ...product, id: productId };
-} else {
-    db.products.push({ ...product, id: Date.now() });
-}
-
-saveData();
-closeModal('product-modal');
-renderInventory(document.getElementById('search-inventory').value);
 
 Swal.fire({
     icon: "success",
