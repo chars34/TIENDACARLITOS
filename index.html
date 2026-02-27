@@ -1348,6 +1348,8 @@ function getSalesSummary(){
         // Se deja como stub para no abrir cámara automáticamente, requiere https:// para funcionar en producción
        let html5QrCode;
 
+let html5QrCode;
+
 function openScanner(context){
 
     openModal('scanner-modal');
@@ -1358,56 +1360,45 @@ function openScanner(context){
 
     html5QrCode = new Html5Qrcode("reader");
 
-    Html5Qrcode.getCameras().then(devices => {
+    html5QrCode.start(
+        {
+            facingMode: "environment" // FUERZA cámara trasera
+        },
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        },
+        (decodedText) => {
 
-        if(devices && devices.length){
+            if(context === "stock"){
+                document.getElementById("p-code").value = decodedText;
+            }
 
-            // Seleccionar cámara trasera
-            let camera = devices.find(device => 
-                device.label.toLowerCase().includes("back") ||
-                device.label.toLowerCase().includes("rear") ||
-                device.label.toLowerCase().includes("environment")
-            );
+            if(context === "pos"){
+                document.getElementById("barcode-scanner").value = decodedText;
+                searchProductPOS(decodedText);
+            }
 
-            const cameraId = camera ? camera.id : devices[devices.length - 1].id;
+            closeScanner();
 
-            html5QrCode.start(
-                cameraId,
-                {
-                    fps: 10,
-                    qrbox: 250
-                },
-                (decodedText) => {
-
-                    if(context === "stock"){
-                        document.getElementById("p-code").value = decodedText;
-                    }
-
-                    if(context === "pos"){
-                        document.getElementById("barcode-scanner").value = decodedText;
-                        searchProductPOS(decodedText);
-                    }
-
-                    closeScanner();
-
-                }
-            );
-
+        },
+        (errorMessage) => {
+            // ignorar errores normales
         }
 
-    }).catch(err => {
+    ).catch(err => {
 
         alert("Error al abrir cámara: " + err);
 
     });
 
 }
-       function closeScanner(){
+function closeScanner(){
 
     if(html5QrCode){
         html5QrCode.stop().then(()=>{
             html5QrCode.clear();
-        });
+        }).catch(()=>{});
     }
 
     closeModal('scanner-modal');
