@@ -1241,33 +1241,49 @@ function deleteCustomer(id){
         return;
     }
 
-    const product = {
-        code,
-        name,
-        cost,
-        price,
-        stock
-    };
+    const productId = id ? parseInt(id) : null;
 
-    if(id){
-        const idx = db.products.findIndex(p => p.id == id);
-        db.products[idx] = { ...product, id: parseInt(id) };
-    } else {
-        db.products.push({ ...product, id: Date.now() });
-    }
+// Validar código duplicado
+const existe = db.products.find(p => 
+    p.code === code && p.id !== productId
+);
 
-    saveData();
-    closeModal('product-modal');
-    renderInventory(document.getElementById('search-inventory').value);
-
+if (existe) {
     Swal.fire({
-        icon: "success",
-        title: "Producto guardado",
-        text: "Registro exitoso",
-        timer: 1500,
-        showConfirmButton: false
+        icon: "error",
+        title: "Código duplicado",
+        text: "Este código de barras ya está registrado",
+        confirmButtonColor: "#dc2626"
     });
+    return;
 }
+
+const product = {
+    code,
+    name,
+    cost,
+    price,
+    stock
+};
+
+if (productId) {
+    const idx = db.products.findIndex(p => p.id === productId);
+    db.products[idx] = { ...product, id: productId };
+} else {
+    db.products.push({ ...product, id: Date.now() });
+}
+
+saveData();
+closeModal('product-modal');
+renderInventory(document.getElementById('search-inventory').value);
+
+Swal.fire({
+    icon: "success",
+    title: "Producto guardado",
+    text: "Registro exitoso",
+    timer: 1500,
+    showConfirmButton: false
+});
 
         // --- RECARGAS ---
         let recargaData = { company: null, amount: null };
