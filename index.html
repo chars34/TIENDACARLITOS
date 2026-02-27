@@ -2,15 +2,13 @@
 <html lang="es">
 <head>
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ff0000">
+    <meta name="theme-color" content="#dc2626">
     <link rel="icon" href="icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="theme-color" content="#dc2626">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> Mini Super Carlitos</title>
+    <title>Mini Super Carlitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -66,7 +64,6 @@
         }
         .btn-action:active { transform: scale(0.96); }
 
-        /* Optimizaciones para móvil */
         @media (max-width: 768px) {
             .pos-layout { flex-direction: column !important; }
             .cart-panel { width: 100% !important; height: 55vh !important; border-width: 2px 0 0 0; border-radius: 1rem 1rem 0 0; }
@@ -77,7 +74,7 @@
 </head>
 <body class="h-screen flex flex-col">
 
-    <!-- Login Overlay -->
+    <!-- LOGIN -->
     <div id="login-overlay" class="fixed inset-0 bg-store-gradient z-[1000] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full border-t-8 border-red-600">
             <div class="text-center mb-6 md:mb-8">
@@ -85,7 +82,7 @@
                     <i class="fas fa-store text-4xl text-red-600"></i>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-black text-gray-800 font-['Oswald'] uppercase tracking-tight">MINI SUPER CARLITOS</h2>
-                <p class="text-gray-500 text-xs font-bold mt-1">SISTEMA POS</p>
+                <p class="text-gray-500 text-xs font-bold mt-1">SISTEMA DE ING.CHARS</p>
             </div>
             
             <div id="role-selection" class="space-y-3">
@@ -103,9 +100,7 @@
                     </div>
                     <i class="fas fa-chevron-right text-gray-300 group-hover:text-gray-800"></i>
                 </button>
-                <div class="text-[10px] text-center text-gray-400 mt-4">
-                    PIN Dueño: admin123 | PIN Empleado: user123
-                </div>
+                
             </div>
 
             <div id="password-entry" class="hidden space-y-4">
@@ -118,7 +113,7 @@
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="header-brand p-3 md:p-4 flex justify-between items-center shadow-md z-10 relative">
         <div class="flex items-center gap-3 md:gap-6">
             <div class="flex flex-col">
@@ -135,41 +130,25 @@
         </div>
     </header>
 
-    <!-- Navegación -->
     <nav id="nav-bar" class="bg-gray-200 border-b flex px-2 md:px-4 gap-1 pt-2 shadow-inner overflow-x-auto custom-scroll z-10 relative"></nav>
 
-    <!-- Main Content Area -->
+    <!-- MAIN VIEWS -->
     <main class="flex-1 overflow-hidden relative bg-gray-100">
         
-        <!-- DASHBOARD (Solo Dueño) -->
+        <!-- DASHBOARD -->
         <div id="view-dashboard" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="flex flex-col md:flex-row gap-3 mt-4">
-
-    <!-- BOTON REPORTE -->
-    <button onclick="sendReportWhatsApp()"
-        class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
-
-        <i class="fab fa-whatsapp text-2xl"></i>
-        ENVIAR REPORTE POR WHATSAPP
-
-    </button>
-
-    <!-- BOTON STOCK BAJO -->
-    <button onclick="sendLowStockWhatsApp()"
-        class="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-red-900 active:border-b-0 active:translate-y-1">
-
-        <i class="fab fa-whatsapp text-2xl"></i>
-        STOCK BAJO POR WHATSAPP
-
-    </button>
-
-</div>
+            <div class="flex flex-col md:flex-row gap-3 mt-4 mb-6">
+                <button onclick="sendReportWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    ENVIAR REPORTE POR WHATSAPP
+                </button>
+            </div>
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-black text-gray-800 font-['Oswald'] uppercase mb-6 border-l-4 border-red-600 pl-3">Resumen del Día</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-emerald-500">
                         <div class="flex justify-between items-start">
-                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Ventas de Hoy</span>
+                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Ventas Efectivo</span>
                             <i class="fas fa-chart-line text-emerald-100 text-2xl"></i>
                         </div>
                         <div id="profit-day" class="text-4xl md:text-5xl font-black text-emerald-600 mt-2">$0.00</div>
@@ -192,7 +171,7 @@
             </div>
         </div>
 
-        <!-- POS (Caja) -->
+        <!-- PUNTO DE VENTA -->
         <div id="view-pos" class="hidden h-full flex flex-col lg:flex-row p-2 md:p-4 gap-2 md:gap-4 pos-layout">
             <div class="flex-1 flex flex-col gap-2 md:gap-4 overflow-hidden">
                 <div class="bg-white p-2 md:p-3 rounded-xl shadow-sm flex items-center gap-2 border-2 border-transparent focus-within:border-red-300 transition">
@@ -202,14 +181,14 @@
                     <div class="bg-red-600 text-white p-3 rounded-lg flex items-center justify-center">
                         <i class="fas fa-barcode text-lg"></i>
                     </div>
-                    <input type="text" id="barcode-scanner" oninput="searchProduct(this.value)" placeholder="BUSCAR PRODUCTO..." class="flex-1 text-base md:text-xl font-black outline-none uppercase placeholder:text-gray-300 px-2 bg-transparent">
-                    <button onclick="document.getElementById('barcode-scanner').value=''; searchProduct('');" class="text-gray-400 hover:text-red-600 p-2">
+                    <input type="text" id="barcode-scanner" oninput="searchProductPOS(this.value)" placeholder="BUSCAR PRODUCTO..." class="flex-1 text-base md:text-xl font-black outline-none uppercase placeholder:text-gray-300 px-2 bg-transparent">
+                    <button onclick="document.getElementById('barcode-scanner').value=''; searchProductPOS('');" class="text-gray-400 hover:text-red-600 p-2">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
                 <div id="pos-grid" class="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3 overflow-y-auto custom-scroll pr-1 content-start grid-products pb-20 md:pb-0">
-                    <!-- Productos inyectados -->
+                    <!-- Products rendered here ONLY when searched -->
                 </div>
             </div>
 
@@ -220,7 +199,7 @@
                 </div>
                 
                 <div id="cart-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll bg-gray-50 ticket-font text-xs">
-                    <!-- Items carrito -->
+                    <!-- Cart items rendered here -->
                 </div>
                 
                 <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
@@ -228,12 +207,12 @@
                         <span class="text-gray-500 font-black uppercase text-[10px] tracking-widest">Total a Pagar</span>
                         <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600 leading-none">$0.00</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="openCheckout('cash')" class="bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1">
+                    <div class="grid grid-cols-2 gap-2" id="checkout-buttons-container">
+                        <button onclick="openCheckout('cash')" class="bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 col-span-2 md:col-span-1" id="btn-checkout-cash">
                             <i class="fas fa-money-bill-wave text-2xl mb-1 opacity-80"></i> 
                             <span class="text-[10px] tracking-widest">EFECTIVO</span>
                         </button>
-                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1">
+                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1 hidden md:flex" id="btn-checkout-fiado">
                             <i class="fas fa-book text-2xl mb-1 opacity-80"></i> 
                             <span class="text-[10px] tracking-widest">FIAR</span>
                         </button>
@@ -254,15 +233,15 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">1. Compañía</h3>
                         <div class="grid grid-cols-3 gap-3" id="company-selector">
-                            <button onclick="selectCompany('Telcel')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 flex flex-col items-center gap-2 transition">
+                            <button onclick="selectCompany('Telcel')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 focus:border-blue-500 flex flex-col items-center gap-2 transition">
                                 <i class="fas fa-signal text-blue-600 text-2xl"></i>
                                 <span class="text-xs font-bold text-gray-700">Telcel</span>
                             </button>
-                            <button onclick="selectCompany('Movistar')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-green-500 flex flex-col items-center gap-2 transition">
+                            <button onclick="selectCompany('Movistar')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-green-500 focus:border-green-500 flex flex-col items-center gap-2 transition">
                                 <i class="fas fa-signal text-green-500 text-2xl"></i>
                                 <span class="text-xs font-bold text-gray-700">Movistar</span>
                             </button>
-                            <button onclick="selectCompany('AT&T')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-orange-500 flex flex-col items-center gap-2 transition">
+                            <button onclick="selectCompany('AT&T')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-orange-500 focus:border-orange-500 flex flex-col items-center gap-2 transition">
                                 <i class="fas fa-signal text-orange-500 text-2xl"></i>
                                 <span class="text-xs font-bold text-gray-700">AT&T</span>
                             </button>
@@ -275,10 +254,10 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">3. Monto</h3>
                         <div class="grid grid-cols-2 gap-3 mb-6" id="amount-selector">
-                            <button onclick="selectAmount(20)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$20</button>
-                            <button onclick="selectAmount(50)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$50</button>
-                            <button onclick="selectAmount(100)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$100</button>
-                            <button onclick="selectAmount(200)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 text-lg font-black text-gray-700 transition">$200</button>
+                            <button onclick="selectAmount(20)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$20</button>
+                            <button onclick="selectAmount(50)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$50</button>
+                            <button onclick="selectAmount(100)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$100</button>
+                            <button onclick="selectAmount(200)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$200</button>
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center mb-4">
@@ -286,7 +265,7 @@
                             <div class="text-lg font-bold text-gray-800 mt-1" id="recarga-summary">Selecciona opciones</div>
                         </div>
 
-                        <button onclick="processRecarga()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 uppercase tracking-widest btn-action flex items-center justify-center gap-2 disabled:opacity-50" id="btn-process-recarga">
+                        <button onclick="processRecarga()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 uppercase tracking-widest btn-action flex items-center justify-center gap-2" id="btn-process-recarga">
                             <i class="fas fa-bolt"></i> ENVIAR RECARGA
                         </button>
                     </div>
@@ -294,7 +273,7 @@
             </div>
         </div>
 
-        <!-- FIADOS (Clientes) -->
+        <!-- FIADOS -->
         <div id="view-fiados" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
             <div class="max-w-6xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-5 rounded-2xl shadow-sm border-l-8 border-red-600">
@@ -302,8 +281,8 @@
                         <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Clientes / Fiados</h2>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GESTIÓN DE CUENTAS POR COBRAR</p>
                     </div>
-                    <!-- Botón oculto para empleados mediante JS -->
-                    <button id="btn-new-customer" onclick="openModal('customer-add-modal')" class="w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
+                    <!-- El botón de nuevo cliente solo se mostrará al dueño -->
+                    <button id="btn-new-customer" onclick="openModal('customer-add-modal')" class="hidden w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
                         <i class="fas fa-user-plus"></i> NUEVO CLIENTE
                     </button>
                 </div>
@@ -314,12 +293,12 @@
                 </div>
 
                 <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Clientes inyectados -->
+                    <!-- Customers rendered here -->
                 </div>
             </div>
         </div>
 
-        <!-- INVENTARIO (Solo Dueño) -->
+        <!-- INVENTARIO -->
         <div id="view-inventory" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
             <div class="bg-white rounded-2xl shadow-sm max-w-6xl mx-auto overflow-hidden flex flex-col h-full md:h-auto">
                 <div class="p-4 md:p-6 bg-gray-800 text-white flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -354,7 +333,7 @@
                             </tr>
                         </thead>
                         <tbody id="inventory-body" class="divide-y divide-gray-100 bg-white text-sm font-medium text-gray-700">
-                            <!-- Inventario inyectado -->
+                            <!-- Inventory items here -->
                         </tbody>
                     </table>
                 </div>
@@ -362,11 +341,9 @@
         </div>
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODALES -->
-    <!-- ========================================== -->
-
-    <!-- Modal Escáner Genérico -->
+    <!-- MODALS -->
+    
+    <!-- Modal Scanner -->
     <div id="scanner-modal" class="hidden fixed inset-0 bg-black/95 z-[2000] flex flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="w-full max-w-md bg-white rounded-2xl overflow-hidden shadow-2xl relative">
             <div class="p-4 bg-red-600 text-white text-center font-black uppercase tracking-widest flex justify-between items-center">
@@ -412,7 +389,7 @@
                 <div>
                     <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Seleccionar Cliente</label>
                     <select id="customer-select" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-500 transition">
-                        <!-- Opciones -->
+                        <!-- Clientes options -->
                     </select>
                 </div>
                 <div class="text-[10px] text-center text-gray-500 bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
@@ -428,7 +405,7 @@
         </div>
     </div>
 
-    <!-- Modal Producto (Crear/Editar) -->
+    <!-- Modal Producto -->
     <div id="product-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md border-t-8 border-gray-800 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
             <button onclick="closeModal('product-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
@@ -442,14 +419,10 @@
                     <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Código de Barras</label>
                     <div class="flex gap-2">
                         <input type="text" id="p-code" placeholder="ESCRIBE O ESCANEA..." class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-mono font-bold outline-none focus:border-red-500 uppercase">
-                    <button type="button"
-        onclick="openScanner('stock')"
-        class="bg-gray-800 hover:bg-black text-white px-4 py-3 rounded-xl font-bold transition btn-action flex items-center justify-center gap-2 shadow-md border-b-4 border-gray-900 active:border-b-0 active:translate-y-[2px]">
-
-    <i class="fas fa-camera text-lg"></i>
-    <span class="hidden sm:inline">ESCANEAR</span>
-
-</button>
+                        <button type="button" onclick="openScanner('stock')" class="bg-gray-800 hover:bg-black text-white px-4 py-3 rounded-xl font-bold transition btn-action flex items-center justify-center gap-2 shadow-md border-b-4 border-gray-900 active:border-b-0 active:translate-y-[2px]">
+                            <i class="fas fa-camera text-lg"></i>
+                            <span class="hidden sm:inline">ESCANEAR</span>
+                        </button>
                     </div>
                 </div>
 
@@ -479,235 +452,165 @@
                     <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Stock Actual</label>
                     <input type="number" id="p-stock" required min="0" placeholder="0" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-black text-center text-xl outline-none focus:border-red-500">
                 </div>
-                
-                <div class="pt-4 flex gap-3">
-        
-                    <button type="button" onclick="closeModal('product-modal')" class="flex-1 bg-gray-200 text-gray-600 py-4 rounded-xl font-black uppercase text-xs btn-action">CANCELAR</button>
-                    <button type="submit" class="flex-[2] bg-gray-800 text-white py-4 rounded-xl font-black uppercase text-sm hover:bg-black transition shadow-md btn-action">GUARDAR DATOS</button>
-                </div>
+
+                <button type="submit" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-red-700 uppercase tracking-widest btn-action mt-4">
+                    GUARDAR PRODUCTO
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Modal Agregar Cliente -->
+    <!-- Modal Nuevo Cliente -->
     <div id="customer-add-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm border-t-8 border-gray-800 shadow-2xl relative">
             <button onclick="closeModal('customer-add-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-xl font-black mb-6 uppercase tracking-widest text-gray-800">NUEVO CLIENTE</h3>
-            
-            <div class="space-y-4">
+            <h3 class="font-black mb-6 text-xl uppercase tracking-widest text-gray-800">NUEVO CLIENTE</h3>
+            <form onsubmit="handleCustomerSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Nombre Completo / Apodo</label>
-                    <input type="text" id="new-cust-name" placeholder="EJ: DOÑA MARÍA" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold uppercase outline-none focus:border-gray-800">
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Nombre del Cliente</label>
+                    <input type="text" id="c-name" required placeholder="Juan Pérez" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold uppercase outline-none focus:border-red-500 transition">
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Teléfono (Opcional)</label>
-                    <input type="text" id="new-cust-phone" placeholder="000 000 0000" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-gray-800">
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Teléfono (Opcional)</label>
+                    <input type="tel" id="c-phone" placeholder="10 Dígitos" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-red-500 transition">
                 </div>
-                <button onclick="saveNewCustomer()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-red-700 uppercase btn-action mt-2">REGISTRAR CLIENTE</button>
-            </div>
+                <button type="submit" class="w-full bg-gray-800 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-black uppercase tracking-widest btn-action mt-2">
+                    <i class="fas fa-save mr-2"></i> GUARDAR CLIENTE
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Modal Detalle Cliente (Abonos) -->
-    <div id="customer-detail-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[650] flex items-center justify-center p-2 md:p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
-            <div class="p-4 bg-red-600 text-white flex justify-between items-center shadow-md z-10">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="bg-white/20 p-2 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-user text-white"></i>
-                    </div>
-                    <h3 id="det-cust-name" class="text-lg font-black font-['Oswald'] uppercase truncate"></h3>
-                </div>
-                <button onclick="closeModal('customer-detail-modal')" class="text-white hover:text-red-200 p-2"><i class="fas fa-times text-xl"></i></button>
-            </div>
+    <!-- Modal Abonar a Fiado -->
+    <div id="abono-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[600] flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm border-t-8 border-emerald-500 shadow-2xl relative">
+            <button onclick="closeModal('abono-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-600"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="font-black mb-2 text-xl uppercase tracking-widest text-gray-800">RECIBIR ABONO</h3>
+            <p id="abono-customer-name" class="text-sm font-bold text-gray-500 uppercase mb-4"></p>
             
-            <div class="p-6 bg-gradient-to-b from-red-50 to-white text-center border-b border-gray-100 relative">
-                <span class="text-[10px] font-black text-red-400 uppercase tracking-widest block mb-1">Deuda Total Actual</span>
-                <div id="det-cust-balance" class="text-5xl font-black text-red-600 font-['Oswald'] tracking-tight"></div>
+            <div class="bg-red-50 p-4 rounded-xl mb-4 border border-red-100 text-center">
+                <span class="text-[10px] font-black text-red-400 uppercase tracking-widest block mb-1">DEUDA ACTUAL</span>
+                <div id="abono-current-debt" class="text-3xl font-black text-red-600 font-['Oswald']"></div>
             </div>
-            
-            <div class="p-4 flex-1 overflow-y-auto custom-scroll space-y-4 bg-gray-50">
-                <!-- Zona de Abono -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                    <p class="text-[10px] font-black text-gray-500 uppercase mb-3 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-emerald-500"></i> Registrar Abono</p>
-                    <div class="flex gap-2">
-                        <div class="relative flex-1">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-                            <input type="number" id="abono-monto" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-gray-50 border-2 border-gray-200 rounded-xl font-black text-lg outline-none focus:border-emerald-500">
-                        </div>
-                        <button onclick="registerAbono()" class="bg-emerald-600 text-white px-6 rounded-xl font-black uppercase text-sm hover:bg-emerald-700 btn-action shadow-md">OK</button>
-                    </div>
-                </div>
 
-                <!-- Historial -->
+            <form onsubmit="handleAbonoSubmit(event)" class="space-y-4">
+                <input type="hidden" id="abono-customer-id">
                 <div>
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Historial de Movimientos</h4>
-                    <div id="customer-history" class="space-y-2">
-                        <!-- Movimientos -->
+                    <label class="text-[10px] font-black text-gray-500 uppercase ml-1 block mb-1">Monto a Abonar</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-2xl">$</span>
+                        <input type="number" id="abono-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full p-4 pl-10 bg-white border-2 border-gray-200 rounded-xl text-3xl text-right font-black focus:border-emerald-500 outline-none transition">
                     </div>
                 </div>
-            </div>
-
-            <div id="customer-footer-actions" class="p-4 border-t border-gray-200 bg-white grid gap-3">
-                <!-- Se inyectan dinámicamente según si es empleado o dueño -->
-            </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-emerald-700 uppercase tracking-widest btn-action mt-2">
+                    <i class="fas fa-hand-holding-usd mr-2"></i> REGISTRAR PAGO
+                </button>
+            </form>
         </div>
     </div>
-<audio id="beep" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3"></audio>
-    <!-- Script de Lógica Principal -->
+
     <script>
-    
-const WHATSAPP_NUMBER = "2371062600"; 
+        // --- BASE DE DATOS Y ESTADO ---
+        let currentRole = localStorage.getItem("role") || "dueño";
+        let db = {
+            products: [
+                { id: 1, code: "75010011", name: "COCA COLA 600ML", cost: 12.00, price: 18.00, stock: 24 },
+                { id: 2, code: "75010022", name: "SABRITAS SAL 40G", cost: 10.00, price: 16.00, stock: 3 }, // Stock bajo de ejemplo
+                { id: 3, code: "75010033", name: "LECHE LALA 1L", cost: 20.00, price: 26.00, stock: 12 }
+            ],
+            customers: [
+                { id: 1, name: "Doña Mary", phone: "5512345678", debt: 150.50 },
+                { id: 2, name: "Don Pepe", phone: "5587654321", debt: 45.00 }
+            ],
+            dailySales: 0
+        };
+function renderCustomers(search = "") {
 
-//------------------------------------------------
-// REPORTE COMPLETO
-//------------------------------------------------
-function sendReportWhatsApp(){
+    let html = "";
 
-    const sales = JSON.parse(localStorage.getItem("sales")) || [];
-    const products = JSON.parse(localStorage.getItem("products")) || [];
+    db.customers
+    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    .forEach((customer, index) => {
 
-    let today = new Date().toISOString().slice(0,10);
-    let currentMonth = today.slice(0,7);
+  html += `
+<div class="bg-white rounded-2xl p-5 shadow border relative">
 
-    let gananciasDia = 0;
-    let ventasDia = 0;
-    let ventasMes = 0;
-    let totalVentas = sales.length;
+    <!-- BOTON ELIMINAR -->
+    <button onclick="deleteCustomer(${customer.id})"
+    class="absolute top-3 right-3 bg-red-500 hover:bg-red-700 text-white w-8 h-8 rounded-full">
+        🗑
+    </button>
 
-    let contadorProductos = {};
+    <h3 class="font-bold text-gray-800 text-lg">
+        ${customer.name}
+    </h3>
 
-    sales.forEach(sale=>{
+    <p class="text-gray-500 text-sm">
+        📞 ${customer.phone || ""}
+    </p>
 
-        if(sale.date.startsWith(today)){
-            gananciasDia += sale.total;
-            ventasDia++;
-        }
+    <p class="mt-2 text-sm text-gray-500">
+        DEUDA TOTAL
+    </p>
 
-        if(sale.date.startsWith(currentMonth)){
-            ventasMes++;
-        }
+    <p class="text-2xl font-black ${customer.debt > 0 ? 'text-red-600':'text-green-600'}">
+        $${customer.debt.toFixed(2)}
+    </p>
 
-        sale.items.forEach(item=>{
-            contadorProductos[item.name] =
-                (contadorProductos[item.name] || 0) + item.qty;
-        });
+    <button onclick="openAbonoModal(${customer.id})"
+    class="mt-3 w-full border border-green-500 text-green-600 py-2 rounded-xl hover:bg-green-50">
+        ABONAR PAGO
+    </button>
 
+</div>
+`;
     });
 
-    let masVendido = "Ninguno";
-    let max = 0;
-
-    for(let p in contadorProductos){
-        if(contadorProductos[p] > max){
-            max = contadorProductos[p];
-            masVendido = p;
-        }
-    }
-
-    let mensaje =
-`📊 REPORTE MINI SUPER CARLITOS
-
-💰 Ganancias del día: $${gananciasDia.toFixed(2)}
-
-📦 Producto más vendido:
-${masVendido}
-
-🧾 Ventas hoy: ${ventasDia}
-
-📅 Ventas del mes: ${ventasMes}
-
-📊 Ventas totales: ${totalVentas}
-
-Fecha: ${new Date().toLocaleString()}
-`;
-
-    abrirWhatsApp(mensaje);
+    document.getElementById("customers-grid").innerHTML = html;
 
 }
+function deleteCustomer(id){
 
+    Swal.fire({
+        title: "Eliminar cliente",
+        text: "Se eliminará el cliente",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        confirmButtonText: "Eliminar"
+    }).then((result) => {
 
-//------------------------------------------------
-// STOCK BAJO
-//------------------------------------------------
-function sendLowStockWhatsApp(){
+        if(result.isConfirmed){
 
-    const products = JSON.parse(localStorage.getItem("products")) || [];
+            db.customers = db.customers.filter(c => c.id !== id);
 
-    let bajos = products.filter(p=>p.stock <= 5);
+            saveData();
 
-    if(bajos.length === 0){
-        alert("No hay stock bajo");
+            renderCustomers();
+
+        }
+ if(currentRole !== "dueño"){
+        Swal.fire("Acceso denegado", "Solo el dueño puede eliminar fiados", "error");
         return;
     }
-
-    let mensaje =
-`⚠️ STOCK BAJO - MINI SUPER CARLITOS
-
-`;
-
-    bajos.forEach(p=>{
-
-        mensaje +=
-`${p.name}
-Stock: ${p.stock}
-Código: ${p.code}
-
-`;
-
     });
 
-    abrirWhatsApp(mensaje);
-
 }
+        // Cargar datos locales si existen
+        function loadData() {
+            const saved = localStorage.getItem('miniSuperDB');
+            if(saved) db = JSON.parse(saved);
+        }
+        function saveData() {
+            localStorage.setItem('miniSuperDB', JSON.stringify(db));
+            updateDashboard();
+        }
 
-
-//------------------------------------------------
-// ABRIR WHATSAPP
-//------------------------------------------------
-function abrirWhatsApp(texto){
-
-    let url =
-`https://wa.me/2371062600?text=${encodeURIComponent(texto)}`;
-
-    window.open(url,"_blank");
-
-}
-        // --- BASE DE DATOS SIMULADA ---
-        let currentRole = null;
-        let selectedRoleForLogin = null;
+        // --- AUTH Y NAVEGACIÓN ---
+        let selectedRoleAttempt = null;
         
-        let products = [
-            { id: 1, code: '7501055300075', name: 'COCA COLA 600ML', cost: 12.00, price: 18.00, stock: 24 },
-            { id: 2, code: '7501000111202', name: 'BIMBO PAN BLANCO', cost: 35.00, price: 45.00, stock: 10 },
-            { id: 3, code: '7501030434559', name: 'SABRITAS SAL 40G', cost: 13.00, price: 17.00, stock: 3 },
-            { id: 4, code: '7501020434551', name: 'LECHE LALA 1L', cost: 22.00, price: 28.00, stock: 15 },
-        ];
-
-        let customers = [
-            { id: 1, name: 'DOÑA MARÍA', phone: '5512345678', balance: 150.50, history: [{ date: '2023-10-01 10:00', desc: 'Compra a crédito', amount: 150.50, type: 'cargo' }] },
-            { id: 2, name: 'JUAN PÉREZ', phone: '', balance: 45.00, history: [{ date: '2023-10-02 12:00', desc: 'Compra a crédito', amount: 45.00, type: 'cargo' }] }
-        ];
-
-        let cart = [];
-        let dailyStats = { sales: 0, fiados: 0 };
-        let activeCheckoutMode = 'cash';
-        let activeCustomerId = null;
-
-        // --- ESTADOS DE RECARGAS ---
-        let selectedRecargaCompany = null;
-        let selectedRecargaAmount = null;
-
-        // --- RELOJ ---
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString();
-        }, 1000);
-
-        // --- LOGIN ---
         function selectRole(role) {
-            selectedRoleForLogin = role;
+            selectedRoleAttempt = role;
             document.getElementById('role-selection').classList.add('hidden');
             document.getElementById('password-entry').classList.remove('hidden');
             document.getElementById('login-pass').value = '';
@@ -715,18 +618,46 @@ function abrirWhatsApp(texto){
         }
 
         function backToRoles() {
+            selectedRoleAttempt = null;
             document.getElementById('password-entry').classList.add('hidden');
             document.getElementById('role-selection').classList.remove('hidden');
         }
 
         function attemptLogin() {
-            const pass = document.getElementById('login-pass').value;
-            if ((selectedRoleForLogin === 'owner' && pass === 'admin123') || 
-                (selectedRoleForLogin === 'employee' && pass === 'user123')) {
-                currentRole = selectedRoleForLogin;
-                initApp();
+            const pin = document.getElementById('login-pass').value;
+            if (selectedRoleAttempt === 'owner' && pin === 'admin123') {
+                login('owner');
+            } else if (selectedRoleAttempt === 'employee' && pin === 'user123') {
+                login('employee');
             } else {
-                Swal.fire({ icon: 'error', title: 'PIN Incorrecto', text: 'Intenta nuevamente', confirmButtonColor: '#dc2626' });
+                Swal.fire('Error', 'PIN Incorrecto', 'error');
+            }
+        }
+
+        function login(role) {
+            currentRole = role;
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('role-indicator').innerText = role === 'owner' ? 'Dueño' : 'Empleado';
+            document.getElementById('role-indicator').classList.remove('hidden');
+            
+            buildNav();
+            loadData();
+            
+            // Lógica específica por rol
+            if(role === 'employee') {
+                // Empleado NO puede agregar clientes ni FIAR en el POS
+                document.getElementById('btn-new-customer').classList.add('hidden');
+                document.getElementById('btn-checkout-fiado').classList.add('hidden');
+                document.getElementById('btn-checkout-cash').classList.remove('md:col-span-1');
+                document.getElementById('btn-checkout-cash').classList.add('col-span-2');
+                switchView('view-pos'); // Empleado empieza en el POS
+            } else {
+                // Dueño ve todo
+                document.getElementById('btn-new-customer').classList.remove('hidden');
+                document.getElementById('btn-checkout-fiado').classList.remove('hidden');
+                document.getElementById('btn-checkout-cash').classList.add('md:col-span-1');
+                document.getElementById('btn-checkout-cash').classList.remove('col-span-2');
+                switchView('view-dashboard'); // Dueño empieza en dashboard
             }
         }
 
@@ -736,496 +667,374 @@ function abrirWhatsApp(texto){
             backToRoles();
         }
 
-        // --- INICIALIZACIÓN DE APP ---
-        function initApp() {
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('role-indicator').innerText = currentRole === 'owner' ? 'Dueño' : 'Empleado';
-            document.getElementById('role-indicator').className = `text-[8px] md:text-[10px] px-2 py-1 rounded font-bold uppercase hidden md:inline-block ${currentRole === 'owner' ? 'bg-yellow-500 text-yellow-900' : 'bg-gray-200 text-gray-800'}`;
-            
-            // Restricciones visuales directas
-            document.getElementById('btn-new-customer').style.display = currentRole === 'owner' ? 'flex' : 'none';
+        const navItems = [
+            { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
+            { id: 'view-pos', icon: 'fa-cash-register', text: 'Caja', role: 'all' },
+            { id: 'view-recargas', icon: 'fa-mobile-alt', text: 'Recargas', role: 'all' },
+            { id: 'view-fiados', icon: 'fa-book', text: 'Fiados', role: 'all' },
+            { id: 'view-inventory', icon: 'fa-boxes', text: 'Inventario', role: 'owner' }
+        ];
 
-            buildNavigation();
-            updateDashboard();
-            renderPOS();
-            renderCustomers();
-            if(currentRole === 'owner') renderInventory();
-            
-            // Switch al primer tab permitido
-            const firstTab = currentRole === 'owner' ? 'dashboard' : 'pos';
-            switchView(firstTab);
-        }
-
-        function buildNavigation() {
+        function buildNav() {
             const nav = document.getElementById('nav-bar');
             nav.innerHTML = '';
-            
-            const tabs = [
-                { id: 'dashboard', icon: 'fas fa-chart-pie', label: 'Dashboard', roles: ['owner'] },
-                { id: 'pos', icon: 'fas fa-cash-register', label: 'Caja', roles: ['owner', 'employee'] },
-                { id: 'recargas', icon: 'fas fa-mobile-alt', label: 'Recargas', roles: ['owner', 'employee'] },
-                { id: 'fiados', icon: 'fas fa-book', label: 'Fiados', roles: ['owner', 'employee'] },
-                { id: 'inventory', icon: 'fas fa-box', label: 'Inventario', roles: ['owner'] }
-            ];
-
-            tabs.forEach(tab => {
-                if(tab.roles.includes(currentRole)) {
+            navItems.forEach(item => {
+                if (item.role === 'all' || item.role === currentRole) {
                     const btn = document.createElement('button');
-                    btn.onclick = () => switchView(tab.id);
-                    btn.className = `nav-btn px-4 py-3 text-xs md:text-sm font-bold text-gray-500 rounded-t-xl hover:bg-gray-100 transition flex items-center gap-2 tracking-wide uppercase`;
-                    btn.setAttribute('data-target', tab.id);
-                    btn.innerHTML = `<i class="${tab.icon}"></i> <span class="hidden sm:inline">${tab.label}</span>`;
+                    btn.className = `flex-1 min-w-[80px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-xl transition-all hover:bg-gray-100 flex flex-col items-center gap-1 md:gap-2 btn-nav`;
+                    btn.onclick = () => switchView(item.id);
+                    btn.dataset.target = item.id;
+                    btn.innerHTML = `<i class="fas ${item.icon} text-lg md:text-xl"></i><span>${item.text}</span>`;
                     nav.appendChild(btn);
                 }
             });
         }
 
         function switchView(viewId) {
-            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
             
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('tab-active');
-                if(btn.getAttribute('data-target') === viewId) btn.classList.add('tab-active');
-            });
+            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('tab-active'));
+            const activeBtn = document.querySelector(`.btn-nav[data-target="${viewId}"]`);
+            if(activeBtn) activeBtn.classList.add('tab-active');
+
+            if(viewId === 'view-dashboard') updateDashboard();
+            if(viewId === 'view-fiados') renderCustomers('');
+            if(viewId === 'view-inventory') renderInventory('');
         }
 
-        // --- FUNCIONALIDAD CAJA (POS) ---
-        function renderPOS(query = '') {
+        // --- DASHBOARD ---
+        function updateDashboard() {
+            if(currentRole !== 'owner') return;
+            document.getElementById('profit-day').innerText = `$${db.dailySales.toFixed(2)}`;
+            const totalFiados = db.customers.reduce((sum, c) => sum + c.debt, 0);
+            document.getElementById('total-fiados').innerText = `$${totalFiados.toFixed(2)}`;
+            const lowStockCount = db.products.filter(p => p.stock < 5).length;
+            document.getElementById('low-stock-count').innerText = lowStockCount;
+        }
+
+        function sendReportWhatsApp() {
+            const lowStockItems = db.products.filter(p => p.stock < 5);
+            if(lowStockItems.length === 0) {
+                return Swal.fire('Todo Excelente', 'No tienes productos con stock bajo.', 'success');
+            }
+
+            let msg = "⚠️ *REPORTE DE STOCK BAJO* ⚠️\n_Mini Super Carlitos_\n\n";
+            msg += "Los siguientes productos tienen menos de 5 unidades:\n\n";
+            
+            lowStockItems.forEach(p => {
+                msg += `🔸 *${p.name}*: Quedan ${p.stock}\n`;
+            });
+            msg += "\nPor favor, realizar pedido.";
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // --- PUNTO DE VENTA (POS) ---
+        let cart = [];
+
+        function searchProductPOS(query) {
             const grid = document.getElementById('pos-grid');
-            grid.innerHTML = '';
+            if(!query.trim()) {
+                grid.innerHTML = '';
+                return;
+            }
+            const q = query.toLowerCase();
+            const results = db.products.filter(p => p.name.toLowerCase().includes(q) || p.code.includes(q));
             
-            const filtered = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.includes(query));
-            
-            filtered.forEach(p => {
-                const stockColor = p.stock > 5 ? 'text-gray-500' : 'text-red-500 font-bold';
-                const card = document.createElement('button');
-                card.onclick = () => addToCart(p.id);
-                card.className = `bg-white p-3 rounded-xl border border-gray-200 hover:border-red-400 hover:shadow-md transition text-left flex flex-col justify-between h-28 btn-action ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`;
-                card.innerHTML = `
-                    <div class="text-[10px] text-gray-400 font-mono">${p.code}</div>
-                    <div class="font-bold text-gray-800 text-sm leading-tight uppercase line-clamp-2">${p.name}</div>
-                    <div class="flex justify-between items-end mt-2">
-                        <span class="font-black text-red-600">$${p.price.toFixed(2)}</span>
-                        <span class="text-[9px] ${stockColor} uppercase">Stock: ${p.stock}</span>
+            grid.innerHTML = results.map(p => `
+                <button onclick="addToCart(${p.id})" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:border-red-500 hover:shadow-md transition text-left flex flex-col justify-between aspect-square btn-action relative overflow-hidden">
+                    ${p.stock < 5 ? '<div class="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold px-2 py-1 rounded-bl-lg">¡POCO STOCK!</div>' : ''}
+                    <div>
+                        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest break-words">${p.code}</div>
+                        <div class="font-bold text-gray-800 text-xs mt-1 leading-tight uppercase line-clamp-3">${p.name}</div>
                     </div>
-                `;
-                grid.appendChild(card);
-            });
+                    <div class="flex justify-between items-end mt-2">
+                        <span class="text-xs text-gray-500 font-bold">Disp: ${p.stock}</span>
+                        <span class="font-black text-red-600 text-lg">$${p.price.toFixed(2)}</span>
+                    </div>
+                </button>
+            `).join('');
         }
-
-        function searchProduct(val) { renderPOS(val); }
 
         function addToCart(id) {
-            const p = products.find(x => x.id === id);
-            if(p.stock <= 0) {
-                Swal.fire({ icon: 'warning', title: 'Sin Stock', text: 'No hay unidades disponibles.', timer: 1500, showConfirmButton: false });
+            const product = db.products.find(p => p.id === id);
+            if(!product) return;
+            if(product.stock <= 0) {
+                Swal.fire('Sin Stock', 'No hay unidades disponibles', 'error');
                 return;
             }
 
-            const item = cart.find(x => x.id === id);
-            if(item) {
-                if(item.qty >= p.stock) return Swal.fire({ icon: 'warning', title: 'Límite de Stock', timer: 1000, showConfirmButton: false });
-                item.qty++;
+            const exist = cart.find(c => c.id === id);
+            if(exist) {
+                if(exist.qty >= product.stock) {
+                    Swal.fire('Límite', 'No hay más stock disponible', 'warning');
+                    return;
+                }
+                exist.qty++;
             } else {
-                cart.push({ ...p, qty: 1 });
+                cart.push({ ...product, qty: 1 });
             }
-            updateCartUI();
+            renderCart();
+            // Limpiar búsqueda
+            document.getElementById('barcode-scanner').value = '';
+            document.getElementById('pos-grid').innerHTML = '';
         }
 
-        function updateCartUI() {
+        function removeFromCart(id) {
+            cart = cart.filter(c => c.id !== id);
+            renderCart();
+        }
+
+        function renderCart() {
             const list = document.getElementById('cart-list');
-            list.innerHTML = '';
             let total = 0;
-
-            cart.forEach((item, index) => {
-                total += item.price * item.qty;
-                const div = document.createElement('div');
-                div.className = 'bg-white p-2 rounded border border-gray-100 flex justify-between items-center shadow-sm';
-                div.innerHTML = `
+            list.innerHTML = cart.map(item => {
+                const sub = item.qty * item.price;
+                total += sub;
+                return `
+                <div class="bg-white p-2 rounded border border-gray-100 flex justify-between items-center shadow-sm">
                     <div class="flex-1">
-                        <div class="font-bold truncate w-40 sm:w-48">${item.name}</div>
-                        <div class="text-gray-400">$${item.price.toFixed(2)} x ${item.qty}</div>
+                        <div class="font-bold text-gray-800 truncate pr-2 uppercase">${item.name}</div>
+                        <div class="text-gray-500 mt-0.5">${item.qty} x $${item.price.toFixed(2)}</div>
                     </div>
-                    <div class="font-black text-gray-800 mr-3">$${(item.price * item.qty).toFixed(2)}</div>
-                    <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-gray-800">$${sub.toFixed(2)}</span>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
                 `;
-                list.appendChild(div);
-            });
-
+            }).join('');
+            
+            if(cart.length === 0) list.innerHTML = '<div class="text-center text-gray-400 mt-10 text-[10px] uppercase font-bold tracking-widest">Carrito Vacío</div>';
             document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
         }
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCartUI();
-        }
-
-        function clearCart() {
-            cart = [];
-            updateCartUI();
-        }
+        function clearCart() { cart = []; renderCart(); }
 
         // --- CHECKOUT ---
-        function openCheckout(mode) {
-            if(cart.length === 0) return Swal.fire({ icon: 'info', title: 'Carrito vacío', timer: 1000, showConfirmButton: false });
+        let checkoutType = 'cash'; // 'cash' o 'fiado'
+
+        function openCheckout(type) {
+            if(cart.length === 0) return Swal.fire('Error', 'El carrito está vacío', 'error');
             
-            activeCheckoutMode = mode;
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            
-            document.getElementById('checkout-title').innerText = mode === 'cash' ? 'COBRO EN EFECTIVO' : 'VENTA A CRÉDITO (FIADO)';
+            checkoutType = type;
+            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
             document.getElementById('checkout-total-display').innerText = `$${total.toFixed(2)}`;
             
-            document.getElementById('cash-payment-fields').classList.add('hidden');
-            document.getElementById('fiado-fields').classList.add('hidden');
-            
-            if(mode === 'cash') {
+            if(type === 'cash') {
+                document.getElementById('checkout-title').innerText = 'COBRAR EN EFECTIVO';
                 document.getElementById('cash-payment-fields').classList.remove('hidden');
+                document.getElementById('fiado-fields').classList.add('hidden');
                 document.getElementById('cash-received').value = '';
                 document.getElementById('cash-change').innerText = '$0.00';
-                setTimeout(() => document.getElementById('cash-received').focus(), 100);
             } else {
+                document.getElementById('checkout-title').innerText = 'REGISTRAR FIADO';
+                document.getElementById('cash-payment-fields').classList.add('hidden');
                 document.getElementById('fiado-fields').classList.remove('hidden');
-                populateCustomerSelect();
+                
+                // Cargar clientes
+                const select = document.getElementById('customer-select');
+                select.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
+                    db.customers.map(c => `<option value="${c.id}">${c.name} (Deuda: $${c.debt.toFixed(2)})</option>`).join('');
             }
             
-            document.getElementById('checkout-modal').classList.remove('hidden');
+            openModal('checkout-modal');
+            if(type === 'cash') setTimeout(() => document.getElementById('cash-received').focus(), 100);
         }
 
         function calcChange() {
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const received = parseFloat(document.getElementById('cash-received').value) || 0;
-            const change = received - total;
-            const changeEl = document.getElementById('cash-change');
-            
+            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
+            const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+            const change = rec - total;
+            const display = document.getElementById('cash-change');
             if(change >= 0) {
-                changeEl.innerText = `$${change.toFixed(2)}`;
-                changeEl.className = 'text-2xl font-black text-emerald-600';
+                display.innerText = `$${change.toFixed(2)}`;
+                display.classList.remove('text-red-600');
+                display.classList.add('text-emerald-600');
             } else {
-                changeEl.innerText = `Faltan $${Math.abs(change).toFixed(2)}`;
-                changeEl.className = 'text-lg font-black text-red-500';
+                display.innerText = `Falta $${Math.abs(change).toFixed(2)}`;
+                display.classList.remove('text-emerald-600');
+                display.classList.add('text-red-600');
             }
         }
 
         function finalizeSale() {
-            let sales = JSON.parse(localStorage.getItem("sales")) || [];
-
-sales.push({
-
-    items: cart,
-    total: total,
-    date: new Date().toISOString()
-
-});
-localStorage.setItem("products", JSON.stringify(products));
-localStorage.setItem("customers", JSON.stringify(customers));
-
-localStorage.setItem("sales", JSON.stringify(sales));
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
             
-            if(activeCheckoutMode === 'cash') {
-                const received = parseFloat(document.getElementById('cash-received').value) || 0;
-                if(received < total) return Swal.fire({ icon: 'error', title: 'Efectivo insuficiente', confirmButtonColor: '#dc2626' });
-                dailyStats.sales += total;
-            } else {
-                const cid = parseInt(document.getElementById('customer-select').value);
-                if(!cid) return Swal.fire({ icon: 'error', title: 'Selecciona un cliente', confirmButtonColor: '#dc2626' });
+            if(checkoutType === 'cash') {
+                const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+                if(rec < total) return Swal.fire('Error', 'El efectivo recibido es insuficiente.', 'error');
                 
-                const c = customers.find(x => x.id === cid);
-                c.balance += total;
-                c.history.unshift({ date: new Date().toLocaleString(), desc: 'Compra a crédito', amount: total, type: 'cargo' });
-                dailyStats.fiados += total;
+                // Procesar pago efectivo: Sumar a ventas del día
+                db.dailySales += total;
+                Swal.fire('Venta Exitosa', `Cambio: $${(rec - total).toFixed(2)}`, 'success');
+                
+            } else if(checkoutType === 'fiado') {
+                const cid = parseInt(document.getElementById('customer-select').value);
+                if(!cid) return Swal.fire('Error', 'Selecciona un cliente para fiar.', 'error');
+                
+                // Procesar fiado: Sumar a la deuda del cliente
+                const customer = db.customers.find(c => c.id === cid);
+                customer.debt += total;
+                Swal.fire('Fiado Registrado', `Agregado a la cuenta de ${customer.name}.`, 'success');
             }
 
-            // Reducir stock
+
+            // Descontar inventario
             cart.forEach(item => {
-                const p = products.find(x => x.id === item.id);
+                const p = db.products.find(x => x.id === item.id);
                 if(p) p.stock -= item.qty;
             });
 
-            closeModal('checkout-modal');
+            saveData();
             clearCart();
-            updateDashboard();
-            renderPOS();
-            if(currentRole === 'owner') renderInventory();
-            renderCustomers();
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Venta Registrada',
-                showConfirmButton: false,
-                timer: 1500
-            });
+            closeModal('checkout-modal');
         }
 
-        // --- RECARGAS (Nuevo Módulo) ---
-        function selectCompany(name) {
-            selectedRecargaCompany = name;
-            document.querySelectorAll('.company-btn').forEach(btn => btn.classList.remove('border-blue-500', 'bg-blue-50'));
-            event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
-            updateRecargaSummary();
-        }
-
-        function selectAmount(amount) {
-            selectedRecargaAmount = amount;
-            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('border-red-500', 'bg-red-50'));
-            event.currentTarget.classList.add('border-red-500', 'bg-red-50');
-            updateRecargaSummary();
-        }
-
-        function updateRecargaSummary() {
-            const phone = document.getElementById('recarga-phone').value;
-            const summaryEl = document.getElementById('recarga-summary');
-            
-            if (selectedRecargaCompany && selectedRecargaAmount && phone.length === 10) {
-                summaryEl.innerHTML = `<span class="text-blue-600">${selectedRecargaCompany}</span> - $${selectedRecargaAmount} al <span class="tracking-wider">${phone}</span>`;
-            } else {
-                summaryEl.innerText = 'Faltan datos para recarga';
-            }
-        }
-
-        document.getElementById('recarga-phone').addEventListener('input', updateRecargaSummary);
-
-        function processRecarga() {
-            const phone = document.getElementById('recarga-phone').value;
-            if (!selectedRecargaCompany) return Swal.fire('Atención', 'Selecciona una compañía', 'warning');
-            if (phone.length !== 10) return Swal.fire('Atención', 'Ingresa un número de 10 dígitos', 'warning');
-            if (!selectedRecargaAmount) return Swal.fire('Atención', 'Selecciona un monto', 'warning');
-
-            const btn = document.getElementById('btn-process-recarga');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-            btn.disabled = true;
-
-            // Simular proceso de 2 segundos
-            setTimeout(() => {
-                // Registrar como venta
-                dailyStats.sales += selectedRecargaAmount;
-                updateDashboard();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Recarga Exitosa',
-                    html: `Se abonaron <b>$${selectedRecargaAmount}</b> a <b>${phone}</b> (${selectedRecargaCompany})`,
-                    confirmButtonColor: '#2563eb'
-                });
-
-                // Limpiar
-                document.getElementById('recarga-phone').value = '';
-                selectedRecargaCompany = null;
-                selectedRecargaAmount = null;
-                document.querySelectorAll('.company-btn, .amount-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50', 'border-red-500', 'bg-red-50'));
-                updateRecargaSummary();
-                
-                btn.innerHTML = '<i class="fas fa-bolt"></i> ENVIAR RECARGA';
-                btn.disabled = false;
-
-            }, 2000);
-        }
 
         // --- FIADOS Y CLIENTES ---
-        function renderCustomers(query = '') {
+        function renderCustomers(query) {
             const grid = document.getElementById('customers-grid');
-            grid.innerHTML = '';
+            const q = query.toLowerCase();
+            const results = db.customers.filter(c => c.name.toLowerCase().includes(q));
             
-            const filtered = customers.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
-            
-            filtered.forEach(c => {
-                const card = document.createElement('div');
-                card.className = 'bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-red-300 transition relative overflow-hidden group';
-                card.innerHTML = `
-                    <div class="absolute top-0 left-0 w-1 h-full ${c.balance > 0 ? 'bg-red-500' : 'bg-emerald-500'}"></div>
-                    <h4 class="font-black text-gray-800 uppercase pl-2 text-lg truncate">${c.name}</h4>
-                    <p class="text-[10px] text-gray-400 font-bold ml-2 uppercase mb-4"><i class="fas fa-phone"></i> ${c.phone || 'SIN TELÉFONO'}</p>
-                    <div class="ml-2 bg-gray-50 p-3 rounded-lg flex justify-between items-center">
-                        <span class="text-[10px] font-black uppercase text-gray-500">Deuda</span>
-                        <span class="font-black text-xl ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}">$${c.balance.toFixed(2)}</span>
-                    </div>
-                    <button onclick="openCustomerDetail(${c.id})" class="w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-bold text-xs transition">
-                        VER DETALLES / ABONAR
-                    </button>
-                `;
-                grid.appendChild(card);
-            });
-            
-            // Actualizar total en dashboard
-            document.getElementById('total-fiados').innerText = `$${customers.reduce((s, c) => s + c.balance, 0).toFixed(2)}`;
-        }
-
-        function populateCustomerSelect() {
-            const sel = document.getElementById('customer-select');
-            sel.innerHTML = '<option value="">-- SELECCIONA --</option>';
-            customers.forEach(c => {
-                sel.innerHTML += `<option value="${c.id}">${c.name} (Deuda actual: $${c.balance.toFixed(2)})</option>`;
-            });
-        }
-
-        function saveNewCustomer() {
-            const name = document.getElementById('new-cust-name').value.toUpperCase();
-            const phone = document.getElementById('new-cust-phone').value;
-            
-            if(!name) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
-            
-            customers.push({ id: Date.now(), name, phone, balance: 0, history: [] });
-            closeModal('customer-add-modal');
-            document.getElementById('new-cust-name').value = '';
-            document.getElementById('new-cust-phone').value = '';
-            renderCustomers();
-            Swal.fire({icon: 'success', title: 'Cliente Registrado', timer: 1000, showConfirmButton: false});
-        }
-
-        function openCustomerDetail(id) {
-            activeCustomerId = id;
-            const c = customers.find(x => x.id === id);
-            
-            document.getElementById('det-cust-name').innerText = c.name;
-            document.getElementById('det-cust-balance').innerText = `$${c.balance.toFixed(2)}`;
-            document.getElementById('abono-monto').value = '';
-            
-            const hist = document.getElementById('customer-history');
-            hist.innerHTML = c.history.length === 0 ? '<div class="text-xs text-center text-gray-400 py-4">Sin movimientos</div>' : '';
-            c.history.forEach(h => {
-                hist.innerHTML += `
-                    <div class="flex justify-between items-center p-2 border-b border-gray-100 text-xs">
-                        <div>
-                            <span class="block font-bold text-gray-700">${h.desc}</span>
-                            <span class="text-[9px] text-gray-400">${h.date}</span>
+            grid.innerHTML = results.map(c => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-black text-gray-800 uppercase">${c.name}</h4>
+                            <div class="bg-gray-100 p-2 rounded-full text-gray-400"><i class="fas fa-user"></i></div>
                         </div>
-                        <span class="font-black ${h.type === 'abono' ? 'text-emerald-500' : 'text-red-500'}">
-                            ${h.type === 'abono' ? '+' : '-'}$${h.amount.toFixed(2)}
-                        </span>
+                        <p class="text-[10px] text-gray-500 font-bold mb-4"><i class="fas fa-phone mr-1"></i> ${c.phone || 'Sin número'}</p>
                     </div>
-                `;
-            });
+                    <div>
+                        <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Deuda Total</div>
+                        <div class="text-3xl font-black ${c.debt > 0 ? 'text-red-600' : 'text-emerald-600'} font-['Oswald'] mb-4">$${c.debt.toFixed(2)}</div>
+                        <button onclick="openAbonoModal(${c.id})" class="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl font-bold uppercase text-xs tracking-widest border border-emerald-200 hover:bg-emerald-600 hover:text-white transition btn-action">
+                            ABONAR PAGO
+                        </button>
+                      ${currentRole === "owner" ? `
+<button onclick="deleteCustomer(${c.id})"
+class="bg-red-500 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center mt-2">
+    <i class="fas fa-trash text-xs"></i>
+</button>
+` : ``}
+                    </div>
+                </div>
+            `).join('');
+        }
+function deleteCustomer(id){
 
-            // Lógica de Permisos de Botones de Acción (Dueño vs Empleado)
-            const actionsFooter = document.getElementById('customer-footer-actions');
-            actionsFooter.innerHTML = ''; // Limpiar botones
+    if(currentRole !== "owner"){
+        Swal.fire("Acceso denegado", "Solo el dueño puede eliminar fiados", "error");
+        return;
+    }
 
-            if(currentRole === 'owner') {
-                actionsFooter.className = "p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3";
-                actionsFooter.innerHTML = `
-                    <button onclick="liquidarDeuda()" class="bg-gray-800 text-white py-3 rounded-xl font-bold uppercase text-xs hover:bg-black transition btn-action flex items-center justify-center gap-2">
-                        <i class="fas fa-check-double"></i> LIQUIDAR DEUDA
-                    </button>
-                    <button onclick="deleteCustomer()" class="bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-bold uppercase text-xs hover:bg-red-100 transition btn-action flex items-center justify-center gap-2">
-                        <i class="fas fa-trash"></i> ELIMINAR CLIENTE
-                    </button>
-                `;
-            } else {
-                // Empleado solo puede cerrar la ventana (el abono se hace arriba)
-                actionsFooter.className = "p-4 border-t border-gray-200 bg-white flex justify-center";
-                actionsFooter.innerHTML = `
-                    <button onclick="closeModal('customer-detail-modal')" class="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-bold uppercase text-xs hover:bg-gray-300 transition btn-action">
-                        CERRAR VENTANA
-                    </button>
-                `;
+    Swal.fire({
+        title: "Eliminar cliente",
+        text: "Se eliminará el cliente",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        confirmButtonText: "Eliminar"
+    }).then((result) => {
+
+        if(result.isConfirmed){
+
+            db.customers = db.customers.filter(c => c.id !== id);
+
+            saveData();
+
+            renderCustomers("");
+
+            Swal.fire("Eliminado", "Cliente eliminado correctamente", "success");
+
+        }
+
+    });
+
+}
+        function handleCustomerSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('c-name').value;
+            const phone = document.getElementById('c-phone').value;
+            
+            db.customers.push({ id: Date.now(), name, phone, debt: 0 });
+            saveData();
+            closeModal('customer-add-modal');
+            renderCustomers('');
+            Swal.fire('Guardado', 'Cliente registrado correctamente.', 'success');
+            e.target.reset();
+        }
+
+        function openAbonoModal(cid) {
+            const customer = db.customers.find(c => c.id === cid);
+            if(customer.debt <= 0) return Swal.fire('Sin Deuda', 'Este cliente no tiene deudas pendientes.', 'info');
+            
+            document.getElementById('abono-customer-id').value = customer.id;
+            document.getElementById('abono-customer-name').innerText = customer.name;
+            document.getElementById('abono-current-debt').innerText = `$${customer.debt.toFixed(2)}`;
+            document.getElementById('abono-amount').value = '';
+            
+            openModal('abono-modal');
+            setTimeout(() => document.getElementById('abono-amount').focus(), 100);
+        }
+
+        function handleAbonoSubmit(e) {
+            e.preventDefault();
+            const cid = parseInt(document.getElementById('abono-customer-id').value);
+            const amount = parseFloat(document.getElementById('abono-amount').value);
+            
+            const customer = db.customers.find(c => c.id === cid);
+            if(amount > customer.debt) {
+                return Swal.fire('Aviso', 'El abono no puede ser mayor a la deuda.', 'warning');
             }
-            
-            document.getElementById('customer-detail-modal').classList.remove('hidden');
-        }
 
-        function registerAbono() {
-            const monto = parseFloat(document.getElementById('abono-monto').value);
-            if(!monto || monto <= 0) return Swal.fire('Error', 'Ingresa un monto válido', 'warning');
+            customer.debt -= amount;
+            // El abono entra como efectivo a la caja, por lo que suma a las ventas del día
+            db.dailySales += amount; 
             
-            const c = customers.find(x => x.id === activeCustomerId);
-            if(monto > c.balance && currentRole === 'employee') {
-                 return Swal.fire('Error', 'El abono no puede superar la deuda', 'warning');
-            }
-            
-            c.balance = Math.max(0, c.balance - monto);
-            c.history.unshift({ date: new Date().toLocaleString(), desc: 'Abono recibido', amount: monto, type: 'abono' });
-            
-            dailyStats.sales += monto; // Abonos entran como venta/ingreso al cajón
-            
-            updateDashboard();
-            renderCustomers();
-            openCustomerDetail(activeCustomerId); // refrescar modal
-            Swal.fire({icon: 'success', title: 'Abono Registrado', timer: 1000, showConfirmButton: false});
-        }
-
-        function liquidarDeuda() {
-            const c = customers.find(x => x.id === activeCustomerId);
-            if(c.balance === 0) return Swal.fire('Info', 'La deuda ya está en cero', 'info');
-
-            Swal.fire({
-                title: '¿Liquidar deuda?',
-                text: `¿El cliente ha pagado los $${c.balance.toFixed(2)} restantes?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, liquidar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const monto = c.balance;
-                    c.balance = 0;
-                    c.history.unshift({ date: new Date().toLocaleString(), desc: 'Liquidación total', amount: monto, type: 'abono' });
-                    dailyStats.sales += monto;
-                    updateDashboard();
-                    renderCustomers();
-                    openCustomerDetail(activeCustomerId);
-                    Swal.fire('Liquidado!', 'La deuda quedó en ceros.', 'success');
-                }
-            });
-        }
-
-        function deleteCustomer() {
-            Swal.fire({
-                title: '¿Eliminar cliente?',
-                text: "Esta acción no se puede deshacer.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    customers = customers.filter(x => x.id !== activeCustomerId);
-                    renderCustomers();
-                    closeModal('customer-detail-modal');
-                    Swal.fire('Eliminado!', 'El cliente ha sido borrado.', 'success');
-                }
-            });
+            saveData();
+            closeModal('abono-modal');
+            renderCustomers('');
+            Swal.fire('Éxito', `Abono de $${amount.toFixed(2)} registrado correctamente.`, 'success');
         }
 
         // --- INVENTARIO ---
-        function renderInventory(query = '') {
+        function renderInventory(query) {
             const tbody = document.getElementById('inventory-body');
-            tbody.innerHTML = '';
+            const q = query.toLowerCase();
+            const results = db.products.filter(p => p.name.toLowerCase().includes(q) || p.code.includes(q));
             
-            let lowStock = 0;
-            const filtered = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.includes(query));
-            
-            filtered.forEach(p => {
-                if(p.stock < 5) lowStock++;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-4 text-center font-mono text-xs text-gray-500">${p.code}</td>
+            tbody.innerHTML = results.map(p => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="p-4 font-mono text-xs text-gray-500">${p.code}</td>
                     <td class="p-4 font-bold uppercase">${p.name}</td>
                     <td class="p-4 text-right text-gray-500">$${p.cost.toFixed(2)}</td>
                     <td class="p-4 text-right font-black text-red-600">$${p.price.toFixed(2)}</td>
                     <td class="p-4 text-center">
-                        <span class="px-2 py-1 rounded text-xs font-bold ${p.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}">${p.stock}</span>
+                        <span class="${p.stock < 5 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 rounded-full text-xs font-bold">
+                            ${p.stock}
+                        </span>
                     </td>
                     <td class="p-4 text-center">
-                        <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mx-1"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 mx-1"><i class="fas fa-trash"></i></button>
+                        <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mx-2"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 mx-2"><i class="fas fa-trash"></i></button>
                     </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('low-stock-count').innerText = lowStock;
+                </tr>
+            `).join('');
         }
 
         function openProductModal() {
             document.getElementById('product-form').reset();
             document.getElementById('p-id').value = '';
             document.getElementById('product-modal-title').innerText = 'NUEVO PRODUCTO';
-            document.getElementById('product-modal').classList.remove('hidden');
+            openModal('product-modal');
         }
 
         function editProduct(id) {
-            const p = products.find(x => x.id === id);
+            const p = db.products.find(x => x.id === id);
             document.getElementById('p-id').value = p.id;
             document.getElementById('p-code').value = p.code;
             document.getElementById('p-name').value = p.name;
@@ -1233,216 +1042,127 @@ localStorage.setItem("sales", JSON.stringify(sales));
             document.getElementById('p-price').value = p.price;
             document.getElementById('p-stock').value = p.stock;
             document.getElementById('product-modal-title').innerText = 'EDITAR PRODUCTO';
-            document.getElementById('product-modal').classList.remove('hidden');
+            openModal('product-modal');
+        }
+
+        function deleteProduct(id) {
+            Swal.fire({
+                title: '¿Eliminar Producto?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.products = db.products.filter(p => p.id !== id);
+                    saveData();
+                    renderInventory(document.getElementById('search-inventory').value);
+                    Swal.fire('Eliminado', '', 'success');
+                }
+            })
         }
 
         function handleProductSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('p-id').value;
-            const pData = {
-                code: document.getElementById('p-code').value || Math.floor(Math.random() * 1000000000000).toString(),
-                name: document.getElementById('p-name').value.toUpperCase(),
+            const product = {
+                code: document.getElementById('p-code').value,
+                name: document.getElementById('p-name').value,
                 cost: parseFloat(document.getElementById('p-cost').value),
                 price: parseFloat(document.getElementById('p-price').value),
                 stock: parseInt(document.getElementById('p-stock').value)
             };
 
             if(id) {
-                const idx = products.findIndex(x => x.id == id);
-                products[idx] = { ...products[idx], ...pData };
+                const idx = db.products.findIndex(p => p.id == id);
+                db.products[idx] = { ...product, id: parseInt(id) };
             } else {
-                products.push({ id: Date.now(), ...pData });
+                db.products.push({ ...product, id: Date.now() });
             }
 
+            saveData();
             closeModal('product-modal');
-            renderInventory();
-            renderPOS();
-            Swal.fire({icon: 'success', title: 'Guardado', timer: 1000, showConfirmButton: false});
+            renderInventory(document.getElementById('search-inventory').value);
+            Swal.fire('Éxito', 'Producto guardado.', 'success');
         }
 
-        function deleteProduct(id) {
+        // --- RECARGAS ---
+        let recargaData = { company: null, amount: null };
+        function selectCompany(comp) {
+            recargaData.company = comp;
+            document.querySelectorAll('.company-btn').forEach(b => b.classList.remove('border-blue-500', 'border-green-500', 'border-orange-500', 'bg-gray-50'));
+            const colors = { 'Telcel': 'border-blue-500', 'Movistar': 'border-green-500', 'AT&T': 'border-orange-500' };
+            event.currentTarget.classList.add(colors[comp], 'bg-gray-50');
+            updateRecargaSummary();
+        }
+        function selectAmount(amt) {
+            recargaData.amount = amt;
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('border-red-500', 'bg-red-50', 'text-red-600'));
+            event.currentTarget.classList.add('border-red-500', 'bg-red-50', 'text-red-600');
+            updateRecargaSummary();
+        }
+        function updateRecargaSummary() {
+            const phone = document.getElementById('recarga-phone').value;
+            let text = '';
+            if(recargaData.company) text += `<span class="text-blue-600">${recargaData.company}</span> `;
+            if(recargaData.amount) text += `| <span class="text-red-600">$${recargaData.amount}</span> `;
+            document.getElementById('recarga-summary').innerHTML = text || 'Selecciona opciones';
+        }
+
+        document.getElementById('recarga-phone').addEventListener('input', updateRecargaSummary);
+
+        function processRecarga() {
+            const phone = document.getElementById('recarga-phone').value;
+            if(!recargaData.company || !recargaData.amount || phone.length !== 10) {
+                return Swal.fire('Error', 'Completa los 3 pasos (Compañía, Número 10 dígitos, Monto)', 'error');
+            }
+
             Swal.fire({
-                title: '¿Borrar producto?',
-                icon: 'warning',
+                title: 'Confirmar Recarga',
+                html: `¿Enviar <b>$${recargaData.amount}</b> a <b>${recargaData.company}</b><br>al número <b>${phone}</b>?`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Sí, borrar',
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Confirmar y Cobrar'
             }).then((result) => {
-                if (result.isConfirmed) {
-                    products = products.filter(x => x.id !== id);
-                    renderInventory();
-                    renderPOS();
+                if(result.isConfirmed) {
+                    db.dailySales += recargaData.amount; // Las recargas se cobran en efectivo
+                    saveData();
+                    Swal.fire('Recarga Exitosa', 'Folio: ' + Math.floor(Math.random()*1000000), 'success');
+                    
+                    // Reset formulario recargas
+                    recargaData = { company: null, amount: null };
+                    document.getElementById('recarga-phone').value = '';
+                    document.querySelectorAll('.company-btn, .amount-btn').forEach(b => b.classList.remove('border-blue-500', 'border-green-500', 'border-orange-500', 'border-red-500', 'bg-gray-50', 'bg-red-50', 'text-red-600'));
+                    updateRecargaSummary();
                 }
             });
         }
 
-        // --- DASHBOARD ---
-        function updateDashboard() {
-            document.getElementById('profit-day').innerText = `$${dailyStats.sales.toFixed(2)}`;
-        }
-
-        // --- MODALES UTILS ---
+        // --- UTILIDADES ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-function openScanner(mode){
 
-    currentScanMode = mode;
+        // Reloj
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('es-MX', { hour12: false });
+        }, 1000);
 
-    document.getElementById("scanner-modal").classList.remove("hidden");
-
-    html5QrCode = new Html5Qrcode("reader");
-
-    html5QrCode.start(
-        { facingMode: "environment" }, // CAMARA TRASERA
-        {
-            fps: 10,
-            qrbox: 250
-        },
-        onScanSuccess
-    );
-
-
-}
-function onScanSuccess(code){
-
-    document.getElementById("beep").play();
-
-}
-        // --- SIMULADOR DE ESCÁNER (Mockup para web) ---
-        function openScanner(target) {
-            Swal.fire({
-                title: 'Simulación de Escáner',
-                text: 'En un entorno web real usaría la cámara con html5-qrcode. Aquí simularemos escanear la Coca Cola (7501055300075).',
-                icon: 'info',
-                confirmButtonText: 'Simular Escaneo'
-            }).then(() => {
-                if(target === 'pos') {
-                    searchProduct('7501055300075');
-                    document.getElementById('barcode-scanner').value = '7501055300075';
-                } else {
-                    document.getElementById('p-code').value = '7501055300075';
-                }
-            });
+        // --- SCANNER STUB ---
+        // Se deja como stub para no abrir cámara automáticamente, requiere https:// para funcionar en producción
+        let html5QrcodeScanner = null;
+        function openScanner(context) {
+            openModal('scanner-modal');
+            // Aquí iría la inicialización real del Html5Qrcode
+            document.getElementById('reader').innerHTML = '<div class="text-white flex items-center justify-center h-full text-xs">Cámara simulada (Requiere HTTPS)</div>';
         }
-        function closeScanner() { document.getElementById('scanner-modal').classList.add('hidden'); }
-
+        function closeScanner() {
+            closeModal('scanner-modal');
+        }
+renderCustomers();
     </script>
-    <script>
-let html5QrCode;
-let scannerTarget = null;
-
-// Abrir escáner
-function openScanner(target) {
-    scannerTarget = target;
-    document.getElementById("scanner-modal").classList.remove("hidden");
-
-    html5QrCode = new Html5Qrcode("reader");
-
-    const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 120 },
-        aspectRatio: 1.7778,
-        formatsToSupport: [
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.CODE_93,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E
-        ]
-    };
-
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-
-            // buscar cámara trasera
-            let cameraId = cameras[0].id;
-            cameras.forEach(cam => {
-                if (cam.label.toLowerCase().includes("back") ||
-                    cam.label.toLowerCase().includes("trasera")) {
-                    cameraId = cam.id;
-                }
-            });
-
-            html5QrCode.start(
-                cameraId,
-                config,
-                onScanSuccess
-            );
-
-        } else {
-            alert("No se encontró cámara");
-        }
-    }).catch(err => {
-        console.error(err);
-        alert("Error al abrir cámara");
-    });
-}
-function onScanSuccess(decodedText) {
-
-    closeScanner();
-
-    // POS
-    if (scannerTarget === "pos") {
-
-        const input = document.getElementById("barcode-scanner");
-        input.value = decodedText;
-        searchProduct(decodedText);
-
-    }
-
-    // NUEVO PRODUCTO / STOCK
-    if (scannerTarget === "stock") {
-
-        const input = document.getElementById("p-code");
-        input.value = decodedText;
-
-        // buscar si ya existe producto
-        if (typeof products !== "undefined") {
-
-            const producto = products.find(p => p.code === decodedText);
-
-            if (producto) {
-
-                document.getElementById("p-name").value = producto.name;
-                document.getElementById("p-cost").value = producto.cost;
-                document.getElementById("p-price").value = producto.price;
-                document.getElementById("p-stock").value = producto.stock;
-
-            }
-
-        }
-
-    }
-
-}
-
-window.addEventListener("beforeunload", function(){
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-
-});
-// Cerrar escáner
-function closeScanner() {
-
-    document.getElementById("scanner-modal").classList.add("hidden");
-
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-        }).catch(err => {
-            console.log(err);
-        });
-    }
-
-}
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
-</script>
 </body>
 </html>
-
