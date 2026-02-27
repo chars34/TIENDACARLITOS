@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" href="icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#dc2626">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema POS - Mini Super Carlitos</title>
+    <title> Mini Super Carlitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -136,6 +141,27 @@
         
         <!-- DASHBOARD (Solo Dueño) -->
         <div id="view-dashboard" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
+            <div class="flex flex-col md:flex-row gap-3 mt-4">
+
+    <!-- BOTON REPORTE -->
+    <button onclick="sendReportWhatsApp()"
+        class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
+
+        <i class="fab fa-whatsapp text-2xl"></i>
+        ENVIAR REPORTE POR WHATSAPP
+
+    </button>
+
+    <!-- BOTON STOCK BAJO -->
+    <button onclick="sendLowStockWhatsApp()"
+        class="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-red-900 active:border-b-0 active:translate-y-1">
+
+        <i class="fab fa-whatsapp text-2xl"></i>
+        STOCK BAJO POR WHATSAPP
+
+    </button>
+
+</div>
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-black text-gray-800 font-['Oswald'] uppercase mb-6 border-l-4 border-red-600 pl-3">Resumen del Día</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
@@ -526,9 +552,126 @@
             </div>
         </div>
     </div>
-
+<audio id="beep" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3"></audio>
     <!-- Script de Lógica Principal -->
     <script>
+    
+const WHATSAPP_NUMBER = "2371062600"; 
+
+//------------------------------------------------
+// REPORTE COMPLETO
+//------------------------------------------------
+function sendReportWhatsApp(){
+
+    const sales = JSON.parse(localStorage.getItem("sales")) || [];
+    const products = JSON.parse(localStorage.getItem("products")) || [];
+
+    let today = new Date().toISOString().slice(0,10);
+    let currentMonth = today.slice(0,7);
+
+    let gananciasDia = 0;
+    let ventasDia = 0;
+    let ventasMes = 0;
+    let totalVentas = sales.length;
+
+    let contadorProductos = {};
+
+    sales.forEach(sale=>{
+
+        if(sale.date.startsWith(today)){
+            gananciasDia += sale.total;
+            ventasDia++;
+        }
+
+        if(sale.date.startsWith(currentMonth)){
+            ventasMes++;
+        }
+
+        sale.items.forEach(item=>{
+            contadorProductos[item.name] =
+                (contadorProductos[item.name] || 0) + item.qty;
+        });
+
+    });
+
+    let masVendido = "Ninguno";
+    let max = 0;
+
+    for(let p in contadorProductos){
+        if(contadorProductos[p] > max){
+            max = contadorProductos[p];
+            masVendido = p;
+        }
+    }
+
+    let mensaje =
+`📊 REPORTE MINI SUPER CARLITOS
+
+💰 Ganancias del día: $${gananciasDia.toFixed(2)}
+
+📦 Producto más vendido:
+${masVendido}
+
+🧾 Ventas hoy: ${ventasDia}
+
+📅 Ventas del mes: ${ventasMes}
+
+📊 Ventas totales: ${totalVentas}
+
+Fecha: ${new Date().toLocaleString()}
+`;
+
+    abrirWhatsApp(mensaje);
+
+}
+
+
+//------------------------------------------------
+// STOCK BAJO
+//------------------------------------------------
+function sendLowStockWhatsApp(){
+
+    const products = JSON.parse(localStorage.getItem("products")) || [];
+
+    let bajos = products.filter(p=>p.stock <= 5);
+
+    if(bajos.length === 0){
+        alert("No hay stock bajo");
+        return;
+    }
+
+    let mensaje =
+`⚠️ STOCK BAJO - MINI SUPER CARLITOS
+
+`;
+
+    bajos.forEach(p=>{
+
+        mensaje +=
+`${p.name}
+Stock: ${p.stock}
+Código: ${p.code}
+
+`;
+
+    });
+
+    abrirWhatsApp(mensaje);
+
+}
+
+
+//------------------------------------------------
+// ABRIR WHATSAPP
+//------------------------------------------------
+function abrirWhatsApp(texto){
+
+    let url =
+`https://wa.me/2371062600?text=${encodeURIComponent(texto)}`;
+
+    window.open(url,"_blank");
+
+}
         // --- BASE DE DATOS SIMULADA ---
         let currentRole = null;
         let selectedRoleForLogin = null;
@@ -763,6 +906,19 @@
         }
 
         function finalizeSale() {
+            let sales = JSON.parse(localStorage.getItem("sales")) || [];
+
+sales.push({
+
+    items: cart,
+    total: total,
+    date: new Date().toISOString()
+
+});
+localStorage.setItem("products", JSON.stringify(products));
+localStorage.setItem("customers", JSON.stringify(customers));
+
+localStorage.setItem("sales", JSON.stringify(sales));
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             
             if(activeCheckoutMode === 'cash') {
@@ -1126,7 +1282,30 @@
         // --- MODALES UTILS ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function openScanner(mode){
 
+    currentScanMode = mode;
+
+    document.getElementById("scanner-modal").classList.remove("hidden");
+
+    html5QrCode = new Html5Qrcode("reader");
+
+    html5QrCode.start(
+        { facingMode: "environment" }, // CAMARA TRASERA
+        {
+            fps: 10,
+            qrbox: 250
+        },
+        onScanSuccess
+    );
+
+
+}
+function onScanSuccess(code){
+
+    document.getElementById("beep").play();
+
+}
         // --- SIMULADOR DE ESCÁNER (Mockup para web) ---
         function openScanner(target) {
             Swal.fire({
@@ -1237,7 +1416,11 @@ function onScanSuccess(decodedText) {
 
 }
 
+window.addEventListener("beforeunload", function(){
 
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+});
 // Cerrar escáner
 function closeScanner() {
 
