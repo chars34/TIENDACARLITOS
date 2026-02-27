@@ -140,9 +140,36 @@
             <div class="flex flex-col md:flex-row gap-3 mt-4 mb-6">
                 <button onclick="sendReportWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
                     <i class="fab fa-whatsapp text-2xl"></i>
-                    ENVIAR REPORTE POR WHATSAPP
+                    ENVIAR REPORTE STOCK BAJOS
                 </button>
+                 <button onclick="sendDailySummaryWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    ENVIAR REPORTE DE VENTA DEL DIA
+                </button>
+                <button onclick="sendSummaryWhatsApp()" 
+class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
+
+    <i class="fab fa-whatsapp text-2xl"></i>
+     ENVIAR REPORTE DIA/SEM/MES
+
+</button>
+                
             </div>
+            <div id="ownerPanel" class="hidden">
+
+    <button onclick="sendStockWhatsApp()"
+    class="bg-yellow-500 text-white px-4 py-2 rounded-xl w-full">
+    Enviar stock bajo
+    </button>
+
+    <!-- AQUI EXACTO -->
+    <button onclick="sendDailySummaryWhatsApp()"
+    class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl font-bold w-full mt-2">
+    <i class="fab fa-whatsapp mr-2"></i>
+    Enviar resumen del día
+    </button>
+
+</div>
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-black text-gray-800 font-['Oswald'] uppercase mb-6 border-l-4 border-red-600 pl-3">Resumen del Día</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
@@ -524,6 +551,88 @@
             ],
             dailySales: 0
         };
+        function showSalesSummary(){
+
+    const s = getSalesSummary();
+
+    Swal.fire({
+        title: "Resumen de Ventas",
+        html: `
+        <div style="text-align:left;font-size:16px">
+        Hoy: <b>$${s.day.toFixed(2)}</b><br><br>
+        Semana: <b>$${s.week.toFixed(2)}</b><br><br>
+        Mes: <b>$${s.month.toFixed(2)}</b>
+        </div>
+        `,
+        icon: "info"
+    });
+
+}
+        function sendDailySummaryWhatsApp(){
+
+    if(currentRole !== "owner"){
+        Swal.fire("Acceso denegado", "Solo el dueño puede enviar resumen", "error");
+        return;
+    }
+
+    let sales = JSON.parse(localStorage.getItem("sales")) || [];
+
+    let today = new Date().toISOString().split("T")[0];
+
+    let todaySales = sales.filter(s => s.date.startsWith(today));
+
+    if(todaySales.length === 0){
+        Swal.fire("Sin ventas", "No hay ventas hoy", "info");
+        return;
+    }
+
+    let totalVentas = 0;
+    let totalGanancias = 0;
+    let productos = {};
+
+    todaySales.forEach(sale => {
+
+        totalVentas += sale.total;
+
+        sale.items.forEach(item => {
+
+            totalGanancias += (item.price - (item.cost || 0)) * item.qty;
+
+            if(!productos[item.name]){
+                productos[item.name] = 0;
+            }
+
+            productos[item.name] += item.qty;
+
+        });
+
+    });
+
+    // producto más vendido
+    let masVendido = Object.keys(productos).reduce((a,b)=>
+        productos[a] > productos[b] ? a : b
+    );
+
+    let mensaje =
+`📊 RESUMEN DEL DÍA - CARLITOS
+
+💰 Ventas totales: $${totalVentas.toFixed(2)}
+
+📈 Ganancias: $${totalGanancias.toFixed(2)}
+
+🏆 Producto más vendido:
+${masVendido} (${productos[masVendido]} vendidos)
+
+📅 Fecha: ${today}
+`;
+
+    let numero = "2371062600"; // ← TU NUMERO
+
+    let url = `https://wa.me/2371062600?text=${encodeURIComponent(mensaje)}`;
+
+    window.open(url, "_blank");
+
+}
 function renderCustomers(search = "") {
 
     let html = "";
@@ -601,6 +710,9 @@ function deleteCustomer(id){
             const saved = localStorage.getItem('miniSuperDB');
             if(saved) db = JSON.parse(saved);
         }
+        if(!db.salesHistory){
+        db.salesHistory = [];
+    }
         function saveData() {
             localStorage.setItem('miniSuperDB', JSON.stringify(db));
             updateDashboard();
@@ -702,7 +814,23 @@ function deleteCustomer(id){
             if(viewId === 'view-fiados') renderCustomers('');
             if(viewId === 'view-inventory') renderInventory('');
         }
+function sendSummaryWhatsApp(){
 
+    if(!db.salesHistory) db.salesHistory = [];
+
+    const s = getSalesSummary();
+
+    const text =
+`Resumen Mini Super Carlitos
+
+Hoy: $${s.day.toFixed(2)}
+Semana: $${s.week.toFixed(2)}
+Mes: $${s.month.toFixed(2)}`;
+
+    const url = "https://wa.me/2371062600?text=" + encodeURIComponent(text);
+
+    window.open(url, "_blank");
+}
         // --- DASHBOARD ---
         function updateDashboard() {
             if(currentRole !== 'owner') return;
@@ -867,7 +995,18 @@ function deleteCustomer(id){
                 if(rec < total) return Swal.fire('Error', 'El efectivo recibido es insuficiente.', 'error');
                 
                 // Procesar pago efectivo: Sumar a ventas del día
-                db.dailySales += total;
+            // Procesar pago efectivo
+db.dailySales += total;
+
+db.salesHistory.push({
+    amount: total,
+    date: new Date().toISOString(),
+    type: "venta"
+});
+
+
+
+saveData();
                 Swal.fire('Venta Exitosa', `Cambio: $${(rec - total).toFixed(2)}`, 'success');
                 
             } else if(checkoutType === 'fiado') {
@@ -886,7 +1025,18 @@ function deleteCustomer(id){
                 const p = db.products.find(x => x.id === item.id);
                 if(p) p.stock -= item.qty;
             });
+// GUARDAR VENTA PARA REPORTES
+let sales = JSON.parse(localStorage.getItem("sales")) || [];
 
+sales.push({
+
+    items: cart,
+    total: total,
+    date: new Date().toISOString()
+
+});
+
+localStorage.setItem("sales", JSON.stringify(sales));
             saveData();
             clearCart();
             closeModal('checkout-modal');
@@ -1129,8 +1279,15 @@ function deleteCustomer(id){
                 confirmButtonText: 'Confirmar y Cobrar'
             }).then((result) => {
                 if(result.isConfirmed) {
-                    db.dailySales += recargaData.amount; // Las recargas se cobran en efectivo
-                    saveData();
+                    db.dailySales += recargaData.amount;
+
+db.salesHistory.push({
+    amount: recargaData.amount,
+    date: new Date().toISOString(),
+    type: "recarga"
+});
+
+saveData();
                     Swal.fire('Recarga Exitosa', 'Folio: ' + Math.floor(Math.random()*1000000), 'success');
                     
                     // Reset formulario recargas
@@ -1141,7 +1298,42 @@ function deleteCustomer(id){
                 }
             });
         }
+function getSalesSummary(){
 
+    if(!db.salesHistory) return { day:0, week:0, month:0 };
+
+    const today = new Date();
+
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setHours(0,0,0,0);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    let day = 0;
+    let week = 0;
+    let month = 0;
+
+    db.salesHistory.forEach(sale => {
+
+        const saleDate = new Date(sale.date);
+
+        if(saleDate >= startOfDay)
+            day += sale.amount;
+
+        if(saleDate >= startOfWeek)
+            week += sale.amount;
+
+        if(saleDate >= startOfMonth)
+            month += sale.amount;
+
+    });
+
+    return { day, week, month };
+
+}
         // --- UTILIDADES ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
