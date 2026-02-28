@@ -145,9 +145,31 @@ content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
         <!-- DASHBOARD -->
         <div id="view-dashboard" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
             <div class="flex flex-col md:flex-row gap-3 mt-4 mb-6">
-                <button onclick="backupData()"
-class="bg-blue-600 text-white px-4 py-2 rounded-xl">
-Respaldar datos
+           <button onclick="mostrarResumenDia()"
+class="bg-green-600 text-white px-4 py-2 rounded-xl">
+
+Resumen del día
+
+</button>
+<button onclick="backupCloud()"
+class="bg-blue-600 text-white p-2 rounded">
+
+☁️ Respaldar 
+
+</button>
+
+
+<button onclick="restoreCloud()"
+class="bg-green-600 text-white p-2 rounded">
+
+🔄 Restaurar 
+
+</button>
+<button onclick="reiniciarDia()"
+class="bg-red-600 text-white px-4 py-2 rounded-xl ml-2">
+
+Reiniciar día
+
 </button>
                 <button onclick="sendReportWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 btn-action border-b-4 border-green-900 active:border-b-0 active:translate-y-1">
                     <i class="fab fa-whatsapp text-2xl"></i>
@@ -562,6 +584,73 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
             ],
             dailySales: 0
         };
+        // Guardar fecha actual
+function obtenerFechaHoy(){
+
+    const hoy = new Date();
+
+    return hoy.getFullYear()+"-"+(hoy.getMonth()+1)+"-"+hoy.getDate();
+
+}
+
+
+// Mostrar resumen
+function mostrarResumenDia(){
+
+    const hoy = obtenerFechaHoy();
+
+    const ventas = db.salesHistory.filter(s =>
+        s.date.startsWith(hoy)
+    );
+
+    let total = 0;
+
+    ventas.forEach(v=> total += v.amount);
+
+
+    Swal.fire({
+
+        title: "Resumen del día",
+
+        html:
+        "Ventas: $" + total.toFixed(2) + "<br>" +
+        "Productos vendidos: " + ventas.length,
+
+        icon: "info"
+
+    });
+
+}
+
+
+// Reiniciar día manual
+function reiniciarDia(){
+
+    Swal.fire({
+        title: "Reiniciar día?",
+        showCancelButton: true,
+        confirmButtonText: "SI"
+    }).then((result)=>{
+
+        if(result.isConfirmed){
+
+            db.dailySales = 0;
+
+            db.dailyExpenses = 0;
+
+            db.cashRegister = 0;
+
+            saveData();
+
+            updateDashboard();
+
+            Swal.fire("Reiniciado");
+
+        }
+
+    });
+
+}
         function showSalesSummary(){
 
     const s = getSalesSummary();
@@ -724,10 +813,17 @@ function deleteCustomer(id){
         if(!db.salesHistory){
         db.salesHistory = [];
     }
-        function saveData() {
-            localStorage.setItem('miniSuperDB', JSON.stringify(db));
-            updateDashboard();
-        }
+        function saveData(){
+
+    localStorage.setItem("pos_data", JSON.stringify(db));
+
+    if(window.syncCloud){
+
+        syncCloud();
+
+    }
+
+}
 
         // --- AUTH Y NAVEGACIÓN ---
         let selectedRoleAttempt = null;
@@ -925,30 +1021,103 @@ Mes: $${s.month.toFixed(2)}`;
             renderCart();
         }
 
-        function renderCart() {
-            const list = document.getElementById('cart-list');
-            let total = 0;
-            list.innerHTML = cart.map(item => {
-                const sub = item.qty * item.price;
-                total += sub;
-                return `
-                <div class="bg-white p-2 rounded border border-gray-100 flex justify-between items-center shadow-sm">
-                    <div class="flex-1">
-                        <div class="font-bold text-gray-800 truncate pr-2 uppercase">${item.name}</div>
-                        <div class="text-gray-500 mt-0.5">${item.qty} x $${item.price.toFixed(2)}</div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-black text-gray-800">$${sub.toFixed(2)}</span>
-                        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-                `;
-            }).join('');
-            
-            if(cart.length === 0) list.innerHTML = '<div class="text-center text-gray-400 mt-10 text-[10px] uppercase font-bold tracking-widest">Carrito Vacío</div>';
-            document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
-        }
+    function renderCart() {
 
+    const list = document.getElementById('cart-list');
+    let total = 0;
+
+    let html = "";
+
+    cart.forEach(item => {
+
+        const subtotal = item.qty * item.price;
+        total += subtotal;
+
+        html += `
+        <div class="bg-white p-2 rounded border flex justify-between items-center">
+
+            <div class="flex-1">
+                <div class="font-bold text-xs">${item.name}</div>
+                <div class="text-gray-500 text-xs">
+                    $${item.price.toFixed(2)} c/u
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+
+                <!-- BOTON RESTAR -->
+                <button onclick="changeQty(${item.id}, -1)"
+                class="bg-gray-200 px-2 rounded font-bold">
+                -
+                </button>
+
+                <span class="font-bold">
+                    ${item.qty}
+                </span>
+
+                <!-- BOTON SUMAR -->
+                <button onclick="changeQty(${item.id}, 1)"
+                class="bg-green-500 text-white px-2 rounded font-bold">
+                +
+                </button>
+
+                <!-- SUBTOTAL -->
+                <span class="font-bold w-16 text-right">
+                    $${subtotal.toFixed(2)}
+                </span>
+
+                <!-- ELIMINAR -->
+                <button onclick="removeFromCart(${item.id})"
+                class="text-red-500 font-bold">
+                🗑
+                </button>
+
+            </div>
+
+        </div>
+        `;
+    });
+
+    list.innerHTML = html || `
+    <div class="text-center text-gray-400 mt-10">
+    Carrito vacío
+    </div>
+    `;
+
+    document.getElementById('cart-total').innerText =
+        "$" + total.toFixed(2);
+}
+function changeQty(id, amount){
+
+    const item = cart.find(p => p.id === id);
+
+    if(!item) return;
+
+    const product = db.products.find(p => p.id === id);
+
+    item.qty += amount;
+
+    if(item.qty <= 0){
+
+        removeFromCart(id);
+        return;
+
+    }
+
+    if(item.qty > product.stock){
+
+        item.qty = product.stock;
+
+    }
+
+    renderCart();
+}
+function removeFromCart(id){
+
+    cart = cart.filter(p => p.id !== id);
+
+    renderCart();
+}
         function clearCart() { cart = []; renderCart(); }
 
         // --- CHECKOUT ---
@@ -1571,6 +1740,95 @@ document.addEventListener("click",()=>{
     if(input) input.focus();
 
 });
+// evitar zoom doble toque
+document.addEventListener("dblclick", e => e.preventDefault());
+
+// mejor rendimiento Android
+document.addEventListener("touchstart", ()=>{}, true);
     </script>
-</body>
+ <script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import {
+  getAuth,
+  signInAnonymously
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+// CONFIG
+const firebaseConfig = {
+
+  apiKey: "AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",
+
+  authDomain: "tiendacarlitos-a5b1d.firebaseapp.com",
+
+  projectId: "tiendacarlitos-a5b1d",
+
+  storageBucket: "tiendacarlitos-a5b1d.firebasestorage.app",
+
+  messagingSenderId: "653941208919",
+
+  appId: "1:653941208919:web:42bb4150ccc3f558f53012"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const cloud = getFirestore(app);
+
+const auth = getAuth(app);
+
+
+// LOGIN
+await signInAnonymously(auth);
+
+
+// NEGOCIO
+const BUSINESS_ID = "carlitos";
+
+const ref = doc(cloud, "pos", BUSINESS_ID);
+
+
+// RECIBIR CAMBIOS
+onSnapshot(ref, (snapshot)=>{
+
+    if(snapshot.exists()){
+
+        db = snapshot.data();
+
+        localStorage.setItem("pos_data", JSON.stringify(db));
+
+        if(typeof renderCart === "function") renderCart();
+
+        if(typeof renderInventory === "function") renderInventory("");
+
+        if(typeof updateDashboard === "function") updateDashboard();
+
+        console.log("Sincronizado correctamente");
+
+    }
+
+});
+
+
+// ENVIAR CAMBIOS
+window.syncCloud = async function(){
+
+    if(!db) return;
+
+    await setDoc(ref, db);
+
+};
+
+
+</script>
 </html>
