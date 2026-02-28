@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mini Super POS - Avanzado</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- FontAwesome para Iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -16,7 +21,23 @@
     
     <!-- HTML5 QRCode Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+        *{
+            -webkit-tap-highlight-color: transparent;
+        }
 
+        input, button{
+            font-size:16px !important;
+        }
+
+        button{
+            min-height:48px;
+        }
+
+        body{
+            user-select:none;
+        }
+    </style>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
@@ -507,7 +528,41 @@
         };
 
         // --- SISTEMA DE LOGIN Y ROLES ---
+function vibrar(ms=50){
+        if(navigator.vibrate){
+            navigator.vibrate(ms);
+        }
+    }
 
+
+    // cuando cobra
+    function openCheckout(tipo){
+        vibrar(100);
+
+        // TU CODIGO ORIGINAL AQUI
+    }
+
+
+    // pantalla completa
+    document.addEventListener("DOMContentLoaded", ()=>{
+
+        if(window.matchMedia('(display-mode: standalone)').matches){
+            document.body.classList.add("standalone");
+        }
+
+    });
+
+
+    // botón regresar Android
+    document.addEventListener("backbutton", function(e){
+
+        e.preventDefault();
+
+        if(confirm("¿Salir de la aplicación?")){
+            navigator.app.exitApp();
+        }
+
+    });
         function attemptLogin() {
             const input = document.getElementById('login-pin');
             const pin = input.value;
@@ -1049,6 +1104,11 @@
         function toast(title, icon = 'success') {
             Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1500 }).fire({ icon, title });
         }
+    </script>
+ <script>
+    if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("service-worker.js");
+    }
     </script>
 </body>
 </html>
