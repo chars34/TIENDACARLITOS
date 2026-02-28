@@ -7,12 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="viewport"
 content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <meta name="mobile-web-app-capable" content="yes">
 
-<meta name="theme-color" content="#dc2626">
     <meta charset="UTF-8">
     <title>Mini Super Carlitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -750,10 +748,8 @@ ${masVendido} (${productos[masVendido]} vendidos)
 📅 Fecha: ${today}
 `;
 
-    let numero = "2371062600"; // ← TU NUMERO
-
-    let url = `https://wa.me/2371062600?text=${encodeURIComponent(mensaje)}`;
-
+    let numero = "5212371062600"; // con código país
+let url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, "_blank");
 
 }
@@ -804,39 +800,32 @@ function renderCustomers(search = "") {
 }
 function deleteCustomer(id){
 
-    Swal.fire({
-        title: "Eliminar cliente",
-        text: "Se eliminará el cliente",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc2626",
-        confirmButtonText: "Eliminar"
-    }).then((result) => {
-
-        if(result.isConfirmed){
-
-            db.customers = db.customers.filter(c => c.id !== id);
-
-            saveData();
-
-            renderCustomers();
-
-        }
- if(currentRole !== "dueño"){
+    if(currentRole !== "owner"){
         Swal.fire("Acceso denegado", "Solo el dueño puede eliminar fiados", "error");
         return;
     }
-    });
 
+    Swal.fire({
+        title: "Eliminar cliente",
+        icon: "warning",
+        showCancelButton: true
+    }).then((result)=>{
+        if(result.isConfirmed){
+            db.customers = db.customers.filter(c => c.id !== id);
+            saveData();
+            renderCustomers();
+        }
+    });
 }
         // Cargar datos locales si existen
-        function loadData() {
-            const saved = localStorage.getItem('miniSuperDB');
-            if(saved) db = JSON.parse(saved);
-        }
-        if(!db.salesHistory){
+       function loadData(){
+    const saved = localStorage.getItem('pos_data');
+    if(saved) db = JSON.parse(saved);
+
+    if(!db.salesHistory){
         db.salesHistory = [];
     }
+}
         function saveData(){
 
     localStorage.setItem("pos_data", JSON.stringify(db));
@@ -866,18 +855,40 @@ function deleteCustomer(id){
             document.getElementById('role-selection').classList.remove('hidden');
         }
 
-        function attemptLogin() {
-            const pin = document.getElementById('login-pass').value;
-            if (selectedRoleAttempt === 'owner' && pin === 'admin123') {
-                login('owner');
-            } else if (selectedRoleAttempt === 'employee' && pin === 'user123') {
-                login('employee');
-            } else {
-                Swal.fire('Error', 'PIN Incorrecto', 'error');
-            }
-        }
+      function attemptLogin() {
+
+    const pin = document.getElementById('login-pass').value.trim();
+
+    if(!selectedRoleAttempt){
+        Swal.fire('Error', 'Selecciona un rol primero', 'warning');
+        return;
+    }
+
+    // Inicializar PINs si no existen
+    if(!localStorage.getItem("ownerPin")){
+        localStorage.setItem("ownerPin","admin123");
+    }
+
+    if(!localStorage.getItem("employeePin")){
+        localStorage.setItem("employeePin","user123");
+    }
+
+    const ownerPin = localStorage.getItem("ownerPin");
+    const employeePin = localStorage.getItem("employeePin");
+
+    if (selectedRoleAttempt === 'owner' && pin === ownerPin) {
+        login('owner');
+    } 
+    else if (selectedRoleAttempt === 'employee' && pin === employeePin) {
+        login('employee');
+    } 
+    else {
+        Swal.fire('Error', 'PIN Incorrecto', 'error');
+    }
+}
 
         function login(role) {
+            localStorage.setItem("role", role);
             currentRole = role;
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('role-indicator').innerText = role === 'owner' ? 'Dueño' : 'Empleado';
@@ -958,7 +969,7 @@ Hoy: $${s.day.toFixed(2)}
 Semana: $${s.week.toFixed(2)}
 Mes: $${s.month.toFixed(2)}`;
 
-    const url = "https://wa.me/2371062600?text=" + encodeURIComponent(text);
+    const url = "https://wa.me/522371062600?text=" + encodeURIComponent(text);
 
     window.open(url, "_blank");
 }
@@ -1504,7 +1515,6 @@ function deleteCustomer(id){
     saveData();
     closeModal('product-modal');
     renderInventory("");
-
     Swal.fire({
         icon:"success",
         title:"Producto guardado",
@@ -1731,7 +1741,42 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 });
 
+function showNotification(text, color="green"){
 
+    const old = document.getElementById("pos-notification");
+    if(old) old.remove();
+
+    const div = document.createElement("div");
+
+    div.id = "pos-notification";
+
+    div.innerText = text;
+
+    div.style.position = "fixed";
+    div.style.bottom = "90px";
+    div.style.left = "50%";
+    div.style.transform = "translateX(-50%)";
+    div.style.padding = "14px 22px";
+    div.style.borderRadius = "12px";
+    div.style.color = "white";
+    div.style.fontWeight = "bold";
+    div.style.zIndex = "9999";
+    div.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
+    div.style.fontSize = "14px";
+
+    if(color==="green") div.style.background = "#16a34a";
+    if(color==="red") div.style.background = "#dc2626";
+    if(color==="blue") div.style.background = "#2563eb";
+
+    document.body.appendChild(div);
+
+    setTimeout(()=>{
+        div.style.opacity = "0";
+        div.style.transition = "0.3s";
+        setTimeout(()=>div.remove(),300);
+    }, 2500);
+
+}
 // ========================
 // BACKUP
 // ========================
