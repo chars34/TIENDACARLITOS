@@ -585,6 +585,30 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
             dailySales: 0
         };
         // Guardar fecha actual
+        function showNotification(text, color="green"){
+
+    const div = document.createElement("div");
+
+    div.innerText = text;
+
+    div.className = `
+        fixed bottom-24 left-1/2 -translate-x-1/2
+        px-5 py-3 rounded-xl text-white font-bold
+        shadow-2xl z-50 transition-all duration-300
+    `;
+
+    if(color==="green") div.style.background="#16a34a";
+    if(color==="red") div.style.background="#dc2626";
+    if(color==="blue") div.style.background="#2563eb";
+
+    document.body.appendChild(div);
+
+    setTimeout(()=>{
+        div.style.opacity="0";
+        setTimeout(()=>div.remove(),300);
+    },2500);
+
+}
 function obtenerFechaHoy(){
 
     const hoy = new Date();
@@ -1711,23 +1735,52 @@ document.addEventListener("DOMContentLoaded",()=>{
 // ========================
 // BACKUP
 // ========================
-
 function backupData(){
 
-    const data = JSON.stringify(db,null,2);
+    try{
 
-    const blob = new Blob([data],{type:"application/json"});
+        if(!db){
 
-    const a = document.createElement("a");
+            showNotification("❌ No hay datos", "red");
 
-    a.href = URL.createObjectURL(blob);
+            return;
 
-    a.download = "backup_pos.json";
+        }
 
-    a.click();
+        const json = JSON.stringify(db, null, 2);
+
+        const blob = new Blob([json], {type:"application/json"});
+
+        const url = URL.createObjectURL(blob);
+
+        const fecha = new Date().toLocaleDateString().replace(/\//g,"-");
+
+        const nombre = "backup_"+fecha+".json";
+
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = nombre;
+
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+        // NOTIFICACION
+        showNotification("✅ Respaldo guardado");
+
+        console.log("Backup correcto");
+
+    }
+    catch(e){
+
+        showNotification("❌ Error al respaldar", "red");
+
+        console.error(e);
+
+    }
 
 }
-
 
 // ========================
 // AUTOFOCUS SCANNER
