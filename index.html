@@ -270,6 +270,26 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
                             <i class="fas fa-money-bill-wave text-2xl mb-1 opacity-80"></i> 
                             <span class="text-[10px] tracking-widest">EFECTIVO</span>
                         </button>
+                <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
+                    <div class="flex justify-between items-end mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div class="flex flex-col">
+                            <span class="text-gray-500 font-black uppercase text-[10px] tracking-widest leading-none mb-1">Total Carrito</span>
+                            <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600 leading-none">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <button onclick="openCheckout('cash')" id="btn-checkout-cash" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-3 btn-action border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1">
+                            <i class="fas fa-money-bill-wave text-xl opacity-80"></i> 
+                            <span class="tracking-widest uppercase">COBRAR EFECTIVO</span>
+                        </button>
+
+                        <button onclick="openCheckout('fiado')" id="btn-checkout-fiado" class="w-full bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex items-center justify-center gap-3 btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1">
+                            <i class="fas fa-book text-lg opacity-80"></i> 
+                            <span class="text-xs tracking-widest uppercase">FIAR PRODUCTO</span>
+                        </button>
+                    </div>
+                </div>
                         <button onclick="openCheckout('fiado')" 
 class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1"
 id="btn-checkout-fiado">
