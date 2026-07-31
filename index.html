@@ -211,13 +211,14 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
                         </div>
                         <div id="profit-day" class="text-4xl md:text-5xl font-black text-emerald-600 mt-2">$0.00</div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-red-600">
+           <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-red-600">
                         <div class="flex justify-between items-start">
-                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Fiados Pendientes</span>
-                            <i class="fas fa-book-open text-red-100 text-2xl"></i>
+                            <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Gastos / Faltantes</span>
+                            <i class="fas fa-arrow-down text-red-100 text-2xl"></i>
                         </div>
-                        <div id="total-fiados" class="text-4xl md:text-5xl font-black text-red-600 mt-2">$0.00</div>
+                        <div id="expenses-day" class="text-4xl md:text-5xl font-black text-red-600 mt-2">$0.00</div>
                     </div>
+                        
                     <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-gray-800">
                         <div class="flex justify-between items-start">
                             <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">Stock Crítico (< 5)</span>
@@ -274,101 +275,16 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
                             <i class="fas fa-money-bill-wave text-2xl mb-1 opacity-80"></i> 
                             <span class="text-[10px] tracking-widest">EFECTIVO</span>
                         </button>
-                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1" id="btn-checkout-fiado">
-                            <i class="fas fa-book text-2xl mb-1 opacity-80"></i> 
-                            <span class="text-[10px] tracking-widest">FIAR</span>
-                        </button>
+                       
                     </div>
                 </div>
-                        <button onclick="openCheckout('fiado')" 
-class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1"
-id="btn-checkout-fiado">
-
-<i class="fas fa-book text-2xl mb-1 opacity-80"></i> 
-<span class="text-[10px] tracking-widest">FIAR</span>
-</button>
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- RECARGAS -->
-        <div id="view-recargas" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-blue-600 mb-6">
-                    <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Recargas Telefónicas</h2>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SELECCIONA COMPAÑÍA Y MONTO</p>
-                </div>
+      
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">1. Compañía</h3>
-                        <div class="grid grid-cols-3 gap-3" id="company-selector">
-                            <button onclick="selectCompany('Telcel')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 focus:border-blue-500 flex flex-col items-center gap-2 transition">
-                                <i class="fas fa-signal text-blue-600 text-2xl"></i>
-                                <span class="text-xs font-bold text-gray-700">Telcel</span>
-                            </button>
-                            <button onclick="selectCompany('Movistar')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-green-500 focus:border-green-500 flex flex-col items-center gap-2 transition">
-                                <i class="fas fa-signal text-green-500 text-2xl"></i>
-                                <span class="text-xs font-bold text-gray-700">Movistar</span>
-                            </button>
-                            <button onclick="selectCompany('AT&T')" class="company-btn p-4 rounded-xl border-2 border-gray-200 hover:border-orange-500 focus:border-orange-500 flex flex-col items-center gap-2 transition">
-                                <i class="fas fa-signal text-orange-500 text-2xl"></i>
-                                <span class="text-xs font-bold text-gray-700">AT&T</span>
-                            </button>
-                        </div>
-
-                        <h3 class="font-black text-gray-700 mb-4 mt-6 uppercase text-sm border-b pb-2">2. Número a 10 dígitos</h3>
-                        <input type="tel" id="recarga-phone" maxlength="10" placeholder="Ej: 5512345678" class="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold text-center text-xl tracking-[0.3em] outline-none focus:border-blue-500 transition">
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="font-black text-gray-700 mb-4 uppercase text-sm border-b pb-2">3. Monto</h3>
-                        <div class="grid grid-cols-2 gap-3 mb-6" id="amount-selector">
-                            <button onclick="selectAmount(20)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$20</button>
-                            <button onclick="selectAmount(50)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$50</button>
-                            <button onclick="selectAmount(100)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$100</button>
-                            <button onclick="selectAmount(200)" class="amount-btn p-4 rounded-xl border-2 border-gray-200 hover:border-red-500 focus:border-red-500 text-lg font-black text-gray-700 transition">$200</button>
-                        </div>
-
-                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center mb-4">
-                            <span class="text-[10px] font-black text-gray-400 uppercase block">Resumen</span>
-                            <div class="text-lg font-bold text-gray-800 mt-1" id="recarga-summary">Selecciona opciones</div>
-                        </div>
-
-                        <button onclick="processRecarga()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 uppercase tracking-widest btn-action flex items-center justify-center gap-2" id="btn-process-recarga">
-                            <i class="fas fa-bolt"></i> ENVIAR RECARGA
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FIADOS -->
-        <div id="view-fiados" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
-            <div class="max-w-6xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-5 rounded-2xl shadow-sm border-l-8 border-red-600">
-                    <div>
-                        <h2 class="text-2xl md:text-3xl font-black font-['Oswald'] text-gray-800 uppercase">Clientes / Fiados</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GESTIÓN DE CUENTAS POR COBRAR</p>
-                    </div>
-                    <!-- El botón de nuevo cliente solo se mostrará al dueño -->
-                    <button id="btn-new-customer" onclick="openModal('customer-add-modal')" class="hidden w-full md:w-auto bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-black transition flex items-center justify-center gap-2 btn-action">
-                        <i class="fas fa-user-plus"></i> NUEVO CLIENTE
-                    </button>
-                </div>
-                
-                <div class="mb-4 relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-customer" oninput="renderCustomers(this.value)" placeholder="BUSCAR CLIENTE..." class="w-full bg-white p-4 pl-12 rounded-xl shadow-sm outline-none font-bold uppercase border-2 border-transparent focus:border-red-300 transition">
-                </div>
-
-                <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Customers rendered here -->
-                </div>
-            </div>
-        </div>
 
         <!-- INVENTARIO -->
         <div id="view-inventory" class="hidden h-full p-4 md:p-6 overflow-y-auto custom-scroll">
@@ -812,25 +728,7 @@ function renderCustomers(search = "") {
     document.getElementById("customers-grid").innerHTML = html;
 
 }
-function deleteCustomer(id){
 
-    if(currentRole !== "owner"){
-        Swal.fire("Acceso denegado", "Solo el dueño puede eliminar fiados", "error");
-        return;
-    }
-
-    Swal.fire({
-        title: "Eliminar cliente",
-        icon: "warning",
-        showCancelButton: true
-    }).then((result)=>{
-        if(result.isConfirmed){
-            db.customers = db.customers.filter(c => c.id !== id);
-            saveData();
-            renderCustomers();
-        }
-    });
-}
         // Cargar datos locales si existen
        function loadData(){
     const saved = localStorage.getItem('pos_data');
@@ -900,34 +798,27 @@ function deleteCustomer(id){
         Swal.fire('Error', 'PIN Incorrecto', 'error');
     }
 }
-
-        function login(role) {
-            localStorage.setItem("role", role);
-            currentRole = role;
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('role-indicator').innerText = role === 'owner' ? 'Dueño' : 'Empleado';
-            document.getElementById('role-indicator').classList.remove('hidden');
-            
-            buildNav();
-            loadData();
-            
-            // Lógica específica por rol
-            if(role === 'employee') {
-                // Empleado NO puede agregar clientes ni FIAR en el POS
-                document.getElementById('btn-new-customer').classList.add('hidden');
-                document.getElementById('btn-checkout-fiado').classList.add('hidden');
-                document.getElementById('btn-checkout-cash').classList.remove('md:col-span-1');
-                document.getElementById('btn-checkout-cash').classList.add('col-span-2');
-                switchView('view-pos'); // Empleado empieza en el POS
-            } else {
-                // Dueño ve todo
-                document.getElementById('btn-new-customer').classList.remove('hidden');
-                document.getElementById('btn-checkout-fiado').classList.remove('hidden');
-                document.getElementById('btn-checkout-cash').classList.add('md:col-span-1');
-                document.getElementById('btn-checkout-cash').classList.remove('col-span-2');
-                switchView('view-dashboard'); // Dueño empieza en dashboard
-            }
-        }
+function login(role) {
+    localStorage.setItem("role", role);
+    currentRole = role;
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.getElementById('role-indicator').innerText = role === 'owner' ? 'Dueño' : 'Empleado';
+    document.getElementById('role-indicator').classList.remove('hidden');
+    
+    buildNav();
+    loadData();
+    
+    // Lógica específica por rol (Limpia de errores de fiado)
+    if(role === 'employee') {
+        document.getElementById('btn-checkout-cash').classList.remove('md:col-span-1');
+        document.getElementById('btn-checkout-cash').classList.add('col-span-2');
+        switchView('view-pos'); // Empleado empieza en el POS
+    } else {
+        document.getElementById('btn-checkout-cash').classList.add('md:col-span-1');
+        document.getElementById('btn-checkout-cash').classList.remove('col-span-2');
+        switchView('view-dashboard'); // Dueño empieza en dashboard
+    }
+}
 
         function logout() {
             currentRole = null;
@@ -938,8 +829,6 @@ function deleteCustomer(id){
         const navItems = [
             { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
             { id: 'view-pos', icon: 'fa-cash-register', text: 'Caja', role: 'all' },
-            { id: 'view-recargas', icon: 'fa-mobile-alt', text: 'Recargas', role: 'all' },
-            { id: 'view-fiados', icon: 'fa-book', text: 'Fiados', role: 'all' },
             { id: 'view-inventory', icon: 'fa-boxes', text: 'Inventario', role: 'owner' }
         ];
 
@@ -967,7 +856,6 @@ function deleteCustomer(id){
             if(activeBtn) activeBtn.classList.add('tab-active');
 
             if(viewId === 'view-dashboard') updateDashboard();
-            if(viewId === 'view-fiados') renderCustomers('');
             if(viewId === 'view-inventory') renderInventory('');
         }
 function sendSummaryWhatsApp(){
@@ -987,15 +875,7 @@ Mes: $${s.month.toFixed(2)}`;
 
     window.open(url, "_blank");
 }
-        // --- DASHBOARD ---
-        function updateDashboard() {
-            if(currentRole !== 'owner') return;
-            document.getElementById('profit-day').innerText = `$${db.dailySales.toFixed(2)}`;
-            const totalFiados = db.customers.reduce((sum, c) => sum + c.debt, 0);
-            document.getElementById('total-fiados').innerText = `$${totalFiados.toFixed(2)}`;
-            const lowStockCount = db.products.filter(p => p.stock < 5).length;
-            document.getElementById('low-stock-count').innerText = lowStockCount;
-        }
+     
 
         function sendReportWhatsApp() {
             const lowStockItems = db.products.filter(p => p.stock < 5);
@@ -1156,34 +1036,27 @@ Mes: $${s.month.toFixed(2)}`;
         // --- CHECKOUT ---
         let checkoutType = 'cash'; 
 
-        function openCheckout(type) {
-            let cart = carts[currentCartIndex];
-            if(cart.length === 0) return Swal.fire('Error', `La caja ${currentCartIndex + 1} está vacía`, 'error');
-            
-            checkoutType = type;
-            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
-            document.getElementById('checkout-total-display').innerText = `$${total.toFixed(2)}`;
-            
-            if(type === 'cash') {
-                document.getElementById('checkout-title').innerText = 'COBRAR EN EFECTIVO';
-                document.getElementById('cash-payment-fields').classList.remove('hidden');
-                document.getElementById('fiado-fields').classList.add('hidden');
-                document.getElementById('cash-received').value = '';
-                document.getElementById('cash-change').innerText = '$0.00';
-            } else {
-                document.getElementById('checkout-title').innerText = 'REGISTRAR FIADO';
-                document.getElementById('cash-payment-fields').classList.add('hidden');
-                document.getElementById('fiado-fields').classList.remove('hidden');
-                
-                const select = document.getElementById('customer-select');
-                select.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
-                    db.customers.map(c => `<option value="${c.id}">${c.name} (Deuda: $${c.debt.toFixed(2)})</option>`).join('');
-            }
-            
-            openModal('checkout-modal');
-            if(type === 'cash') setTimeout(() => document.getElementById('cash-received').focus(), 100);
-        }
-
+       function openCheckout(type) {
+    let cart = carts[currentCartIndex];
+    if(cart.length === 0) return Swal.fire('Error', `La caja ${currentCartIndex + 1} está vacía`, 'error');
+    
+    checkoutType = 'cash'; 
+    const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
+    document.getElementById('checkout-total-display').innerText = `$${total.toFixed(2)}`;
+    
+    document.getElementById('checkout-title').innerText = 'COBRAR EN EFECTIVO';
+    document.getElementById('cash-payment-fields').classList.remove('hidden');
+    
+    // Ocultar modal de fiado solo si aún existe en el HTML
+    const fiadoFields = document.getElementById('fiado-fields');
+    if(fiadoFields) fiadoFields.classList.add('hidden');
+    
+    document.getElementById('cash-received').value = '';
+    document.getElementById('cash-change').innerText = '$0.00';
+    
+    openModal('checkout-modal');
+    setTimeout(() => document.getElementById('cash-received').focus(), 100);
+}
         function calcChange() {
             let cart = carts[currentCartIndex];
             const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
@@ -1201,189 +1074,63 @@ Mes: $${s.month.toFixed(2)}`;
             }
         }
 
-        function finalizeSale(){
-            let cart = carts[currentCartIndex];
-            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
+      function finalizeSale(){
+    let cart = carts[currentCartIndex];
+    const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-            if(total <= 0){
-                Swal.fire("Error","Carrito vacío","error");
-                return;
-            }
-
-            if(window.navigator.vibrate) navigator.vibrate(100);
-            const beep = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
-            beep.play();
-
-            if(checkoutType === 'cash'){
-                const rec = parseFloat(document.getElementById('cash-received').value) || 0;
-                if(rec < total){
-                    Swal.fire("Error","Efectivo insuficiente","error");
-                    return;
-                }
-
-                db.dailySales += total;
-                db.salesHistory.push({
-                    amount: total,
-                    date: new Date().toISOString(),
-                    type: "venta"
-                });
-
-                Swal.fire("Venta exitosa", "Cambio: $" + (rec-total).toFixed(2), "success");
-            }
-
-            if(checkoutType === 'fiado'){
-                const cid = parseInt(document.getElementById('customer-select').value);
-                if(!cid){
-                    Swal.fire("Error","Selecciona cliente","error");
-                    return;
-                }
-
-                const customer = db.customers.find(c=>c.id===cid);
-                customer.debt += total;
-
-                db.salesHistory.push({
-                    amount: total,
-                    date: new Date().toISOString(),
-                    type: "fiado"
-                });
-
-                Swal.fire("Fiado guardado","","success");
-            }
-
-            for(const item of cart){
-                const product = db.products.find(p=>p.id===item.id);
-                if(product){
-                    if(product.stock >= item.qty){
-                        product.stock -= item.qty;
-                    }else{
-                        Swal.fire("Error","Stock insuficiente","error");
-                        return;
-                    }
-                }
-            }
-
-            let sales = JSON.parse(localStorage.getItem("sales")) || [];
-            sales.push({
-                items: cart,
-                total: total,
-                date: new Date().toISOString()
-            });
-            localStorage.setItem("sales",JSON.stringify(sales));
-
-            saveData();
-            clearCart(); // Vacia y renderiza
-            closeModal("checkout-modal");
-        }
-
-        // --- FIADOS Y CLIENTES ---
-        function renderCustomers(query) {
-            const grid = document.getElementById('customers-grid');
-            const q = query.toLowerCase();
-            const results = db.customers.filter(c => c.name.toLowerCase().includes(q));
-            
-            grid.innerHTML = results.map(c => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-black text-gray-800 uppercase">${c.name}</h4>
-                            <div class="bg-gray-100 p-2 rounded-full text-gray-400"><i class="fas fa-user"></i></div>
-                        </div>
-                        <p class="text-[10px] text-gray-500 font-bold mb-4"><i class="fas fa-phone mr-1"></i> ${c.phone || 'Sin número'}</p>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Deuda Total</div>
-                        <div class="text-3xl font-black ${c.debt > 0 ? 'text-red-600' : 'text-emerald-600'} font-['Oswald'] mb-4">$${c.debt.toFixed(2)}</div>
-                        <button onclick="openAbonoModal(${c.id})" class="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl font-bold uppercase text-xs tracking-widest border border-emerald-200 hover:bg-emerald-600 hover:text-white transition btn-action">
-                            ABONAR PAGO
-                        </button>
-                      ${currentRole === "owner" ? `
-<button onclick="deleteCustomer(${c.id})"
-class="bg-red-500 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center mt-2">
-    <i class="fas fa-trash text-xs"></i>
-</button>
-` : ``}
-                    </div>
-                </div>
-            `).join('');
-        }
-function deleteCustomer(id){
-
-    if(currentRole !== "owner"){
-        Swal.fire("Acceso denegado", "Solo el dueño puede eliminar fiados", "error");
+    if(total <= 0){
+        Swal.fire("Error","Carrito vacío","error");
         return;
     }
 
-    Swal.fire({
-        title: "Eliminar cliente",
-        text: "Se eliminará el cliente",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc2626",
-        confirmButtonText: "Eliminar"
-    }).then((result) => {
+    if(window.navigator.vibrate) navigator.vibrate(100);
+    const beep = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
+    beep.play();
 
-        if(result.isConfirmed){
+    // Procesar Efectivo
+    const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+    if(rec < total){
+        Swal.fire("Error","Efectivo insuficiente","error");
+        return;
+    }
 
-            db.customers = db.customers.filter(c => c.id !== id);
-
-            saveData();
-
-            renderCustomers("");
-
-            Swal.fire("Eliminado", "Cliente eliminado correctamente", "success");
-
-        }
-
+    db.dailySales += total;
+    db.salesHistory.push({
+        amount: total,
+        date: new Date().toISOString(),
+        type: "venta"
     });
 
-}
-        function handleCustomerSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('c-name').value;
-            const phone = document.getElementById('c-phone').value;
-            
-            db.customers.push({ id: Date.now(), name, phone, debt: 0 });
-            saveData();
-            closeModal('customer-add-modal');
-            renderCustomers('');
-            Swal.fire('Guardado', 'Cliente registrado correctamente.', 'success');
-            e.target.reset();
-        }
-
-        function openAbonoModal(cid) {
-            const customer = db.customers.find(c => c.id === cid);
-            if(customer.debt <= 0) return Swal.fire('Sin Deuda', 'Este cliente no tiene deudas pendientes.', 'info');
-            
-            document.getElementById('abono-customer-id').value = customer.id;
-            document.getElementById('abono-customer-name').innerText = customer.name;
-            document.getElementById('abono-current-debt').innerText = `$${customer.debt.toFixed(2)}`;
-            document.getElementById('abono-amount').value = '';
-            
-            openModal('abono-modal');
-            setTimeout(() => document.getElementById('abono-amount').focus(), 100);
-        }
-
-        function handleAbonoSubmit(e) {
-            e.preventDefault();
-            const cid = parseInt(document.getElementById('abono-customer-id').value);
-            const amount = parseFloat(document.getElementById('abono-amount').value);
-            
-            const customer = db.customers.find(c => c.id === cid);
-            if(amount > customer.debt) {
-                return Swal.fire('Aviso', 'El abono no puede ser mayor a la deuda.', 'warning');
+    // Descontar Stock
+    for(const item of cart){
+        const product = db.products.find(p=>p.id===item.id);
+        if(product){
+            if(product.stock >= item.qty){
+                product.stock -= item.qty;
+            }else{
+                Swal.fire("Error","Stock insuficiente","error");
+                return;
             }
-
-            customer.debt -= amount;
-            // El abono entra como efectivo a la caja, por lo que suma a las ventas del día
-            db.dailySales += amount; 
-            
-            saveData();
-            closeModal('abono-modal');
-            renderCustomers('');
-            Swal.fire('Éxito', `Abono de $${amount.toFixed(2)} registrado correctamente.`, 'success');
         }
+    }
 
-        // --- INVENTARIO ---
+    // Registrar en el historial de ventas
+    let sales = JSON.parse(localStorage.getItem("sales")) || [];
+    sales.push({
+        items: cart,
+        total: total,
+        date: new Date().toISOString()
+    });
+    localStorage.setItem("sales",JSON.stringify(sales));
+
+    saveData();
+    clearCart(); 
+    closeModal("checkout-modal");
+    
+    Swal.fire("Venta exitosa", "Cambio: $" + (rec-total).toFixed(2), "success");
+}
+    
+        
         function renderInventory(query) {
             const tbody = document.getElementById('inventory-body');
             const q = query.toLowerCase();
@@ -1526,65 +1273,7 @@ function deleteProduct(id){
     });
 
 }
-        // --- RECARGAS ---
-        let recargaData = { company: null, amount: null };
-        function selectCompany(comp) {
-            recargaData.company = comp;
-            document.querySelectorAll('.company-btn').forEach(b => b.classList.remove('border-blue-500', 'border-green-500', 'border-orange-500', 'bg-gray-50'));
-            const colors = { 'Telcel': 'border-blue-500', 'Movistar': 'border-green-500', 'AT&T': 'border-orange-500' };
-            event.currentTarget.classList.add(colors[comp], 'bg-gray-50');
-            updateRecargaSummary();
-        }
-        function selectAmount(amt) {
-            recargaData.amount = amt;
-            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('border-red-500', 'bg-red-50', 'text-red-600'));
-            event.currentTarget.classList.add('border-red-500', 'bg-red-50', 'text-red-600');
-            updateRecargaSummary();
-        }
-        function updateRecargaSummary() {
-            const phone = document.getElementById('recarga-phone').value;
-            let text = '';
-            if(recargaData.company) text += `<span class="text-blue-600">${recargaData.company}</span> `;
-            if(recargaData.amount) text += `| <span class="text-red-600">$${recargaData.amount}</span> `;
-            document.getElementById('recarga-summary').innerHTML = text || 'Selecciona opciones';
-        }
-
-        document.getElementById('recarga-phone').addEventListener('input', updateRecargaSummary);
-
-        function processRecarga() {
-            const phone = document.getElementById('recarga-phone').value;
-            if(!recargaData.company || !recargaData.amount || phone.length !== 10) {
-                return Swal.fire('Error', 'Completa los 3 pasos (Compañía, Número 10 dígitos, Monto)', 'error');
-            }
-
-            Swal.fire({
-                title: 'Confirmar Recarga',
-                html: `¿Enviar <b>$${recargaData.amount}</b> a <b>${recargaData.company}</b><br>al número <b>${phone}</b>?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'Confirmar y Cobrar'
-            }).then((result) => {
-                if(result.isConfirmed) {
-                    db.dailySales += recargaData.amount;
-
-db.salesHistory.push({
-    amount: recargaData.amount,
-    date: new Date().toISOString(),
-    type: "recarga"
-});
-
-saveData();
-                    Swal.fire('Recarga Exitosa', 'Folio: ' + Math.floor(Math.random()*1000000), 'success');
-                    
-                    // Reset formulario recargas
-                    recargaData = { company: null, amount: null };
-                    document.getElementById('recarga-phone').value = '';
-                    document.querySelectorAll('.company-btn, .amount-btn').forEach(b => b.classList.remove('border-blue-500', 'border-green-500', 'border-orange-500', 'border-red-500', 'bg-gray-50', 'bg-red-50', 'text-red-600'));
-                    updateRecargaSummary();
-                }
-            });
-        }
+       
 function getSalesSummary(){
 
     if(!db.salesHistory) return { day:0, week:0, month:0 };
