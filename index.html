@@ -549,6 +549,7 @@
 
     <!-- JAVASCRIPT UNIFICADO Y CORREGIDO -->
     <script>
+        // ESTADO Y VARIABLES GLOBALES
         let currentRole = localStorage.getItem("role") || "owner";
         let db = {
             products: [
@@ -559,8 +560,7 @@
             ],
             dailySales: 0,
             dailyExpenses: 0,
-            salesHistory: [],
-            shift: { active: false, initialCash: 0, startTime: null }
+            salesHistory: []
         };
         let carts = [[], [], []];
         let currentCartIndex = 0;
@@ -722,6 +722,7 @@
 
         function loadData() {
             const savedData = localStorage.getItem("pos_data"); 
+            
             if (savedData) {
                 db = JSON.parse(savedData);
             } else {
@@ -734,7 +735,7 @@
                         { id: 4, code: "75010044", name: "CIGARROS MARLBORO 20S", cost: 50.00, price: 75.00, piecePrice: 4.00, stock: 100, type: "mixto", piecesPerBox: 20 }
                     ],
                     salesHistory: [],
-                    shift: { active: false, initialCash: 0, startTime: null },
+                    shift: { active: false },
                     lastResetDate: ""
                 };
             }
@@ -752,6 +753,7 @@
 
         function saveData(){
             localStorage.setItem("pos_data", JSON.stringify(db));
+            if(window.syncCloud) syncCloud();
         }
 
         function selectRole(role) {
@@ -1106,7 +1108,7 @@
                             Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning');
                             return;
                         }
-                        const exist = cart.find(c => c.id === id && !c.cartItemId);
+                        const exist = cart.find(c => c.id === id);
                         if (exist) {
                             exist.qty += qty;
                         } else {
@@ -1161,26 +1163,28 @@
             document.getElementById('pos-grid').innerHTML = '';
         }
 
-        function changeQty(identifier, delta) {
+        function changeQty(id, delta) {
             let cart = carts[currentCartIndex];
-            const item = cart.find(i => i.cartItemId === identifier || i.id === identifier);
+            const item = cart.find(i => i.id === id || i.cartItemId === id);
+            
             if (!item) return;
 
             item.qty += delta;
+            
             if (item.qty <= 0) {
-                removeFromCart(identifier);
+                removeFromCart(id);
             } else {
                 const product = db.products.find(p => p.id === item.id);
                 if (product && item.qty > product.stock) {
                     item.qty = product.stock;
-                    Swal.fire('Límite', 'No hay más stock disponible', 'warning');
+                    Swal.fire('Límite', 'No hay más stock disponible en inventario', 'warning');
                 }
                 renderCart();
             }
         }
 
         function removeFromCart(identifier){
-            carts[currentCartIndex] = carts[currentCartIndex].filter(p => p.cartItemId !== identifier && p.id !== identifier);
+            carts[currentCartIndex] = carts[currentCartIndex].filter(p => p.id !== identifier && p.cartItemId !== identifier);
             renderCart();
         }
 
@@ -1277,6 +1281,7 @@
 
         function finalizeSale() {
             let cart = carts[currentCartIndex];
+            
             if (cart.length === 0) {
                 Swal.fire("Carrito vacío", "No hay productos en el carrito actual.", "warning");
                 return;
@@ -1284,7 +1289,7 @@
 
             for (const item of cart) {
                 const product = db.products.find(p => p.id === item.id);
-                const requiredStock = item.piecesCount || item.qty;
+                const requiredStock = item.piecesCount ? (item.piecesCount * (item.qty / (item.piecesCount / (item.piecesPerBox || 1)))) : item.qty;
                 if (!product || product.stock < requiredStock) {
                     Swal.fire(
                         "Stock insuficiente", 
@@ -1295,23 +1300,23 @@
                 }
             }
 
-            let totalSale = 0;
+            let totalSaleAmount = 0;
             cart.forEach(item => {
                 const product = db.products.find(p => p.id === item.id);
                 if (product) {
-                    const subtract = item.piecesCount || item.qty;
-                    product.stock -= subtract;
-                    if (product.stock < 0) product.stock = 0;
+                    const deduct = item.piecesCount ? item.piecesCount : item.qty;
+                    product.stock -= deduct;
+                    if(product.stock < 0) product.stock = 0;
                 }
-                totalSale += item.qty * item.price;
+                totalSaleAmount += (item.qty * item.price);
             });
 
-            db.dailySales = (db.dailySales || 0) + totalSale;
+            db.dailySales = (db.dailySales || 0) + totalSaleAmount;
             if(!db.salesHistory) db.salesHistory = [];
             db.salesHistory.push({
                 date: new Date().toISOString(),
-                amount: totalSale,
-                items: JSON.parse(JSON.stringify(cart))
+                amount: totalSaleAmount,
+                items: [...cart]
             });
 
             saveData();
@@ -1460,28 +1465,25 @@
                 return;
             }
 
+            const s = getSalesSummary();
             let today = new Date().toISOString().split("T")[0];
-            let todaySales = (db.salesHistory || []).filter(s => s.date.startsWith(today));
-
-            if(todaySales.length === 0 && db.dailySales === 0){
-                Swal.fire("Sin ventas", "No hay ventas hoy", "info");
-                return;
-            }
-
-            let totalVentas = db.dailySales;
             let totalGanancias = 0;
 
-            todaySales.forEach(sale => {
-                sale.items.forEach(item => {
-                    const product = db.products.find(p => p.id === item.id);
-                    const cost = product ? (product.cost || 0) : 0;
-                    totalGanancias += (item.price - cost) * item.qty;
+            if(db.salesHistory) {
+                db.salesHistory.forEach(sale => {
+                    if(sale.date.startsWith(today)) {
+                        sale.items.forEach(item => {
+                            const prod = db.products.find(p => p.id === item.id);
+                            const cost = prod ? (prod.cost || 0) : 0;
+                            totalGanancias += (item.price - cost) * item.qty;
+                        });
+                    }
                 });
-            });
+            }
 
-            let mensaje = `📊 RESUMEN DEL DÍA - CARLITOS\n\n💰 Ventas totales: $${totalVentas.toFixed(2)}\n📈 Ganancias: $${totalGanancias.toFixed(2)}\n📅 Fecha: ${today}`;
-            let numero = "522371062600";
-            let url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+            let mensaje = `📊 RESUMEN DEL DÍA - CARLITOS\n\n💰 Ventas totales: $${s.day.toFixed(2)}\n📈 Ganancias aprox: $${totalGanancias.toFixed(2)}\n📅 Fecha: ${today}`;
+            let numero = "5212371062600";
+            let url = `https://wa.me/${numero}?text=` + encodeURIComponent(mensaje);
             window.open(url, "_blank");
         }
 
