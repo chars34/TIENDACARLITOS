@@ -165,11 +165,11 @@
                     <button onclick="backupData()" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
                         <i class="fas fa-cloud-upload-alt"></i> Respaldar
                     </button>
-               <button onclick="document.getElementById('restore-file-input').click()" class="bg-amber-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-amber-700 transition-all active:scale-95 flex items-center gap-2">
-        <i class="fas fa-cloud-download-alt"></i> Restaurar Respaldo
-    </button>
-    <input type="file" id="restore-file-input" accept=".json" class="hidden" onchange="restoreData(event)">
-</div>
+                    <button onclick="document.getElementById('restore-file-input').click()" class="bg-amber-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-amber-700 transition-all active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-cloud-download-alt"></i> Restaurar Respaldo
+                    </button>
+                    <input type="file" id="restore-file-input" accept=".json" class="hidden" onchange="restoreData(event)">
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <button onclick="sendReportWhatsApp()" class="bg-gradient-to-br from-green-500 to-green-600 text-white p-5 rounded-2xl font-bold shadow-lg shadow-green-500/30 flex flex-col items-center justify-center gap-3 btn-action border border-green-400/50">
@@ -312,30 +312,42 @@
                         </button>
                     </div>
                 </div>
-                
-                <div class="p-6 bg-white border-b border-gray-100">
-                    <div class="relative max-w-xl">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400 text-lg"></i>
-                        </div>
-                        <input type="text" id="search-inventory" oninput="renderInventory(this.value)" placeholder="Buscar por código o nombre..." class="w-full bg-gray-50 p-4 pl-12 rounded-2xl outline-none font-bold text-gray-700 border-2 border-gray-100 focus:border-red-400 focus:ring-4 focus:ring-red-500/10 transition-all text-sm">
-                    </div>
-                </div>
 
-                <div class="overflow-x-auto flex-1">
-                    <table class="w-full min-w-[800px] text-left border-collapse">
-                        <thead class="bg-gray-50/80 text-gray-500 text-xs font-black uppercase tracking-widest border-b border-gray-200">
-                            <tr>
-                                <th class="p-5 w-24 text-center">Código</th>
-                                <th class="p-5">Producto</th>
-                                <th class="p-5 text-right">Costo</th>
-                                <th class="p-5 text-right">Precio Venta</th>
-                                <th class="p-5 text-center">Stock</th>
-                                <th class="p-5 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-body" class="divide-y divide-gray-100 bg-white text-sm font-medium text-gray-700"></tbody>
-                    </table>
+                <div class="p-6 md:p-8 space-y-6">
+                    <!-- Tarjetas de Resumen de Inventario -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="inventory-stats"></div>
+
+                    <!-- Controles de Búsqueda, Escaneo y Filtro Rápido -->
+                    <div class="flex flex-wrap gap-3 items-center justify-between">
+                        <div class="relative flex-1 min-w-[280px]">
+                            <input type="text" id="inventorySearchInput" oninput="renderInventory()" placeholder="Buscar por código o nombre..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 font-bold text-gray-700 text-sm">
+                            <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="openScanner('inventory')" class="bg-gray-800 text-white px-5 py-3 rounded-xl font-bold hover:bg-gray-900 transition flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center">
+                                <i class="fas fa-camera"></i> Escanear
+                            </button>
+                            <button onclick="toggleLowStockFilter()" id="lowStockFilterBtn" class="bg-gray-100 text-gray-700 px-5 py-3 rounded-xl font-bold hover:bg-gray-200 transition flex items-center gap-2 flex-1 sm:flex-none justify-center">
+                                <i class="fas fa-filter text-amber-500"></i> Filtrar Stock Bajo (&le; 3)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[800px] text-left border-collapse">
+                            <thead class="bg-gray-50/80 text-gray-500 text-xs font-black uppercase tracking-widest border-b border-gray-200">
+                                <tr>
+                                    <th class="p-5 w-24 text-center">Código</th>
+                                    <th class="p-5">Producto</th>
+                                    <th class="p-5 text-right">Costo</th>
+                                    <th class="p-5 text-right">Precio Venta</th>
+                                    <th class="p-5 text-center">Stock</th>
+                                    <th class="p-5 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-body" class="divide-y divide-gray-100 bg-white text-sm font-medium text-gray-700"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -482,10 +494,26 @@
                 </div>
                 <div>
                     <label class="text-xs font-black text-gray-500 uppercase ml-2 block mb-2 tracking-wide">Tipo de Venta</label>
-                    <select id="p-type" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400 focus:ring-4 focus:ring-red-500/10 transition-all">
+                    <select id="p-type" onchange="toggleMixedFields()" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400 focus:ring-4 focus:ring-red-500/10 transition-all">
                         <option value="pieza">Por Pieza / Paquete</option>
                         <option value="granel">A Granel (Kilos / Litros)</option>
+                        <option value="mixto">Mixto (Caja / Pieza)</option>
                     </select>
+                </div>
+
+                <!-- Campos adicionales para tipo mixto -->
+                <div id="mixed-fields" class="hidden grid grid-cols-2 gap-5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
+                    <div>
+                        <label class="text-xs font-black text-amber-800 uppercase ml-2 block mb-2 tracking-wide">Precio por Pieza</label>
+                        <div class="relative group">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600 font-bold">$</span>
+                            <input type="number" id="p-piece-price" step="0.01" min="0" placeholder="0.00" class="w-full p-3 pl-10 bg-white border-2 border-amber-200 rounded-xl font-bold text-lg text-amber-800 outline-none focus:border-amber-500 text-right">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-black text-amber-800 uppercase ml-2 block mb-2 tracking-wide">Piezas por Caja</label>
+                        <input type="number" id="p-pieces-per-box" min="1" placeholder="20" class="w-full p-3 bg-white border-2 border-amber-200 rounded-xl font-bold text-lg text-amber-800 outline-none focus:border-amber-500 text-center">
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-5">
@@ -519,7 +547,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT CORREGIDO Y UNIFICADO -->
+    <!-- JAVASCRIPT UNIFICADO Y CORREGIDO -->
     <script>
         // ESTADO Y VARIABLES GLOBALES
         let currentRole = localStorage.getItem("role") || "owner";
@@ -527,7 +555,8 @@
             products: [
                 { id: 1, code: "75010011", name: "COCA COLA 600ML", cost: 12.00, price: 18.00, stock: 24, type: "pieza" },
                 { id: 2, code: "75010022", name: "SABRITAS SAL 40G", cost: 10.00, price: 16.00, stock: 3, type: "pieza" },
-                { id: 3, code: "75010033", name: "LECHE LALA 1L", cost: 20.00, price: 26.00, stock: 12, type: "pieza" }
+                { id: 3, code: "75010033", name: "LECHE LALA 1L", cost: 20.00, price: 26.00, stock: 12, type: "pieza" },
+                { id: 4, code: "75010044", name: "CIGARROS MARLBORO 20S", cost: 50.00, price: 75.00, piecePrice: 4.00, stock: 100, type: "mixto", piecesPerBox: 20 }
             ],
             dailySales: 0,
             dailyExpenses: 0,
@@ -537,33 +566,128 @@
         let currentCartIndex = 0;
         let selectedRoleAttempt = null;
         let html5QrCode;
-function restoreData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+        let showOnlyLowStock = false;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedData = JSON.parse(e.target.result);
-            db = importedData;
-            saveData();
-            updateDashboard();
-            renderCashCutView();
-            Swal.fire({
-                icon: 'success',
-                title: '¡Copia restaurada con éxito!',
-                text: 'Los datos del sistema se han actualizado correctamente.',
-                confirmButtonColor: '#16a34a'
-            }).then(() => {
-                location.reload();
-            });
-        } catch (error) {
-            Swal.fire('Error', 'El archivo no es un JSON válido o está corrupto.', 'error');
+        function toggleLowStockFilter() {
+            showOnlyLowStock = !showOnlyLowStock;
+            const btn = document.getElementById('lowStockFilterBtn');
+            if (showOnlyLowStock) {
+                btn.className = "bg-amber-500 text-white px-5 py-3 rounded-xl font-bold hover:bg-amber-600 transition flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center";
+            } else {
+                btn.className = "bg-gray-100 text-gray-700 px-5 py-3 rounded-xl font-bold hover:bg-gray-200 transition flex items-center gap-2 flex-1 sm:flex-none justify-center";
+            }
+            renderInventory();
         }
-    };
-    reader.readAsText(file);
-}
-        // FUNCIONES DE UTILIDAD
+
+        function adjustStock(id, change) {
+            const product = db.products.find(p => p.id === id);
+            if (product) {
+                product.stock = (product.stock || 0) + change;
+                if (product.stock < 0) product.stock = 0;
+                saveData();
+                renderInventory();
+                updateDashboard();
+            }
+        }
+
+        function renderInventory() {
+            const searchText = document.getElementById('inventorySearchInput')?.value.toLowerCase() || "";
+            const tbody = document.getElementById('inventory-body');
+            const statsContainer = document.getElementById('inventory-stats');
+            
+            if (!tbody) return;
+
+            let filteredProducts = db.products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchText) || (p.code && p.code.toLowerCase().includes(searchText));
+                const matchesLowStock = showOnlyLowStock ? p.stock <= 3 : true;
+                return matchesSearch && matchesLowStock;
+            });
+
+            let totalUnique = db.products.length;
+            let totalInvestment = db.products.reduce((acc, p) => acc + ((p.cost || 0) * (p.stock || 0)), 0);
+            let totalProjected = db.products.reduce((acc, p) => acc + ((p.price || 0) * (p.stock || 0)), 0);
+
+            if (statsContainer) {
+                statsContainer.innerHTML = `
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold"><i class="fas fa-boxes"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Productos Únicos</p>
+                            <h4 class="text-xl font-black text-gray-800">${totalUnique}</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold"><i class="fas fa-wallet"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Inversión (Costo)</p>
+                            <h4 class="text-xl font-black text-gray-800">$${totalInvestment.toFixed(2)}</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold"><i class="fas fa-cash-register"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Valor Venta Proyectado</p>
+                            <h4 class="text-xl font-black text-gray-800">$${totalProjected.toFixed(2)}</h4>
+                        </div>
+                    </div>
+                `;
+            }
+
+            tbody.innerHTML = filteredProducts.map(p => {
+                let stockBadgeClass = "bg-emerald-100 text-emerald-700";
+                let stockIcon = "";
+                if (p.stock <= 3) {
+                    stockBadgeClass = "bg-amber-100 text-amber-800 font-bold";
+                    stockIcon = " ⚠️";
+                }
+
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="py-4 px-4 text-gray-600 font-mono text-sm text-center">${p.code || 'N/A'}</td>
+                        <td class="py-4 px-4 font-bold text-gray-800 uppercase">${p.name}</td>
+                        <td class="py-4 px-4 text-right text-gray-400 font-medium">$${Number(p.cost || 0).toFixed(2)}</td>
+                        <td class="py-4 px-4 text-right font-black text-red-600 text-base">$${Number(p.price || 0).toFixed(2)}</td>
+                        <td class="py-4 px-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-sm ${stockBadgeClass}">${p.stock}${stockIcon}</span>
+                        </td>
+                        <td class="py-4 px-4 text-center flex items-center justify-center gap-2">
+                            <button onclick="adjustStock(${p.id}, 1)" title="Aumentar Stock (+1)" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center">+</button>
+                            <button onclick="adjustStock(${p.id}, -1)" title="Reducir Stock (-1)" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center">-</button>
+                            <button onclick="editProduct(${p.id})" title="Editar producto" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white w-8 h-8 rounded-lg transition flex items-center justify-center"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteProduct(${p.id})" title="Eliminar producto" class="bg-gray-100 text-gray-500 hover:bg-red-600 hover:text-white w-8 h-8 rounded-lg transition flex items-center justify-center"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    db = importedData;
+                    saveData();
+                    updateDashboard();
+                    renderCashCutView();
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Copia restaurada con éxito!',
+                        text: 'Los datos del sistema se han actualizado correctamente.',
+                        confirmButtonColor: '#16a34a'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } catch (error) {
+                    Swal.fire('Error', 'El archivo no es un JSON válido o está corrupto.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
         function showNotification(text, color="green"){
             const old = document.getElementById("pos-notification");
             if(old) old.remove();
@@ -596,11 +720,6 @@ function restoreData(event) {
             }, 2500);
         }
 
-        function obtenerFechaHoy(){
-            const hoy = new Date();
-            return hoy.getFullYear()+"-"+(hoy.getMonth()+1)+"-"+hoy.getDate();
-        }
-
         function loadData() {
             const savedData = localStorage.getItem("pos_data"); 
             
@@ -612,7 +731,8 @@ function restoreData(event) {
                     products: [
                         { id: 1, code: "75010011", name: "COCA COLA 600ML", cost: 12.00, price: 18.00, stock: 24, type: "pieza" },
                         { id: 2, code: "75010022", name: "SABRITAS SAL 40G", cost: 10.00, price: 16.00, stock: 3, type: "pieza" },
-                        { id: 3, code: "75010033", name: "LECHE LALA 1L", cost: 20.00, price: 26.00, stock: 12, type: "pieza" }
+                        { id: 3, code: "75010033", name: "LECHE LALA 1L", cost: 20.00, price: 26.00, stock: 12, type: "pieza" },
+                        { id: 4, code: "75010044", name: "CIGARROS MARLBORO 20S", cost: 50.00, price: 75.00, piecePrice: 4.00, stock: 100, type: "mixto", piecesPerBox: 20 }
                     ],
                     salesHistory: [],
                     shift: { active: false },
@@ -621,15 +741,12 @@ function restoreData(event) {
             }
 
             const today = new Date().toISOString().split('T')[0];
-            
             if (db.lastResetDate !== today) {
                 db.dailySales = 0;
                 db.lastResetDate = today;
-                
                 if (db.shift) {
                     db.shift.active = false; 
                 }
-                
                 saveData();
             }
         }
@@ -639,7 +756,6 @@ function restoreData(event) {
             if(window.syncCloud) syncCloud();
         }
 
-        // SISTEMA DE INICIO DE SESIÓN
         function selectRole(role) {
             selectedRoleAttempt = role;
             document.getElementById('role-selection').classList.add('hidden');
@@ -711,7 +827,6 @@ function restoreData(event) {
             backToRoles();
         }
 
-        // NAVEGACIÓN Y VISTAS
         const navItems = [
             { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
             { id: 'view-pos', icon: 'fa-shopping-cart', text: 'Caja', role: 'all' },
@@ -740,7 +855,7 @@ function restoreData(event) {
             if(activeBtn) activeBtn.classList.add('tab-active');
 
             if(viewId === 'view-dashboard') updateDashboard();
-            if(viewId === 'view-inventory') renderInventory('');
+            if(viewId === 'view-inventory') renderInventory();
             if(viewId === 'view-cash-cut') renderCashCutView();
         }
 
@@ -759,7 +874,6 @@ function restoreData(event) {
             });
         }
 
-        // DASHBOARD
         function updateDashboard() {
             document.getElementById('profit-day').innerText = `$${(db.dailySales || 0).toFixed(2)}`;
             document.getElementById('expenses-day').innerText = `$${(db.dailyExpenses || 0).toFixed(2)}`;
@@ -768,35 +882,21 @@ function restoreData(event) {
             document.getElementById('low-stock-count').innerText = lowStockCount;
         }
 
-        // INVENTARIO
-        function renderInventory(query) {
-            const tbody = document.getElementById('inventory-body');
-            const q = query.toLowerCase();
-            const results = db.products.filter(p => p.name.toLowerCase().includes(q) || p.code.includes(q));
-            
-            tbody.innerHTML = results.map(p => `
-                <tr class="hover:bg-gray-50/80 transition-colors border-b border-gray-50 last:border-0">
-                    <td class="p-5 font-mono text-xs text-gray-500">${p.code}</td>
-                    <td class="p-5 font-bold uppercase text-gray-800">${p.name}</td>
-                    <td class="p-5 text-right text-gray-400 font-medium">$${p.cost.toFixed(2)}</td>
-                    <td class="p-5 text-right font-black text-red-600 text-base">$${p.price.toFixed(2)}</td>
-                    <td class="p-5 text-center">
-                        <span class="${p.stock < 5 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'} px-4 py-1.5 rounded-xl text-xs font-black shadow-sm inline-block min-w-[3rem]">
-                            ${p.stock}
-                        </span>
-                    </td>
-                    <td class="p-5 text-center">
-                        <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors mx-1"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors mx-1"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+        function toggleMixedFields() {
+            const type = document.getElementById('p-type').value;
+            const mixedFields = document.getElementById('mixed-fields');
+            if (type === 'mixto') {
+                mixedFields.classList.remove('hidden');
+            } else {
+                mixedFields.classList.add('hidden');
+            }
         }
 
         function openProductModal() {
             document.getElementById('product-form').reset();
             document.getElementById('p-id').value = '';
             document.getElementById('p-type').value = 'pieza';
+            toggleMixedFields();
             document.getElementById('modal-title-text').innerText = 'NUEVO PRODUCTO';
             openModal('product-modal');
         }
@@ -809,7 +909,10 @@ function restoreData(event) {
             document.getElementById('p-cost').value = p.cost;
             document.getElementById('p-price').value = p.price;
             document.getElementById('p-stock').value = p.stock;
-            document.getElementById('p-type').value = p.type || 'pieza'; 
+            document.getElementById('p-type').value = p.type || 'pieza';
+            document.getElementById('p-piece-price').value = p.piecePrice || 0;
+            document.getElementById('p-pieces-per-box').value = p.piecesPerBox || 1;
+            toggleMixedFields();
             document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
             openModal('product-modal');
         }
@@ -824,6 +927,8 @@ function restoreData(event) {
             const price = parseFloat(document.getElementById('p-price').value);
             const stock = parseFloat(document.getElementById('p-stock').value);
             const type = document.getElementById('p-type').value;
+            const piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
+            const piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 1;
 
             if(!code || !name){
                 Swal.fire("Error","Completa todos los campos","error");
@@ -837,7 +942,9 @@ function restoreData(event) {
                 cost,
                 price,
                 stock,
-                type 
+                type,
+                piecePrice,
+                piecesPerBox
             };
 
             if(productId){
@@ -849,7 +956,7 @@ function restoreData(event) {
 
             saveData();
             closeModal('product-modal');
-            renderInventory("");
+            renderInventory();
             updateDashboard();
             Swal.fire({ icon:"success", title:"Producto guardado", timer:1200, showConfirmButton:false });
         }
@@ -865,14 +972,13 @@ function restoreData(event) {
                 if(result.isConfirmed){
                     db.products = db.products.filter(p => Number(p.id) !== Number(id));
                     saveData();
-                    renderInventory("");
+                    renderInventory();
                     updateDashboard();
                     Swal.fire("Eliminado", "Producto eliminado correctamente", "success");
                 }
             });
         }
 
-        // PUNTO DE VENTA Y CARRITO
         function searchProductPOS(query) {
             const grid = document.getElementById('pos-grid');
             if(!query.trim()) {
@@ -909,7 +1015,7 @@ function restoreData(event) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Acceso Denegado',
-                    text: 'Debes iniciar tu turno en la sección "Turno" antes de poder vender.',
+                    text: 'Debes iniciar tu turno antes de poder vender.',
                     confirmButtonColor: '#dc2626'
                 });
                 switchView('view-cash-cut');
@@ -918,9 +1024,40 @@ function restoreData(event) {
 
             let cart = carts[currentCartIndex];
             const product = db.products.find(p => p.id === id);
-            if(!product) return;
-            if(product.stock <= 0) {
+            if (!product) return;
+
+            if (product.stock <= 0) {
                 Swal.fire('Sin Stock', 'No hay unidades disponibles', 'error');
+                return;
+            }
+
+            if (product.type === 'mixto') {
+                Swal.fire({
+                    title: product.name,
+                    text: '¿Cómo desea vender este producto?',
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: `Caja ($${product.price})`,
+                    denyButtonText: `Pieza suelta ($${product.piecePrice})`,
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc2626',
+                    denyButtonColor: '#2563eb'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const qtyPieces = product.piecesPerBox || 1;
+                        if (qtyPieces > product.stock) {
+                            Swal.fire('Stock Insuficiente', `No hay suficientes piezas para completar una caja (Quedan ${product.stock})`, 'warning');
+                            return;
+                        }
+                        addItemToCartReal(cart, product, 1, product.price, qtyPieces, 'Caja');
+                    } else if (result.isDenied) {
+                        if (1 > product.stock) {
+                            Swal.fire('Sin Stock', 'No hay piezas disponibles', 'warning');
+                            return;
+                        }
+                        addItemToCartReal(cart, product, 1, product.piecePrice, 1, 'Pieza');
+                    }
+                });
                 return;
             }
 
@@ -985,7 +1122,7 @@ function restoreData(event) {
                 return;
             }
 
-            const exist = cart.find(c => c.id === id);
+            const exist = cart.find(c => c.id === id && !c.cartItemId);
             if(exist) {
                 if(exist.qty >= product.stock) {
                     Swal.fire('Límite', 'No hay más stock disponible', 'warning');
@@ -994,6 +1131,32 @@ function restoreData(event) {
                 exist.qty++;
             } else {
                 cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
+            document.getElementById('barcode-scanner').value = '';
+            document.getElementById('pos-grid').innerHTML = '';
+        }
+
+        function addItemToCartReal(cart, product, quantity, salePrice, piecesToSubtract, presentation) {
+            const cartItemId = `${product.id}_${presentation}`;
+            const exist = cart.find(c => c.cartItemId === cartItemId);
+
+            if (exist) {
+                if ((exist.piecesCount + piecesToSubtract) > product.stock) {
+                    Swal.fire('Límite', 'No hay más stock disponible en inventario', 'warning');
+                    return;
+                }
+                exist.qty += quantity;
+                exist.piecesCount += piecesToSubtract;
+            } else {
+                cart.push({
+                    ...product,
+                    cartItemId: cartItemId,
+                    name: `${product.name} (${presentation})`,
+                    price: salePrice,
+                    qty: quantity,
+                    piecesCount: piecesToSubtract
+                });
             }
             renderCart();
             document.getElementById('barcode-scanner').value = '';
@@ -1147,8 +1310,9 @@ function restoreData(event) {
             for(const item of cart){
                 const product = db.products.find(p=>p.id===item.id);
                 if(product){
-                    if(product.stock >= item.qty){
-                        product.stock -= item.qty;
+                    const totalPiecesToDeduct = item.piecesCount || item.qty;
+                    if(product.stock >= totalPiecesToDeduct){
+                        product.stock -= totalPiecesToDeduct;
                     }else{
                         Swal.fire("Error","Stock insuficiente","error");
                         return;
@@ -1268,7 +1432,6 @@ function restoreData(event) {
             else diffDisplay.className = 'text-2xl font-black text-emerald-500';
         }
 
-        // REPORTES
         function getSalesSummary(){
             if(!db.salesHistory) return { day:0, week:0, month:0 };
             const today = new Date();
@@ -1348,7 +1511,6 @@ function restoreData(event) {
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // CONTROL DE MODALES Y CÁMARA
         function openModal(id) { 
             const modal = document.getElementById(id);
             modal.classList.remove('hidden'); 
@@ -1375,6 +1537,10 @@ function restoreData(event) {
                     if(context === "pos") {
                         document.getElementById("barcode-scanner").value = decodedText;
                         searchProductPOS(decodedText);
+                    }
+                    if(context === "inventory") {
+                        document.getElementById("inventorySearchInput").value = decodedText;
+                        renderInventory();
                     }
                     closeScanner();
                 },
@@ -1409,13 +1575,12 @@ function restoreData(event) {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString('es-MX', { hour12: false });
         }, 1000);
 
-   document.addEventListener("DOMContentLoaded",()=>{
-    loadData();
-    // Se elimina el inicio de sesión automático para forzar el pedido de contraseña
-    localStorage.removeItem("role");
-    updateDashboard();
-    renderCashCutView();
-});
+        document.addEventListener("DOMContentLoaded",()=>{
+            loadData();
+            localStorage.removeItem("role");
+            updateDashboard();
+            renderCashCutView();
+        });
     </script>
 </body>
 </html>
