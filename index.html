@@ -14,6 +14,34 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     
+    <!-- FIREBASE SDKs (CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",
+            authDomain: "tiendacarlitos-a5b1d.firebaseapp.com",
+            projectId: "tiendacarlitos-a5b1d",
+            storageBucket: "tiendacarlitos-a5b1d.firebasestorage.app",
+            messagingSenderId: "653941208919",
+            appId: "1:653941208919:web:42bb4150ccc3f558f53012",
+            measurementId: "G-RKZJMETTW7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const dbFirestore = getFirestore(app);
+
+        window.firebaseDb = dbFirestore;
+        window.firebaseDoc = doc;
+        window.firebaseGetDoc = getDoc;
+        window.firebaseSetDoc = setDoc;
+
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;500;600;700;800&family=Courier+Prime&display=swap');
         
@@ -314,10 +342,8 @@
                 </div>
 
                 <div class="p-6 md:p-8 space-y-6">
-                    <!-- Tarjetas de Resumen de Inventario -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="inventory-stats"></div>
 
-                    <!-- Controles de Búsqueda, Escaneo y Filtro Rápido -->
                     <div class="flex flex-wrap gap-3 items-center justify-between">
                         <div class="relative flex-1 min-w-[280px]">
                             <input type="text" id="inventorySearchInput" oninput="renderInventory()" placeholder="Buscar por código o nombre..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 font-bold text-gray-700 text-sm">
@@ -501,7 +527,6 @@
                     </select>
                 </div>
 
-                <!-- Campos adicionales para tipo mixto -->
                 <div id="mixed-fields" class="hidden grid grid-cols-2 gap-5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
                     <div>
                         <label class="text-xs font-black text-amber-800 uppercase ml-2 block mb-2 tracking-wide">Precio por Pieza</label>
@@ -547,9 +572,8 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT UNIFICADO Y CORREGIDO -->
+    <!-- JAVASCRIPT UNIFICADO Y CONECTADO A FIREBASE -->
     <script>
-        // ESTADO Y VARIABLES GLOBALES
         let currentRole = localStorage.getItem("role") || "owner";
         let db = {
             products: [
@@ -720,12 +744,26 @@
             }, 2500);
         }
 
-        function loadData() {
+        async function loadData() {
             const savedData = localStorage.getItem("pos_data"); 
-            
             if (savedData) {
                 db = JSON.parse(savedData);
-            } else {
+            }
+
+            if (window.firebaseDb) {
+                try {
+                    const docRef = window.firebaseDoc(window.firebaseDb, "config", "pos_state");
+                    const docSnap = await window.firebaseGetDoc(docRef);
+                    if (docSnap.exists()) {
+                        db = docSnap.data();
+                        localStorage.setItem("pos_data", JSON.stringify(db));
+                    }
+                } catch (e) {
+                    console.error("Error al cargar desde Firestore:", e);
+                }
+            }
+
+            if (!db || !db.products) {
                 db = {
                     dailySales: 0,
                     products: [
@@ -749,11 +787,20 @@
                 }
                 saveData();
             }
+            updateDashboard();
+            renderInventory();
         }
 
-        function saveData(){
+        async function saveData(){
             localStorage.setItem("pos_data", JSON.stringify(db));
-            if(window.syncCloud) syncCloud();
+            if (window.firebaseDb) {
+                try {
+                    const docRef = window.firebaseDoc(window.firebaseDb, "config", "pos_state");
+                    await window.firebaseSetDoc(docRef, db);
+                } catch (e) {
+                    console.error("Error al guardar en Firestore:", e);
+                }
+            }
         }
 
         function selectRole(role) {
@@ -1571,10 +1618,17 @@
             document.getElementById('clock').innerText = new Date().toLocaleTimeString('es-MX', { hour12: false });
         }, 1000);
 
-        document.addEventListener("DOMContentLoaded",()=>{
-            loadData();
+        window.addEventListener("DOMContentLoaded", async () => {
             localStorage.removeItem("role");
+            await loadData();
             updateDashboard();
+            renderCashCutView();
+        });
+
+        window.addEventListener("firebase-ready", async () => {
+            await loadData();
+            updateDashboard();
+            renderInventory();
             renderCashCutView();
         });
     </script>
