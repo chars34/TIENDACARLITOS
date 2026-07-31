@@ -255,12 +255,16 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
                     <h3 class="font-bold text-xs tracking-widest uppercase"><i class="fas fa-shopping-basket mr-2 text-red-400"></i> CARRITO</h3>
                     <button onclick="clearCart()" class="text-[10px] bg-red-600/80 px-3 py-1.5 rounded font-bold hover:bg-red-600 transition">VACIAR</button>
                 </div>
-                
+                <!-- TABS DE CAJAS MULTIPLES -->
+                <div class="flex bg-gray-200 border-b border-gray-300 shadow-inner" id="cart-tabs">
+                    <button onclick="switchCart(0)" id="tab-cart-0" class="flex-1 py-2 text-[10px] md:text-xs font-bold text-red-600 bg-white border-b-2 border-red-600 transition flex items-center justify-center">CAJA 1</button>
+                    <button onclick="switchCart(1)" id="tab-cart-1" class="flex-1 py-2 text-[10px] md:text-xs font-bold text-gray-500 border-b-2 border-transparent hover:bg-gray-100 transition flex items-center justify-center">CAJA 2</button>
+                    <button onclick="switchCart(2)" id="tab-cart-2" class="flex-1 py-2 text-[10px] md:text-xs font-bold text-gray-500 border-b-2 border-transparent hover:bg-gray-100 transition flex items-center justify-center">CAJA 3</button>
+                </div>
                 <div id="cart-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll bg-gray-50 ticket-font text-xs">
                     <!-- Cart items rendered here -->
                 </div>
-                
-                <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
+             <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
                     <div class="flex justify-between items-end mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
                         <span class="text-gray-500 font-black uppercase text-[10px] tracking-widest">Total a Pagar</span>
                         <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600 leading-none">$0.00</span>
@@ -270,23 +274,9 @@ class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold
                             <i class="fas fa-money-bill-wave text-2xl mb-1 opacity-80"></i> 
                             <span class="text-[10px] tracking-widest">EFECTIVO</span>
                         </button>
-                <div class="p-4 md:p-5 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
-                    <div class="flex justify-between items-end mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div class="flex flex-col">
-                            <span class="text-gray-500 font-black uppercase text-[10px] tracking-widest leading-none mb-1">Total Carrito</span>
-                            <span id="cart-total" class="text-3xl md:text-4xl font-black text-red-600 leading-none">$0.00</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-col gap-2">
-                        <button onclick="openCheckout('cash')" id="btn-checkout-cash" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-3 btn-action border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1">
-                            <i class="fas fa-money-bill-wave text-xl opacity-80"></i> 
-                            <span class="tracking-widest uppercase">COBRAR EFECTIVO</span>
-                        </button>
-
-                        <button onclick="openCheckout('fiado')" id="btn-checkout-fiado" class="w-full bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex items-center justify-center gap-3 btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1">
-                            <i class="fas fa-book text-lg opacity-80"></i> 
-                            <span class="text-xs tracking-widest uppercase">FIAR PRODUCTO</span>
+                        <button onclick="openCheckout('fiado')" class="bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 shadow-sm flex flex-col items-center btn-action border-b-4 border-red-800 active:border-b-0 active:translate-y-1" id="btn-checkout-fiado">
+                            <i class="fas fa-book text-2xl mb-1 opacity-80"></i> 
+                            <span class="text-[10px] tracking-widest">FIAR</span>
                         </button>
                     </div>
                 </div>
@@ -1024,8 +1014,36 @@ Mes: $${s.month.toFixed(2)}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // --- PUNTO DE VENTA (POS) ---
-        let cart = [];
+ // --- PUNTO DE VENTA (POS) ---
+        let carts = [[], [], []]; // 3 Carritos simultáneos
+        let currentCartIndex = 0;
+
+        // Cambiar entre cajas
+        function switchCart(index) {
+            currentCartIndex = index;
+            updateCartTabs();
+            renderCart();
+        }
+
+        // Actualizar diseño de pestañas e indicadores visuales de espera
+        function updateCartTabs() {
+            for (let i = 0; i < 3; i++) {
+                const tab = document.getElementById(`tab-cart-${i}`);
+                if(!tab) continue;
+                
+                const itemsCount = carts[i].reduce((sum, item) => sum + item.qty, 0);
+                // Si la caja tiene artículos, mostramos un globo rojo chiquito
+                const badge = itemsCount > 0 ? `<span class="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full ml-1">${itemsCount}</span>` : '';
+                
+                if (i === currentCartIndex) {
+                    tab.className = 'flex-1 py-2 text-[10px] md:text-xs font-bold text-red-600 bg-white border-b-2 border-red-600 transition flex items-center justify-center';
+                    tab.innerHTML = `CAJA ${i + 1} ${badge}`;
+                } else {
+                    tab.className = 'flex-1 py-2 text-[10px] md:text-xs font-bold text-gray-500 border-b-2 border-transparent hover:bg-gray-100 transition flex items-center justify-center bg-gray-200';
+                    tab.innerHTML = `CAJA ${i + 1} ${badge}`;
+                }
+            }
+        }
 
         function searchProductPOS(query) {
             const grid = document.getElementById('pos-grid');
@@ -1052,6 +1070,7 @@ Mes: $${s.month.toFixed(2)}`;
         }
 
         function addToCart(id) {
+            let cart = carts[currentCartIndex]; // Usa la caja activa
             const product = db.products.find(p => p.id === id);
             if(!product) return;
             if(product.stock <= 0) {
@@ -1070,120 +1089,76 @@ Mes: $${s.month.toFixed(2)}`;
                 cart.push({ ...product, qty: 1 });
             }
             renderCart();
-            // Limpiar búsqueda
             document.getElementById('barcode-scanner').value = '';
             document.getElementById('pos-grid').innerHTML = '';
         }
 
-        function removeFromCart(id) {
-            cart = cart.filter(c => c.id !== id);
+        function renderCart() {
+            let cart = carts[currentCartIndex]; // Usa la caja activa
+            const list = document.getElementById('cart-list');
+            let total = 0;
+            let html = "";
+
+            cart.forEach(item => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                html += `
+                <div class="bg-white p-2 rounded border flex justify-between items-center">
+                    <div class="flex-1">
+                        <div class="font-bold text-xs">${item.name}</div>
+                        <div class="text-gray-500 text-xs">$${item.price.toFixed(2)} c/u</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeQty(${item.id}, -1)" class="bg-gray-200 px-2 rounded font-bold">-</button>
+                        <span class="font-bold">${item.qty}</span>
+                        <button onclick="changeQty(${item.id}, 1)" class="bg-green-500 text-white px-2 rounded font-bold">+</button>
+                        <span class="font-bold w-16 text-right">$${subtotal.toFixed(2)}</span>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 font-bold">🗑</button>
+                    </div>
+                </div>
+                `;
+            });
+
+            list.innerHTML = html || `
+            <div class="text-center text-gray-400 mt-10 font-bold">
+                CAJA ${currentCartIndex + 1} VACÍA
+            </div>
+            `;
+            document.getElementById('cart-total').innerText = "$" + total.toFixed(2);
+            updateCartTabs(); // Actualiza burbujas
+        }
+
+        function changeQty(id, amount){
+            let cart = carts[currentCartIndex];
+            const item = cart.find(p => p.id === id);
+            if(!item) return;
+            const product = db.products.find(p => p.id === id);
+
+            item.qty += amount;
+            if(item.qty <= 0){
+                removeFromCart(id);
+                return;
+            }
+            if(item.qty > product.stock) item.qty = product.stock;
             renderCart();
         }
 
-    function renderCart() {
+        function removeFromCart(id){
+            carts[currentCartIndex] = carts[currentCartIndex].filter(p => p.id !== id);
+            renderCart();
+        }
 
-    const list = document.getElementById('cart-list');
-    let total = 0;
-
-    let html = "";
-
-    cart.forEach(item => {
-
-        const subtotal = item.qty * item.price;
-        total += subtotal;
-
-        html += `
-        <div class="bg-white p-2 rounded border flex justify-between items-center">
-
-            <div class="flex-1">
-                <div class="font-bold text-xs">${item.name}</div>
-                <div class="text-gray-500 text-xs">
-                    $${item.price.toFixed(2)} c/u
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-
-                <!-- BOTON RESTAR -->
-                <button onclick="changeQty(${item.id}, -1)"
-                class="bg-gray-200 px-2 rounded font-bold">
-                -
-                </button>
-
-                <span class="font-bold">
-                    ${item.qty}
-                </span>
-
-                <!-- BOTON SUMAR -->
-                <button onclick="changeQty(${item.id}, 1)"
-                class="bg-green-500 text-white px-2 rounded font-bold">
-                +
-                </button>
-
-                <!-- SUBTOTAL -->
-                <span class="font-bold w-16 text-right">
-                    $${subtotal.toFixed(2)}
-                </span>
-
-                <!-- ELIMINAR -->
-                <button onclick="removeFromCart(${item.id})"
-                class="text-red-500 font-bold">
-                🗑
-                </button>
-
-            </div>
-
-        </div>
-        `;
-    });
-
-    list.innerHTML = html || `
-    <div class="text-center text-gray-400 mt-10">
-    Carrito vacío
-    </div>
-    `;
-
-    document.getElementById('cart-total').innerText =
-        "$" + total.toFixed(2);
-}
-function changeQty(id, amount){
-
-    const item = cart.find(p => p.id === id);
-
-    if(!item) return;
-
-    const product = db.products.find(p => p.id === id);
-
-    item.qty += amount;
-
-    if(item.qty <= 0){
-
-        removeFromCart(id);
-        return;
-
-    }
-
-    if(item.qty > product.stock){
-
-        item.qty = product.stock;
-
-    }
-
-    renderCart();
-}
-function removeFromCart(id){
-
-    cart = cart.filter(p => p.id !== id);
-
-    renderCart();
-}
-        function clearCart() { cart = []; renderCart(); }
+        function clearCart() { 
+            carts[currentCartIndex] = []; 
+            renderCart(); 
+        }
 
         // --- CHECKOUT ---
-        let checkoutType = 'cash'; // 'cash' o 'fiado'
+        let checkoutType = 'cash'; 
 
         function openCheckout(type) {
-            if(cart.length === 0) return Swal.fire('Error', 'El carrito está vacío', 'error');
+            let cart = carts[currentCartIndex];
+            if(cart.length === 0) return Swal.fire('Error', `La caja ${currentCartIndex + 1} está vacía`, 'error');
             
             checkoutType = type;
             const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
@@ -1200,7 +1175,6 @@ function removeFromCart(id){
                 document.getElementById('cash-payment-fields').classList.add('hidden');
                 document.getElementById('fiado-fields').classList.remove('hidden');
                 
-                // Cargar clientes
                 const select = document.getElementById('customer-select');
                 select.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
                     db.customers.map(c => `<option value="${c.id}">${c.name} (Deuda: $${c.debt.toFixed(2)})</option>`).join('');
@@ -1211,6 +1185,7 @@ function removeFromCart(id){
         }
 
         function calcChange() {
+            let cart = carts[currentCartIndex];
             const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
             const rec = parseFloat(document.getElementById('cash-received').value) || 0;
             const change = rec - total;
@@ -1226,113 +1201,79 @@ function removeFromCart(id){
             }
         }
 
-       function finalizeSale(){
+        function finalizeSale(){
+            let cart = carts[currentCartIndex];
+            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-    const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
-
-    if(total <= 0){
-        Swal.fire("Error","Carrito vacío","error");
-        return;
-    }
-
-    // SONIDO
-    if(window.navigator.vibrate) navigator.vibrate(100);
-
-    const beep = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
-    beep.play();
-
-
-    if(checkoutType === 'cash'){
-
-        const rec = parseFloat(document.getElementById('cash-received').value) || 0;
-
-        if(rec < total){
-            Swal.fire("Error","Efectivo insuficiente","error");
-            return;
-        }
-
-        db.dailySales += total;
-
-        db.salesHistory.push({
-            amount: total,
-            date: new Date().toISOString(),
-            type: "venta"
-        });
-
-        Swal.fire("Venta exitosa",
-        "Cambio: $" + (rec-total).toFixed(2),
-        "success");
-
-    }
-
-
-    if(checkoutType === 'fiado'){
-
-        const cid = parseInt(document.getElementById('customer-select').value);
-
-        if(!cid){
-            Swal.fire("Error","Selecciona cliente","error");
-            return;
-        }
-
-        const customer = db.customers.find(c=>c.id===cid);
-
-        customer.debt += total;
-
-        db.salesHistory.push({
-            amount: total,
-            date: new Date().toISOString(),
-            type: "fiado"
-        });
-
-        Swal.fire("Fiado guardado","","success");
-
-    }
-
-
-    // PROTEGER STOCK
-    for(const item of cart){
-
-        const product = db.products.find(p=>p.id===item.id);
-
-        if(product){
-
-            if(product.stock >= item.qty){
-
-                product.stock -= item.qty;
-
-            }else{
-
-                Swal.fire("Error","Stock insuficiente","error");
+            if(total <= 0){
+                Swal.fire("Error","Carrito vacío","error");
                 return;
-
             }
 
+            if(window.navigator.vibrate) navigator.vibrate(100);
+            const beep = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
+            beep.play();
+
+            if(checkoutType === 'cash'){
+                const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+                if(rec < total){
+                    Swal.fire("Error","Efectivo insuficiente","error");
+                    return;
+                }
+
+                db.dailySales += total;
+                db.salesHistory.push({
+                    amount: total,
+                    date: new Date().toISOString(),
+                    type: "venta"
+                });
+
+                Swal.fire("Venta exitosa", "Cambio: $" + (rec-total).toFixed(2), "success");
+            }
+
+            if(checkoutType === 'fiado'){
+                const cid = parseInt(document.getElementById('customer-select').value);
+                if(!cid){
+                    Swal.fire("Error","Selecciona cliente","error");
+                    return;
+                }
+
+                const customer = db.customers.find(c=>c.id===cid);
+                customer.debt += total;
+
+                db.salesHistory.push({
+                    amount: total,
+                    date: new Date().toISOString(),
+                    type: "fiado"
+                });
+
+                Swal.fire("Fiado guardado","","success");
+            }
+
+            for(const item of cart){
+                const product = db.products.find(p=>p.id===item.id);
+                if(product){
+                    if(product.stock >= item.qty){
+                        product.stock -= item.qty;
+                    }else{
+                        Swal.fire("Error","Stock insuficiente","error");
+                        return;
+                    }
+                }
+            }
+
+            let sales = JSON.parse(localStorage.getItem("sales")) || [];
+            sales.push({
+                items: cart,
+                total: total,
+                date: new Date().toISOString()
+            });
+            localStorage.setItem("sales",JSON.stringify(sales));
+
+            saveData();
+            clearCart(); // Vacia y renderiza
+            closeModal("checkout-modal");
         }
-
-    }
-
-
-    // GUARDAR HISTORIAL
-    let sales = JSON.parse(localStorage.getItem("sales")) || [];
-
-    sales.push({
-        items: cart,
-        total: total,
-        date: new Date().toISOString()
-    });
-
-    localStorage.setItem("sales",JSON.stringify(sales));
-
-
-    saveData();
-
-    clearCart();
-
-    closeModal("checkout-modal");
-
-}
-
 
         // --- FIADOS Y CLIENTES ---
         function renderCustomers(query) {
