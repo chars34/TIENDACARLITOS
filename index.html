@@ -549,7 +549,6 @@
 
     <!-- JAVASCRIPT UNIFICADO Y CORREGIDO -->
     <script>
-        // ESTADO Y VARIABLES GLOBALES
         let currentRole = localStorage.getItem("role") || "owner";
         let db = {
             products: [
@@ -560,7 +559,8 @@
             ],
             dailySales: 0,
             dailyExpenses: 0,
-            salesHistory: []
+            salesHistory: [],
+            shift: { active: false, initialCash: 0, startTime: null }
         };
         let carts = [[], [], []];
         let currentCartIndex = 0;
@@ -722,7 +722,6 @@
 
         function loadData() {
             const savedData = localStorage.getItem("pos_data"); 
-            
             if (savedData) {
                 db = JSON.parse(savedData);
             } else {
@@ -735,7 +734,7 @@
                         { id: 4, code: "75010044", name: "CIGARROS MARLBORO 20S", cost: 50.00, price: 75.00, piecePrice: 4.00, stock: 100, type: "mixto", piecesPerBox: 20 }
                     ],
                     salesHistory: [],
-                    shift: { active: false },
+                    shift: { active: false, initialCash: 0, startTime: null },
                     lastResetDate: ""
                 };
             }
@@ -753,7 +752,6 @@
 
         function saveData(){
             localStorage.setItem("pos_data", JSON.stringify(db));
-            if(window.syncCloud) syncCloud();
         }
 
         function selectRole(role) {
@@ -1108,7 +1106,7 @@
                             Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning');
                             return;
                         }
-                        const exist = cart.find(c => c.id === id);
+                        const exist = cart.find(c => c.id === id && !c.cartItemId);
                         if (exist) {
                             exist.qty += qty;
                         } else {
@@ -1163,23 +1161,26 @@
             document.getElementById('pos-grid').innerHTML = '';
         }
 
-        function changeQty(id, amount){
+        function changeQty(identifier, delta) {
             let cart = carts[currentCartIndex];
-            const item = cart.find(p => p.id === id);
-            if(!item) return;
-            const product = db.products.find(p => p.id === id);
+            const item = cart.find(i => i.cartItemId === identifier || i.id === identifier);
+            if (!item) return;
 
-            item.qty += amount;
-            if(item.qty <= 0){
-                removeFromCart(id);
-                return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                removeFromCart(identifier);
+            } else {
+                const product = db.products.find(p => p.id === item.id);
+                if (product && item.qty > product.stock) {
+                    item.qty = product.stock;
+                    Swal.fire('Límite', 'No hay más stock disponible', 'warning');
+                }
+                renderCart();
             }
-            if(item.qty > product.stock) item.qty = product.stock;
-            renderCart();
         }
 
-        function removeFromCart(id){
-            carts[currentCartIndex] = carts[currentCartIndex].filter(p => p.id !== id);
+        function removeFromCart(identifier){
+            carts[currentCartIndex] = carts[currentCartIndex].filter(p => p.cartItemId !== identifier && p.id !== identifier);
             renderCart();
         }
 
@@ -1219,6 +1220,7 @@
             cart.forEach(item => {
                 const subtotal = item.qty * item.price;
                 total += subtotal;
+                const identifier = item.cartItemId || item.id;
                 html += `
                 <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex-1 pr-2">
@@ -1226,13 +1228,13 @@
                         <div class="text-gray-400 text-xs mt-0.5">$${item.price.toFixed(2)} c/u</div>
                     </div>
                     <div class="flex items-center gap-1 md:gap-2">
-                        <button onclick="changeQty(${item.id}, -1)" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-colors">-</button>
+                        <button onclick="changeQty('${identifier}', -1)" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-colors">-</button>
                         <span class="font-bold px-2 text-center text-gray-800 text-xs">
                             ${item.type === 'granel' ? item.qty.toFixed(3) + ' kg/l' : item.qty}
                         </span>
-                        <button onclick="changeQty(${item.id}, 1)" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-colors">+</button>
+                        <button onclick="changeQty('${identifier}', 1)" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-colors">+</button>
                         <span class="font-black text-red-600 w-16 text-right ml-2 text-sm">$${subtotal.toFixed(2)}</span>
-                        <button onclick="removeFromCart(${item.id})" class="text-gray-400 hover:text-red-500 ml-1 p-1 transition-colors"><i class="fas fa-times-circle text-lg"></i></button>
+                        <button onclick="removeFromCart('${identifier}')" class="text-gray-400 hover:text-red-500 ml-1 p-1 transition-colors"><i class="fas fa-times-circle text-lg"></i></button>
                     </div>
                 </div>
                 `;
@@ -1273,67 +1275,59 @@
             }
         }
 
-        function finalizeSale(){
-            if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
-                closeModal("checkout-modal");
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Acceso Denegado',
-                    text: 'No puedes realizar ventas sin un turno activo.',
-                    confirmButtonColor: '#dc2626'
-                });
-                switchView('view-cash-cut');
-                return;
-            }
-
+        function finalizeSale() {
             let cart = carts[currentCartIndex];
-            const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
-
-            if(total <= 0){
-                Swal.fire("Error","Carrito vacío","error");
+            if (cart.length === 0) {
+                Swal.fire("Carrito vacío", "No hay productos en el carrito actual.", "warning");
                 return;
             }
 
-            const rec = parseFloat(document.getElementById('cash-received').value) || 0;
-            if(rec < total){
-                Swal.fire("Error","Efectivo insuficiente","error");
-                return;
-            }
-
-            db.dailySales += total;
-            db.salesHistory.push({
-                amount: total,
-                date: new Date().toISOString(),
-                type: "venta"
-            });
-
-            for(const item of cart){
-                const product = db.products.find(p=>p.id===item.id);
-                if(product){
-                    const totalPiecesToDeduct = item.piecesCount || item.qty;
-                    if(product.stock >= totalPiecesToDeduct){
-                        product.stock -= totalPiecesToDeduct;
-                    }else{
-                        Swal.fire("Error","Stock insuficiente","error");
-                        return;
-                    }
+            for (const item of cart) {
+                const product = db.products.find(p => p.id === item.id);
+                const requiredStock = item.piecesCount || item.qty;
+                if (!product || product.stock < requiredStock) {
+                    Swal.fire(
+                        "Stock insuficiente", 
+                        `El producto "${product ? product.name : 'desconocido'}" no cuenta con las existencias necesarias.`, 
+                        "error"
+                    );
+                    return;
                 }
             }
 
-            let sales = JSON.parse(localStorage.getItem("sales")) || [];
-            sales.push({
-                items: cart,
-                total: total,
-                date: new Date().toISOString()
+            let totalSale = 0;
+            cart.forEach(item => {
+                const product = db.products.find(p => p.id === item.id);
+                if (product) {
+                    const subtract = item.piecesCount || item.qty;
+                    product.stock -= subtract;
+                    if (product.stock < 0) product.stock = 0;
+                }
+                totalSale += item.qty * item.price;
             });
-            localStorage.setItem("sales", JSON.stringify(sales));
+
+            db.dailySales = (db.dailySales || 0) + totalSale;
+            if(!db.salesHistory) db.salesHistory = [];
+            db.salesHistory.push({
+                date: new Date().toISOString(),
+                amount: totalSale,
+                items: JSON.parse(JSON.stringify(cart))
+            });
 
             saveData();
-            clearCart(); 
-            closeModal("checkout-modal");
+            closeModal('checkout-modal');
+            carts[currentCartIndex] = [];
+            renderCart();
             updateDashboard();
-            
-            Swal.fire("Venta exitosa", "Cambio: $" + (rec-total).toFixed(2), "success");
+            renderInventory();
+
+            Swal.fire({
+                icon: "success",
+                title: "¡Venta Exitosa!",
+                text: "La transacción se ha completado correctamente.",
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
 
         function closeShift() {
@@ -1466,27 +1460,27 @@
                 return;
             }
 
-            let sales = JSON.parse(localStorage.getItem("sales")) || [];
             let today = new Date().toISOString().split("T")[0];
-            let todaySales = sales.filter(s => s.date.startsWith(today));
+            let todaySales = (db.salesHistory || []).filter(s => s.date.startsWith(today));
 
-            if(todaySales.length === 0){
+            if(todaySales.length === 0 && db.dailySales === 0){
                 Swal.fire("Sin ventas", "No hay ventas hoy", "info");
                 return;
             }
 
-            let totalVentas = 0;
+            let totalVentas = db.dailySales;
             let totalGanancias = 0;
 
             todaySales.forEach(sale => {
-                totalVentas += sale.total;
                 sale.items.forEach(item => {
-                    totalGanancias += (item.price - (item.cost || 0)) * item.qty;
+                    const product = db.products.find(p => p.id === item.id);
+                    const cost = product ? (product.cost || 0) : 0;
+                    totalGanancias += (item.price - cost) * item.qty;
                 });
             });
 
             let mensaje = `📊 RESUMEN DEL DÍA - CARLITOS\n\n💰 Ventas totales: $${totalVentas.toFixed(2)}\n📈 Ganancias: $${totalGanancias.toFixed(2)}\n📅 Fecha: ${today}`;
-            let numero = "5212371062600";
+            let numero = "522371062600";
             let url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
             window.open(url, "_blank");
         }
