@@ -1294,7 +1294,7 @@
           if (type === 'mixto') {
               productData.price = parseFloat(document.getElementById('p-price').value) || 0;
               productData.piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
-              productData.piecesPerBox = int(document.getElementById('p-pieces-per-box').value) || 20;
+            productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
           } else {
               productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
               productData.piecePrice = null;
