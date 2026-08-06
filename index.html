@@ -721,11 +721,19 @@
               firebase.initializeApp(firebaseConfig);
               firebaseDb = firebase.database();
               
-              // Escucha activa de cambios en la nube
+             // Escucha activa de cambios en la nube
               firebaseDb.ref('miniSuperDb').on('value', (snapshot) => {
                   const data = snapshot.val();
                   if (data) {
                       db = data;
+                      
+                      // --- ESTA ES LA REPARACIÓN CLAVE ---
+                      // Si Firebase borró los arreglos por estar vacíos, los recreamos
+                      if (!db.products) db.products = [];
+                      if (!db.salesHistory) db.salesHistory = [];
+                      if (!db.shift) db.shift = { active: false };
+                      // ------------------------------------
+
                       localStorage.setItem("pos_data", JSON.stringify(db));
                       updateDashboard();
                       if(selectedInventoryCategory) renderInventory();
@@ -733,7 +741,7 @@
                           searchProductPOS(document.getElementById('barcode-scanner').value);
                       }
                   } else {
-                      // Si la base de datos está vacía, subimos la estructura local inicial
+                      // Si la base de datos está completamente vacía, subimos la estructura local inicial
                       saveData();
                   }
               });
@@ -1266,6 +1274,7 @@
       }
 function handleProductSubmit(event) {
           event.preventDefault();
+          if (!db.products) db.products = [];
           const type = document.getElementById('p-type').value;
           const pid = document.getElementById('p-id').value;
           let stockVal = 0;
