@@ -1264,8 +1264,7 @@
           document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
           openModal('product-modal');
       }
-
-      function handleProductSubmit(event) {
+function handleProductSubmit(event) {
           event.preventDefault();
           const type = document.getElementById('p-type').value;
           const pid = document.getElementById('p-id').value;
@@ -1282,8 +1281,8 @@
 
           const productData = {
               id: pid ? Number(pid) : Date.now(),
-              code: document.getElementById('p-code').value.trim(),
-              name: document.getElementById('p-name').value.trim().toUpperCase(),
+              code: (document.getElementById('p-code').value || '').trim(),
+              name: (document.getElementById('p-name').value || '').trim().toUpperCase(),
               category: document.getElementById('p-category').value,
               type: type,
               cost: parseFloat(document.getElementById('p-cost').value) || 0,
@@ -1294,14 +1293,14 @@
           if (type === 'mixto') {
               productData.price = parseFloat(document.getElementById('p-price').value) || 0;
               productData.piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
-            productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
+              productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
           } else {
               productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
               productData.piecePrice = null;
               productData.piecesPerBox = null;
           }
 
-          const existingIndex = db.products.findIndex(p => p.id === productData.id);
+          const existingIndex = db.products.findIndex(p => Number(p.id) === Number(productData.id));
           if (existingIndex >= 0) {
               db.products[existingIndex] = productData;
           } else {
@@ -1314,22 +1313,6 @@
           closeModal('product-modal');
           Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Producto guardado correctamente', timer: 1500, showConfirmButton: false });
       }
-
-      function deleteProduct(id){
-          Swal.fire({
-              title: "¿Eliminar producto?", icon: "warning", showCancelButton: true,
-              confirmButtonColor: "#dc2626", confirmButtonText: "Sí, eliminar"
-          }).then((result)=>{
-              if(result.isConfirmed){
-                  db.products = db.products.filter(p => Number(p.id) !== Number(id));
-                  saveData();
-                  if(selectedInventoryCategory) renderInventory();
-                  updateDashboard();
-                  Swal.fire("Eliminado", "Producto eliminado correctamente", "success");
-              }
-          });
-      }
-
       function searchProductPOS(query) {
           const grid = document.getElementById('product-grid');
           const emptyState = document.getElementById('empty-state');
