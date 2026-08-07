@@ -869,7 +869,7 @@ body.dark-mode .ticket-font {
                             </optgroup>
                         </select>
                     </div>
-                    <div id="expiry-container" class="hidden">
+                                                        <div id="expiry-container" class="hidden">
                         <label class="text-xs font-black text-gray-500 uppercase ml-2 block mb-2 tracking-wide text-amber-600">
                             <i class="fas fa-calendar-alt"></i> Fecha de Caducidad (Opcional)
                         </label>
@@ -880,15 +880,55 @@ body.dark-mode .ticket-font {
                         <select id="p-type" onchange="toggleMixedFields()" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400 focus:ring-4 focus:ring-red-500/10 transition-all">
                             <option value="pieza">Por Pieza</option>
                             <option value="granel">Por kilos</option>
-                            <option value="mixto">Por Cajetilla / Pieza</option>
+                            <option value="cajapieza">Caja / Pieza</option>
+                            <option value="cajetilla">Cajetilla / Cigarro</option>
                         </select>
                     </div>
                 </div>
+                <!-- BLOQUE DE CONFIGURACIÓN (Textos genéricos para Caja/Pieza) -->
+                <div id="mixed-fields" class="hidden space-y-4 bg-amber-50/60 p-5 rounded-2xl border border-amber-200 shadow-sm">
+                    <div class="text-xs font-black text-amber-900 uppercase tracking-widest flex items-center gap-2 border-b border-amber-200 pb-2">
+                        <i class="fas fa-boxes"></i> Configuración de <span id="mixed-label-title">Caja/pzs</span>
+                    </div>
+                    <!-- 👇 ESTOS 3 INPUTS SE OCULTARÁN SI ES CAJA/PIEZA -->
+                    <div id="mixed-price-fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div id="div-precio-paquete">
+                            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1">Precio x <span id="mixed-label-price-box">Caja</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">$</span>
+                                <input type="number" id="p-price" step="0.01" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-white border-2 border-amber-200 rounded-xl font-black text-amber-900 outline-none focus:border-amber-500 text-right text-base">
+                            </div>
+                        </div>
+                        <div id="div-precio-pieza">
+                            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1">Precio x <span id="mixed-label-piece">Pieza</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">$</span>
+                                <input type="number" id="p-piece-price" step="0.01" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-white border-2 border-amber-200 rounded-xl font-bold text-amber-900 outline-none focus:border-amber-500 text-right text-base">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1"><span id="mixed-label-per-box">pzs por caja</span></label>
+                            <input type="number" id="p-pieces-per-box" min="1" placeholder="24" value="24" class="w-full p-3 bg-white border-2 border-amber-200 rounded-xl font-black text-center text-amber-900 outline-none focus:border-amber-500 text-base">
+                        </div>
+                    </div>
+                    <!-- 👇 CAMPOS DE STOCK (SIEMPRE VISIBLES) -->
+                    <div class="grid grid-cols-2 gap-4 border-t border-amber-200 pt-3">
+                        <div>
+                            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1"><span id="mixed-label-stock-boxes">cajas</span></label>
+                            <input type="number" id="p-stock-boxes" min="0" placeholder="0" class="w-full p-3 bg-white border-2 border-amber-200 rounded-xl font-black text-center text-amber-900 outline-none focus:border-amber-500 text-base">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1"><span id="mixed-label-loose">piezas sueltas</span></label>
+                            <input type="number" id="p-stock-loose" min="0" placeholder="0" class="w-full p-3 bg-white border-2 border-amber-200 rounded-xl font-black text-center text-amber-900 outline-none focus:border-amber-500 text-base">
+                        </div>
+                    </div>
+                </div>
+                <!-- BLOQUE DE CONFIGURACIÓN (Con etiquetas de Cajetilla / Cigarro) -->
                 <div id="mixed-fields" class="hidden space-y-4 bg-amber-50/60 p-5 rounded-2xl border border-amber-200 shadow-sm">
                     <div class="text-xs font-black text-amber-900 uppercase tracking-widest flex items-center gap-2 border-b border-amber-200 pb-2">
                         <i class="fas fa-boxes"></i> Configuración de Cajetilla / Caja
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div id="mixed-price-fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="text-[11px] font-black text-amber-800 uppercase block mb-1">Precio x Cajetilla</label>
                             <div class="relative">
@@ -2381,17 +2421,16 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 return matchesCategory && matchesSearch && matchesLowStock;
             });
 
-            tbody.innerHTML = filteredProducts.map(p => {
+                                     tbody.innerHTML = filteredProducts.map(p => {
                 let stockBadgeClass = "bg-emerald-100 text-emerald-700";
                 let stockIcon = "";
                 if (p.stock <= 3) {
                     stockBadgeClass = "bg-amber-100 text-amber-800 font-bold";
                     stockIcon = " ⚠️";
                 }
-                const ppb = p.piecesPerBox || 20;
-                const boxes = Math.floor((p.stock || 0) / ppb);
-                const loose = (p.stock || 0) % ppb;
-                const stepChange = p.type === 'mixto' ? ppb : 1;
+
+                const ppb = p.piecesPerBox || 1; 
+                const stepChange = (p.type === 'cajetilla' || p.type === 'cajapieza') ? ppb : 1;
 
                 let expiryBadge = '<span class="text-gray-300">-</span>';
                 if (p.expiryDate) {
@@ -2415,6 +2454,26 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                     sugerencias.map(s => `<span class="bg-gray-100 border border-gray-200 text-gray-600 text-[9px] px-1.5 py-0.5 rounded-full">${s}</span>`).join('') + 
                     `</div>` : '';
 
+                // 👇 LOGICA PARA MOSTRAR CAJAS/PIEZAS Y CAJETILLAS/CIGARROS
+                let stockText = p.stock;
+                let infoText = '-';
+                
+                if (p.type === 'cajetilla' || p.type === 'cajapieza') {
+                    const boxes = Math.floor(p.stock / ppb);
+                    const loose = p.stock % ppb;
+                    
+                    // Si es Cigarros: Cajetillas en Stock, Cigarros (piezas) en Info Detallada
+                    if (p.category === 'Cigarros') {
+                        stockText = `${boxes} Cajetillas`;
+                        infoText = `${p.stock} Cigarros`;
+                    } 
+                    // Si NO es Cigarros (Agua, etc.): Cajas en Stock, Piezas en Info Detallada
+                    else {
+                        stockText = `${boxes} Cajas`;
+                        infoText = `${p.stock} pzs.`;
+                    }
+                }
+
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                         <td class="py-4 px-4 text-gray-600 font-mono text-sm text-center">${p.code || 'N/A'}</td>
@@ -2427,13 +2486,20 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                         <td class="py-4 px-4 text-center whitespace-nowrap">${expiryBadge}</td>
                         <td class="py-4 px-4 text-center">
                             <span class="px-3 py-1 rounded-full text-sm font-bold ${stockBadgeClass}">
-                                ${p.type === 'mixto' ? `${boxes} cajetillas y ${loose} sueltos` : p.stock}${stockIcon}
+                                ${stockText}${stockIcon}
                             </span>
                         </td>
                         <td class="py-4 px-4 text-center text-xs font-bold text-gray-500">
-                            ${p.type === 'mixto' ? `(${p.stock} cig. total)` : '-'}
+                            ${infoText}
                         </td>
-                        <td class="py-4 px-4 text-center flex items-center justify-center gap-2">
+                        <td class="py-4 px-4 text-center flex flex-wrap items-center justify-center gap-2">
+                            <button onclick="addPackStock(${p.id}, ${stepChange})" class="bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center shadow-sm" title="Agregar 1 Caja / Cajetilla (${stepChange} piezas)">
+                                <i class="fas fa-box"></i>
+                            </button>
+                            <button onclick="addPackStock(${p.id}, 1)" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center shadow-sm" title="Agregar 1 Pieza / Cigarro">
+                                <i class="fas fa-cube"></i>
+                            </button>
+                            <div class="w-px h-6 bg-gray-200 mx-0.5"></div>
                             <button onclick="adjustStock(${p.id}, ${stepChange})" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center">+</button>
                             <button onclick="adjustStock(${p.id}, -${stepChange})" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white w-8 h-8 rounded-lg font-bold transition flex items-center justify-center">-</button>
                             <button onclick="editProduct(${p.id})" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white w-8 h-8 rounded-lg transition flex items-center justify-center"><i class="fas fa-edit"></i></button>
@@ -2443,7 +2509,18 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 `;
             }).join('');
         }
+                // ===== FUNCIÓN PARA AGREGAR STOCK POR CAJA O PIEZA (SIN CONFIRMAR) =====
+        function addPackStock(id, cantidadPiezas) {
+            const product = db.products.find(p => p.id === id);
+            if (!product) return;
 
+            // Sumar al stock directamente
+            product.stock = (product.stock || 0) + cantidadPiezas;
+            
+            saveData();
+            if(selectedInventoryCategory) renderInventory();
+            updateDashboard();
+        }
         function toggleLowStockFilter() {
             showOnlyLowStock = !showOnlyLowStock;
             const btn = document.getElementById('lowStockFilterBtn');
@@ -2540,7 +2617,7 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             openModal('product-modal');
         }
 
-        function handleProductSubmit(event) {
+                   function handleProductSubmit(event) {
             event.preventDefault();
             if (!db.products) db.products = []; 
             
@@ -2549,12 +2626,17 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             const barcode = (document.getElementById('p-code').value || '').trim();
             
             let stockVal = 0;
-            if (type === 'mixto') {
-                const boxes = parseFloat(document.getElementById('p-stock-boxes').value) || 0;
-                const loose = parseFloat(document.getElementById('p-stock-loose').value) || 0;
-                const ppb = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
-                stockVal = (boxes * ppb) + loose;
+            
+            // Si es "Caja / Pieza" o "Cajetilla / Cigarro", calculamos el stock multiplicando
+            if (type === 'cajapieza' || type === 'cajetilla') {
+                const boxes = parseFloat(document.getElementById('p-stock-boxes').value) || 0; // Cajas/Cajetillas a registrar
+                const ppb = parseInt(document.getElementById('p-pieces-per-box').value) || 1;  // Piezas por caja
+                const loose = parseFloat(document.getElementById('p-stock-loose').value) || 0; // Piezas sueltas extra
+                
+                // 👉 MULTIPLICACIÓN: Paquetes * Piezas + Sueltas
+                stockVal = (boxes * ppb) + loose; 
             } else {
+                // Para venta por pieza normal o por kilos
                 stockVal = parseFloat(document.getElementById('p-stock').value) || 0;
             }
 
@@ -2565,20 +2647,29 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 category: document.getElementById('p-category').value,
                 type: type,
                 cost: parseFloat(document.getElementById('p-cost').value) || 0,
-                stock: stockVal,
+                stock: stockVal, // Aquí se guarda el resultado de la multiplicación
                 expiryDate: document.getElementById('p-expiry').value || null 
             };
 
-            if (type === 'mixto') {
+            // Guardar los precios y configuraciones específicas según el tipo
+            if (type === 'cajetilla' || (type === 'cajapieza' && document.getElementById('p-category').value === 'Cigarros')) {
+                // Para Cajetilla / Cigarro
                 productData.price = parseFloat(document.getElementById('p-price').value) || 0;
                 productData.piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
                 productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
+            } else if (type === 'cajapieza') {
+                // Para Caja / Pieza (Solo usamos el precio unitario estándar)
+                productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
+                productData.piecePrice = 0;
+                productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 24;
             } else {
+                // Por Pieza / Por kilos
                 productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
                 productData.piecePrice = null;
                 productData.piecesPerBox = null;
             }
 
+            // Validación de código duplicado
             if (barcode !== '' && !pid) {
                 const existingByCode = db.products.find(p => p.code === barcode);
                 if (existingByCode) {
@@ -2619,37 +2710,86 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 }
             });
         }
-
-        function toggleMixedFields() {
+                               function toggleMixedFields() {
             const type = document.getElementById('p-type').value;
             const mixedFields = document.getElementById('mixed-fields');
             const standardPriceField = document.getElementById('standard-price-field');
             const genericStockContainer = document.getElementById('generic-stock-container');
             const standardPriceInput = document.getElementById('standard-p-price');
-            const boxPriceInput = document.getElementById('p-price');
             const pStockInput = document.getElementById('p-stock');
 
-            if (type === 'mixto') {
+            // Leer la categoría
+            const categorySelect = document.getElementById('p-category');
+            const category = categorySelect ? categorySelect.value : '';
+
+            if (type === 'cajetilla' || type === 'cajapieza') {
+                // 1. Mostrar el bloque amarillo
                 mixedFields.classList.remove('hidden');
-                document.getElementById('standard-p-price').parentElement.parentElement.classList.add('hidden');
-                standardPriceField.classList.remove('grid-cols-2');
-                standardPriceField.classList.add('grid-cols-1');
+                
+                // 2. Ocultar el campo de stock genérico (el de abajo)
                 if (genericStockContainer) genericStockContainer.classList.add('hidden');
-                standardPriceInput.removeAttribute('required');
                 if (pStockInput) pStockInput.removeAttribute('required');
-                boxPriceInput.setAttribute('required', 'true');
+
+                // 3. El precio de venta estándar (rojo) siempre visible
+                standardPriceField.classList.remove('hidden');
+                standardPriceInput.setAttribute('required', 'true');
+
+                // 4. Lógica para ocultar los inputs de dinero y cambiar textos
+                const divPrecioPaquete = document.getElementById('div-precio-paquete');
+                const divPrecioPieza = document.getElementById('div-precio-pieza');
+                const inputPrecioPaquete = document.getElementById('p-price');
+                const inputPrecioPieza = document.getElementById('p-piece-price');
+
+                // Elementos Span para cambiar textos (si los cigarros los necesitan, los cambiarán aquí)
+                const labelTitle = document.getElementById('mixed-label-title');
+                const labelPriceBox = document.getElementById('mixed-label-price-box');
+                const labelPiece = document.getElementById('mixed-label-piece');
+                const labelPerBox = document.getElementById('mixed-label-per-box');
+                const labelStockBoxes = document.getElementById('mixed-label-stock-boxes');
+                const labelLoose = document.getElementById('mixed-label-loose');
+
+                if (type === 'cajetilla' || (type === 'cajapieza' && category === 'Cigarros')) {
+                    // ✅ CAJETILLA / CIGARRO: Mostrar los inputs de precio y cambiar textos a los de cigarros
+                    divPrecioPaquete.classList.remove('hidden');
+                    divPrecioPieza.classList.remove('hidden');
+                    inputPrecioPaquete.setAttribute('required', 'true');
+                    inputPrecioPieza.setAttribute('required', 'true');
+                    
+                    if(labelTitle) labelTitle.innerText = 'Cajetilla / Cigarro';
+                    if(labelPriceBox) labelPriceBox.innerText = 'Cajetilla';
+                    if(labelPiece) labelPiece.innerText = 'Cigarro';
+                    if(labelPerBox) labelPerBox.innerText = 'Cigarros x Cajetilla';
+                    if(labelStockBoxes) labelStockBoxes.innerText = 'Cajetillas';
+                    if(labelLoose) labelLoose.innerText = 'Cigarros Sueltos';
+                    
+                } else {
+                    // ✅ CAJA / PIEZA (REFRESCOS): Ocultar los inputs de precio (dejar solo el campo de piezas)
+                    divPrecioPaquete.classList.add('hidden');
+                    divPrecioPieza.classList.add('hidden');
+                    inputPrecioPaquete.removeAttribute('required');
+                    inputPrecioPieza.removeAttribute('required');
+                    
+                    // Aquí los textos ya están puestos en el HTML, pero por si acaso los reafirmamos
+                    if(labelTitle) labelTitle.innerText = 'Configuración de Caja/pzs';
+                    if(labelPriceBox) labelPriceBox.innerText = 'Caja';
+                    if(labelPiece) labelPiece.innerText = 'Pieza';
+                    if(labelPerBox) labelPerBox.innerText = 'pzs por caja';
+                    if(labelStockBoxes) labelStockBoxes.innerText = 'cajas';
+                    if(labelLoose) labelLoose.innerText = 'piezas sueltas';
+                }
+
             } else {
+                // Si es "Por Pieza" o "Por kilos"
                 mixedFields.classList.add('hidden');
-                document.getElementById('standard-p-price').parentElement.parentElement.classList.remove('hidden');
-                standardPriceField.classList.add('grid-cols-2');
-                standardPriceField.classList.remove('grid-cols-1');
+                standardPriceField.classList.remove('hidden');
                 if (genericStockContainer) genericStockContainer.classList.remove('hidden');
-                boxPriceInput.removeAttribute('required');
+                
+                document.getElementById('p-price').removeAttribute('required');
+                document.getElementById('p-piece-price').removeAttribute('required');
                 standardPriceInput.setAttribute('required', 'true');
                 if (pStockInput) pStockInput.setAttribute('required', 'true');
             }
         }
-
         function toggleExpiryField() {
             const categorySelect = document.getElementById('p-category');
             const expiryContainer = document.getElementById('expiry-container');
@@ -3037,51 +3177,78 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 return;
             }
 
-            if (product.type === 'mixto') {
-                const boxPrice = Number(product.price) || 0;
-                const piecePrice = Number(product.piecePrice) || 0;
-                const piecesPerBox = Number(product.piecesPerBox) || 20;
+                       // 👇 CORRECCIÓN: Aceptar tanto 'mixto' como 'cajetilla' para preguntar por caja/cajetilla
+            if (product.type === 'mixto' || product.type === 'cajetilla') {
+                // Si el producto es Cigarros (categoría Cigarros O tipo cajetilla), preguntamos
+                if (product.category === 'Cigarros' || product.type === 'cajetilla') {
+                    const boxPrice = Number(product.price) || 0;
+                    const piecePrice = Number(product.piecePrice) || 0;
+                    const piecesPerBox = Number(product.piecesPerBox) || 20;
 
-                Swal.fire({
-                    title: product.name,
-                    html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
-                           <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} cigarros</p>`,
-                    showDenyButton: true, showCancelButton: true,
-                    confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
-                    denyButtonText: `🚬 Cigarro Suelto ($${piecePrice.toFixed(2)})`,
-                    cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const qtyPieces = piecesPerBox;
-                        const cartItemId = `${product.id}_Caja`;
-                        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                        if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                            Swal.fire('Stock Insuficiente', `No hay suficientes cigarros para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} cigarros disponibles)`, 'warning');
-                            return;
+                    Swal.fire({
+                        title: product.name,
+                        html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
+                               <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} cigarros</p>`,
+                        showDenyButton: true, showCancelButton: true,
+                        confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
+                        denyButtonText: `🚬 Cigarro Suelto ($${piecePrice.toFixed(2)})`,
+                        cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const qtyPieces = piecesPerBox;
+                            const cartItemId = `${product.id}_Caja`;
+                            const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                            if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                                Swal.fire('Stock Insuficiente', `No hay suficientes cigarros para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} cigarros disponibles)`, 'warning');
+                                return;
+                            }
+                            const exist = cart.find(c => c.cartItemId === cartItemId);
+                            if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                                cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
+                            }
+                            renderCart();
+                            document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+                        } else if (result.isDenied) {
+                            const qtyPieces = 1;
+                            const cartItemId = `${product.id}_Pieza`;
+                            const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                            if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                                Swal.fire('Sin Stock', 'No hay suficientes cigarros sueltos disponibles', 'warning');
+                                return;
+                            }
+                            const exist = cart.find(c => c.cartItemId === cartItemId);
+                            if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                                cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
+                            }
+                            renderCart();
+                            document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
                         }
-                        const exist = cart.find(c => c.cartItemId === cartItemId);
-                        if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                            cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
-                        }
-                        renderCart();
-                        document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                    } else if (result.isDenied) {
-                        const qtyPieces = 1;
-                        const cartItemId = `${product.id}_Pieza`;
-                        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                        if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                            Swal.fire('Sin Stock', 'No hay suficientes cigarros sueltos disponibles', 'warning');
-                            return;
-                        }
-                        const exist = cart.find(c => c.cartItemId === cartItemId);
-                        if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                            cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
-                        }
-                        renderCart();
-                        document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                    }
-                });
+                    });
+                    return;
+                }
+
+                // ⭐ PARA EL RESTO DE PRODUCTOS (Agua, Refrescos, etc.): Vender siempre por pieza
+                const qtyPieces = 1; 
+                const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                
+                if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                    Swal.fire('Sin Stock', 'No hay suficientes piezas disponibles', 'warning');
+                    return;
+                }
+                
+                const exist = cart.find(c => c.id === product.id && !c.cartItemId);
+                if (exist) {
+                    exist.qty++;
+                    exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
+                } else {
+                    // Guardamos el precio unitario (el precio estándar rojo de abajo)
+                    cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
+                }
+                renderCart();
+                document.getElementById('barcode-scanner').value = '';
+                searchProductPOS('');
                 return;
+            
             }
 
             if (product.type === 'granel') {
@@ -3341,10 +3508,9 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             };
 
             db.dailySales = (db.dailySales || 0) + total;
-// CORRECCIÓN: Si hay un turno activo, se suma SIN importar quién sea el rol
-if (db.shift && db.shift.active) {
-    db.shift.sales = (db.shift.sales || 0) + total;
-}
+            if (currentRole === 'employee' && db.shift && db.shift.active) {
+                db.shift.sales = (db.shift.sales || 0) + total;
+            }
 
             if (!db.salesHistory) db.salesHistory = [];
             db.salesHistory.push({
