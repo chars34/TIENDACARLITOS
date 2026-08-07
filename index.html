@@ -78,22 +78,58 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+@media print {
+    /* 1. Ocultar absolutamente todo el cuerpo de la página */
+    body {
+        visibility: hidden !important;
+        background: white !important;
+    }
 
-        @media print {
-            body * { visibility: hidden !important; }
-            #print-label-area, #print-label-area * { visibility: visible !important; }
-            #print-label-area {
-                display: flex !important;
-                position: fixed !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 80mm !important;
-                height: auto !important;
-                background: white !important;
-                color: black !important;
-            }
-        }
+    /* 2. Si se imprime la etiqueta, mostrar SOLO el área de etiquetas */
+    body.printing-label,
+    body.printing-label #print-label-area,
+    body.printing-label #print-label-area * {
+        visibility: visible !important;
+    }
 
+    body.printing-label #print-label-area {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 58mm !important;
+        display: block !important;
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 2mm !important;
+        z-index: 999999 !important;
+    }
+
+    /* 3. Si se imprime el ticket, mostrar SOLO el área de tickets */
+    body.printing-ticket,
+    body.printing-ticket #print-ticket-area,
+    body.printing-ticket #print-ticket-area * {
+        visibility: visible !important;
+    }
+
+    body.printing-ticket #print-ticket-area {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 58mm !important;
+        display: block !important;
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 999999 !important;
+    }
+
+    @page {
+        margin: 0;
+        size: 58mm auto;
+    }
+}
         @media (max-width: 768px) {
             .pos-layout { flex-direction: column !important; }
             .cart-panel { width: 100% !important; height: 55vh !important; border-width: 1px 0 0 0; border-radius: 1.5rem 1.5rem 0 0; box-shadow: 0 -10px 25px rgba(0,0,0,0.05); }
@@ -106,7 +142,8 @@
     </style>
 </head>
 <body class="h-screen flex flex-col">
-
+    <!-- Contenedor exclusivo para imprimir la etiqueta del estante -->
+    <div id="print-label-area" class="hidden print:block"></div>
     <div id="login-overlay" class="fixed inset-0 bg-store-gradient z-[1000] flex items-center justify-center p-4">
         <div class="glass-panel rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-8 md:p-10 max-w-sm w-full relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-red-700"></div>
@@ -173,16 +210,88 @@
     <nav id="nav-bar" class="bg-white border-b border-gray-200 flex px-2 md:px-6 gap-2 pt-3 shadow-sm overflow-x-auto custom-scroll z-10 relative"></nav>
 
     <main class="flex-1 overflow-hidden relative">
+        <!-- VISTA DE PROVEEDORES -->
+<div id="view-suppliers" class="view-section hidden p-4 md:p-6 max-w-7xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl md:text-2xl font-black text-gray-800 uppercase">Gestión de Proveedores</h2>
+            <p class="text-xs text-gray-400 font-bold">Registro de salidas de dinero por mercancía y abonos</p>
+        </div>
+  
+     <button onclick="openSupplierPaymentModal()" class="bg-red-600 hover:bg-red-700 text-white font-black px-4 py-3 rounded-xl shadow-md transition-all uppercase text-xs flex items-center gap-2">
+            <i class="fas fa-plus"></i> Registrar Pago a Proveedor
+        </button>
+        <button id="btn-delete-supplier-history" onclick="clearSupplierHistory()" class="hidden bg-gray-800 hover:bg-gray-900 text-red-400 hover:text-red-300 font-black px-4 py-3 rounded-xl shadow-md transition-all uppercase text-xs items-center gap-2 border border-red-900/50">
+    <i class="fas fa-trash-alt"></i> Borrar Historial
+</button>
+    </div>
+    
+<!-- MODAL DE SALIDA DE DINERO A PROVEEDORES -->
+<div id="supplier-modal" class="fixed inset-0 bg-black/50 z-[700] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+        <button onclick="closeModal('supplier-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-lg">
+            <i class="fas fa-times"></i>
+        </button>
         
-        <div id="view-dashboard" class="hidden h-full p-4 md:p-8 overflow-y-auto custom-scroll">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex flex-wrap gap-3 mt-2 mb-8">
-                    <button onclick="mostrarResumenDia()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2">
-                        <i class="fas fa-chart-pie"></i> Resumen del día
-                    </button>
-                    <button onclick="backupData()" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
-                        <i class="fas fa-cloud-upload-alt"></i> Respaldar
-                    </button>
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-orange-100 p-3 rounded-2xl text-orange-600">
+                <i class="fas fa-hand-holding-usd text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-gray-800 text-lg uppercase">Salida por Proveedor</h3>
+                <p class="text-xs text-gray-400 font-bold">Registrar dinero entregado de caja</p>
+            </div>
+        </div>
+
+        <form onsubmit="handleSupplierPayment(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre del Proveedor</label>
+                <input type="text" id="sup-name" required placeholder="Ej. Bimbo, Sabritas, Coca-Cola..." class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Monto Entregado ($)</label>
+                <input type="number" step="0.01" id="sup-amount" required placeholder="0.00" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold text-gray-700 text-lg outline-none focus:border-red-400">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Concepto / Notas (Opcional)</label>
+                <input type="text" id="sup-notes" placeholder="Ej. Factura #1234 o pago de mercancía" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400">
+            </div>
+
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-600/30 transition-all uppercase text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> Registrar Retiro de Caja
+            </button>
+        </form>
+    </div>
+</div>
+    <!-- Aquí puedes poner una tabla opcional para listar los pagos guardados -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+        <h3 class="font-bold text-gray-700 text-sm mb-4 uppercase">Historial de Retiros a Proveedores</h3>
+        <div id="suppliers-table-container">
+            <!-- Si deseas mostrar la lista guardada, se cargará aquí -->
+            <p class="text-xs text-gray-400 italic">Los pagos registrados aparecerán aquí.</p>
+        </div>
+    </div>
+</div>
+       <div id="view-dashboard" class="hidden h-full p-4 md:p-8 overflow-y-auto custom-scroll">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-wrap gap-3 mt-2 mb-8">
+            <button onclick="mostrarResumenDia()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2">
+                <i class="fas fa-chart-pie"></i> Resumen del día
+            </button>
+            <button onclick="backupData()" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
+                <i class="fas fa-cloud-upload-alt"></i> Respaldar
+            </button>
+            
+            <!-- 🔒 BOTÓN SOLO PARA DUEÑO - Ver Reportes Guardados -->
+            <button id="btn-ver-reportes-dashboard" 
+                    onclick="verReportesGuardados()" 
+                    class="hidden bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2">
+                <i class="fas fa-folder-lock"></i> Ver Reportes
+            </button>
+            
+       
                     <button onclick="document.getElementById('restore-file-input').click()" class="bg-amber-600 text-white px-5 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-amber-700 transition-all active:scale-95 flex items-center gap-2">
                         <i class="fas fa-cloud-download-alt"></i> Restaurar Respaldo
                     </button>
@@ -273,10 +382,30 @@
                         <i class="fas fa-times-circle text-xl"></i>
                     </button>
                 </div>
-                
+                <!-- BARRA DE CATEGORÍAS RÁPIDAS EN CAJA -->
+<div class="flex gap-2 overflow-x-auto py-2 mb-4 scrollbar-none">
+    <button onclick="filterPosCategory('All')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🔥 Todos
+    </button>
+    <button onclick="filterPosCategory('Refrescos')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🥤 Refrescos
+    </button>
+    <button onclick="filterPosCategory('Sabritas')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🥔 Sabritas
+    </button>
+    <button onclick="filterPosCategory('Galletas')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🍪 Galletas
+    </button>
+    <button onclick="filterPosCategory('Lácteos')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🥛 Lácteos
+    </button>
+    <button onclick="filterPosCategory('Cigarros')" class="bg-white text-gray-700 px-4 py-2 rounded-xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 whitespace-nowrap shadow-sm transition-all">
+        🚬 Cigarros
+    </button>
+</div>
                 <div class="caja-viewport flex-1 relative flex items-center justify-center overflow-hidden">
                     <div id="empty-state" class="flex flex-col items-center opacity-15 absolute pointer-events-none">
-                        <img src="icon.png" alt="Logo Tienda" class="w-48 mb-2">
+                        <img src="icon_512.png" alt="Logo Tienda" class="w-48 mb-2">
                         <p class="text-base font-bold">ESCANEA UN PRODUCTO PARA COMENZAR</p>
                     </div>
                     <div id="product-grid" class="hidden w-full h-full overflow-y-auto custom-scroll grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pr-2 content-start pb-24 md:pb-4"></div>
@@ -294,7 +423,14 @@
                         <i class="fas fa-trash-alt"></i> VACIAR
                     </button>
                 </div>
-                
+                <!-- Botón de Devolución / Cambio con autorización -->
+<!-- Botón de Devolución flotante en la esquina inferior izquierda -->
+<div class="fixed bottom-6 left-6 z-50">
+  <button onclick="processReturnWithAuth()" class="flex items-center justify-center space-x-2 bg-yellow-500 text-white hover:bg-yellow-600 px-5 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+    <i class="fas fa-undo-alt text-xl"></i>
+    <span>Devolución / Cambio</span>
+  </button>
+</div>
                 <div class="flex bg-gray-50 border-b border-gray-200" id="cart-tabs">
                     <button onclick="switchCart(0)" id="tab-cart-0" class="flex-1 py-3 text-xs font-black text-red-600 bg-white border-b-2 border-red-600 transition flex items-center justify-center">CAJA 1</button>
                     <button onclick="switchCart(1)" id="tab-cart-1" class="flex-1 py-3 text-xs font-bold text-gray-500 border-b-2 border-transparent hover:bg-gray-100 transition flex items-center justify-center">CAJA 2</button>
@@ -388,6 +524,62 @@
                     <button onclick="filterInventoryCategory('Sabritas')" data-category="Sabritas" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
                         <i class="fas fa-cookie-bite text-2xl text-amber-600"></i> Sabritas
                     </button>
+                     <!-- Galletas -->
+<button onclick="filterInventoryCategory('Galletas')" data-category="Galletas" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-cookie-bite text-2xl text-amber-600"></i> Galletas
+</button>
+
+<!-- Alcohol -->
+<button onclick="filterInventoryCategory('Alcohol')" data-category="Alcohol" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-wine-bottle text-2xl text-purple-600"></i> Alcohol
+</button>
+
+<!-- Alimentos -->
+<button onclick="filterInventoryCategory('Alimentos')" data-category="Alimentos" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-utensils text-2xl text-red-500"></i> Alimentos
+</button>
+
+<!-- Dulces -->
+<button onclick="filterInventoryCategory('Dulces')" data-category="Dulces" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-candy-cane text-2xl text-pink-500"></i> Dulces
+</button>
+
+<!-- Higiene -->
+<button onclick="filterInventoryCategory('Higiene')" data-category="Higiene" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-pump-soap text-2xl text-teal-600"></i> Higiene
+</button>
+
+<!-- Ferretería -->
+<button onclick="filterInventoryCategory('Ferretería')" data-category="Ferretería" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-tools text-2xl text-slate-700"></i> Ferretería
+</button>
+                    <button onclick="filterInventoryCategory('Limpieza')" data-category="Limpieza" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-broom text-2xl text-blue-600"></i> Limpieza
+</button>
+<!-- Celular / Electrónica -->
+<button onclick="filterInventoryCategory('Celular')" data-category="Celular" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-mobile-alt text-2xl text-purple-600"></i> Celular
+</button>
+
+<!-- Eléctrico -->
+<button onclick="filterInventoryCategory('Eléctrico')" data-category="Eléctrico" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-bolt text-2xl text-amber-500"></i> Eléctrico
+</button>
+
+<!-- Farmacia -->
+<button onclick="filterInventoryCategory('Farmacia')" data-category="Farmacia" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-pills text-2xl text-emerald-600"></i> Farmacia
+</button>
+
+<!-- Especias -->
+<button onclick="filterInventoryCategory('Especias')" data-category="Especias" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-pepper-hot text-2xl text-red-600"></i> Especias
+</button>
+
+<!-- Limpieza -->
+<button onclick="filterInventoryCategory('Limpieza')" data-category="Limpieza" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-broom text-2xl text-blue-600"></i> Limpieza
+</button>
                     <button onclick="filterInventoryCategory('Frutas')" data-category="Frutas" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
                         <i class="fas fa-apple-alt text-2xl text-emerald-600"></i> Frutas
                     </button>
@@ -478,24 +670,58 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-inner">
-                        <div>
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Esperado en Caja</span>
-                            <div id="display-expected-cash" class="text-4xl font-mono font-black mt-1 text-blue-400">$0.00</div>
-                        </div>
-                    </div>
+                   <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col gap-4 shadow-inner">
+    <!-- Panel de información del turno (arriba) -->
+    <div id="shift-info-panel" class="text-xs text-gray-300 border-b border-gray-700 pb-3">
+        <!-- Se llena dinámicamente desde JavaScript -->
+        <span class="text-gray-400">Cargando información del turno...</span>
+    </div>
+    
+    <!-- Total esperado en caja (abajo) -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Esperado en Caja</span>
+            <div id="display-expected-cash" class="text-4xl font-mono font-black mt-1 text-blue-400">$0.00</div>
+        </div>
+        
+        <!-- Opcional: badge de estado del turno -->
+        <div class="flex items-center gap-3">
+            <span id="shift-status-badge-turno" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-700 text-gray-300">
+                ⏸️ Sin verificar
+            </span>
+        </div>
+    </div>
+</div>
+    <div class="bg-red-50 p-6 rounded-2xl border-2 border-red-200">
+        <h3 class="text-xs font-black text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <i class="fas fa-hand-holding-usd"></i> 
+            Efectivo Físico Contado (Al Cierre)
+        </h3>
+        <div class="relative group">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-400 font-bold text-xl">$</span>
+            <input 
+                type="number" 
+                id="final-cash-input" 
+                oninput="calculateDifference()" 
+                placeholder="0.00" 
+                class="w-full p-4 pl-12 bg-white border-2 border-red-200 rounded-xl font-black text-3xl text-red-600 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/20 transition-all shadow-sm"
+                step="0.01"
+                min="0"
+            >
+        </div>
+        <div class="mt-4 text-center bg-white p-3 rounded-xl border border-red-100">
+            <span class="text-xs font-bold text-gray-500 uppercase block mb-1">Diferencia (Sobrante / Faltante): </span>
+            <span id="display-difference" class="text-2xl font-black text-gray-400">$0.00</span>
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button onclick="setFinalCash(100)" class="flex-1 bg-white hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-lg border border-gray-200 transition-all text-xs">$100</button>
+            <button onclick="setFinalCash(500)" class="flex-1 bg-white hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-lg border border-gray-200 transition-all text-xs">$500</button>
+            <button onclick="setFinalCash(1000)" class="flex-1 bg-white hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-lg border border-gray-200 transition-all text-xs">$1000</button>
+            <button onclick="setFinalCash(1500)" class="flex-1 bg-white hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-lg border border-gray-200 transition-all text-xs">$1500</button>
+            <button onclick="setFinalCash(2000)" class="flex-1 bg-white hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-lg border border-gray-200 transition-all text-xs">$2000</button>
+        </div>
+    </div>
 
-                    <div class="bg-red-50 p-6 rounded-2xl border-2 border-red-100">
-                        <h3 class="text-xs font-black text-red-500 uppercase tracking-widest mb-4">Efectivo Físico Contado (Al Cierre)</h3>
-                        <div class="relative group">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-400 font-bold text-xl">$</span>
-                            <input type="number" id="final-cash-input" oninput="calculateDifference()" placeholder="0.00" class="w-full p-4 pl-10 bg-white border-2 border-red-200 rounded-xl font-black text-3xl text-red-600 outline-none focus:border-red-500 transition-all">
-                        </div>
-                        <div class="mt-4 text-center bg-white p-3 rounded-xl">
-                            <span class="text-xs font-bold text-gray-500 uppercase block mb-1">Diferencia (Sobrante / Faltante): </span>
-                            <span id="display-difference" class="text-2xl font-black text-gray-400">$0.00</span>
-                        </div>
-                    </div>
 
                     <button onclick="closeShift()" class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
                         <i class="fas fa-stop"></i> Cerrar Turno y Guardar Arqueo
@@ -553,6 +779,21 @@
                 <button onclick="finalizeSale()" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-4.5 rounded-2xl font-black text-lg shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_12px_25px_rgba(16,185,129,0.4)] hover:-translate-y-1 transition-all uppercase tracking-widest btn-action flex items-center justify-center gap-3">
                     <i class="fas fa-check-circle text-xl"></i> CONFIRMAR VENTA
                 </button>
+                <!-- BOTONES DE PAGO RÁPIDO / EFECTIVO EXACTO -->
+<div class="my-4">
+    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Pago Rápido (Efectivo)</label>
+    <div class="grid grid-cols-4 gap-2">
+        <button type="button" onclick="setCashAmount(20)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$20</button>
+        <button type="button" onclick="setCashAmount(50)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$50</button>
+        <button type="button" onclick="setCashAmount(100)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$100</button>
+        <button type="button" onclick="setCashAmount(200)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$200</button>
+        <button type="button" onclick="setCashAmount(500)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$500</button>
+        <button type="button" onclick="setCashAmount(1000)" class="bg-gray-100 hover:bg-red-50 text-gray-700 font-bold py-2 px-3 rounded-xl border border-gray-200 transition-all text-sm">$1000</button>
+        <button type="button" onclick="setExactCash()" class="col-span-2 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold py-2 px-3 rounded-xl border border-amber-200 transition-all text-xs flex items-center justify-center gap-1">
+            <i class="fas fa-check-circle"></i> Exacto
+        </button>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -585,14 +826,33 @@
 
                     <div>
                         <label class="text-xs font-black text-gray-500 uppercase ml-2 block mb-2 tracking-wide">Categoría</label>
-                        <select id="p-category" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400">
-                            <option value="Refrescos">Refrescos</option>
-                            <option value="Sabritas">Sabritas</option>
-                            <option value="Frutas">Frutas</option>
-                            <option value="Lácteos">Lácteos</option>
-                            <option value="Cigarros">Cigarros</option>
-                            <option value="Otros">Otros</option>
-                        </select>
+            <select id="p-category" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400">
+    <optgroup label="Bebidas y Licores">
+        <option value="Refrescos">Refrescos</option>
+        <option value="Alcohol">Alcohol</option>
+    </optgroup>
+    <optgroup label="Alimentos y Botanas">
+        <option value="Sabritas">Sabritas</option>
+        <option value="Galletas">Galletas</option>
+        <option value="Frutas">Frutas</option>
+        <option value="Lácteos">Lácteos</option>
+        <option value="Alimentos">Alimentos</option>
+        <option value="Dulces">Dulces</option>
+        <option value="Especias">Especias</option>
+    </optgroup>
+    <optgroup label="Higiene y Hogar">
+        <option value="Higiene">Higiene</option>
+        <option value="Limpieza">Limpieza</option>
+    </optgroup>
+    <optgroup label="Otros Departamentos">
+        <option value="Cigarros">Cigarros</option>
+        <option value="Ferretería">Ferretería</option>
+        <option value="Celular">Celular</option>
+        <option value="Eléctrico">Eléctrico</option>
+        <option value="Farmacia">Farmacia</option>
+        <option value="Otros">Otros</option>
+    </optgroup>
+</select>
                     </div>
 
                     <div id="expiry-container" class="hidden">
@@ -676,7 +936,7 @@
                         <i class="fas fa-save"></i> GUARDAR PRODUCTO
                     </button>
                 </div>
-                <div id="print-label-area" class="hidden"></div>
+                
             </form>
         </div>
     </div>
@@ -693,7 +953,36 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
-  
+  <div id="print-ticket-area" class="hidden ticket-font text-black bg-white p-1" style="width: 58mm; font-size: 10px; line-height: 1.1; font-family: 'Courier Prime', monospace;">
+    <div class="text-center font-bold text-xs mb-0.5">MINI SUPER CARLITOS</div>
+    <div class="text-center text-[9px] mb-1">SISTEMA DE ING.CHARS</div>
+    <div class="text-center text-[8px] mb-1.5" id="ticket-date">Fecha: --/--/---- --:--</div>
+    <div class="border-t border-b border-black py-0.5 my-1 text-[8px]">
+        <div class="flex justify-between font-bold">
+            <span>CANT / DESCRIPCIÓN</span>
+            <span>IMP</span>
+        </div>
+    </div>
+    <div id="ticket-items-list" class="space-y-1 text-[9px]">
+        </div>
+    <div class="border-t border-black pt-1 mt-1 text-[9px] space-y-0.5">
+        <div class="flex justify-between font-bold text-xs">
+            <span>TOTAL:</span>
+            <span id="ticket-total">$0.00</span>
+        </div>
+        <div class="flex justify-between">
+            <span>EFECTIVO RECIBIDO:</span>
+            <span id="ticket-received">$0.00</span>
+        </div>
+        <div class="flex justify-between font-bold">
+            <span>CAMBIO:</span>
+            <span id="ticket-change">$0.00</span>
+        </div>
+    </div>
+    <div class="text-center text-[8px] mt-3 border-t border-dashed border-black pt-1.5">
+        ¡GRACIAS POR SU COMPRA!<br>VUELVA PRONTO
+    </div>
+</div>
     <script>
       const firebaseConfig = {
           apiKey: "AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",
@@ -705,15 +994,18 @@
           measurementId: "G-RKZJMETTW7"
       };
       
-      let firebaseDb = null;
       let db = {
-          products: [],
-          dailySales: 0,
-          dailyExpenses: 0,
-          salesHistory: [],
-          shift: { active: false },
-          lastResetDate: new Date().toISOString().split('T')[0]
-      };
+    products: [],
+    dailySales: 0,
+    dailyExpenses: 0,
+    salesHistory: [],
+    shift: { active: false },
+    lastResetDate: new Date().toISOString().split('T')[0],
+    supplierPayments: [],
+    cashDrawersMovements: [],
+    reportesGuardados: [], // ✅ AGREGAR ESTA LÍNEA
+    shiftHistory: []       // ✅ Y ESTA TAMBIÉN
+};
 
       // Inicialización de Firebase con Sincronización en Tiempo Real Bidireccional
       if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY") {
@@ -732,6 +1024,8 @@
                       if (!db.products) db.products = [];
                       if (!db.salesHistory) db.salesHistory = [];
                       if (!db.shift) db.shift = { active: false };
+                      if (!db.supplierPayments) db.supplierPayments = [];
+                      if (!db.cashDrawersMovements) db.cashDrawersMovements = [];
                       // ------------------------------------
 
                       localStorage.setItem("pos_data", JSON.stringify(db));
@@ -762,7 +1056,464 @@
       let html5QrCode;
       let showOnlyLowStock = false;
       let selectedInventoryCategory = null;
+     // Función que maneja la edición del producto desde la tabla de inventario
+function abrirModalEditarPrecio(productoId) {
+    const p = db.products.find(item => item.id === productoId);
+    if (!p) return;
 
+    Swal.fire({
+        title: `Editar Precio: ${p.name}`,
+        input: 'number',
+        inputValue: p.price,
+        inputLabel: 'Nuevo Precio de Venta ($)',
+        inputAttributes: { step: '0.01', min: '0' },
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar'
+    }).then((res) => {
+        if (res.isConfirmed && res.value) {
+            // Actualizamos el precio en el objeto
+            p.price = parseFloat(res.value);
+            saveData();
+            if (typeof renderInventory === 'function') renderInventory();
+
+            // Preguntamos si desea imprimir la etiqueta con los datos de ESTE producto
+            Swal.fire({
+                icon: 'success',
+                title: '¡Precio Actualizado!',
+                text: `El nuevo precio de ${p.name} es $${p.price.toFixed(2)}`,
+                showCancelButton: true,
+                confirmButtonText: '🖨️ Imprimir Etiqueta',
+                cancelButtonText: 'Continuar',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280'
+            }).then((printRes) => {
+                if (printRes.isConfirmed) {
+                    // LLAMADA CORRECTA: le pasamos p.name y p.price directamente
+                    imprimirEtiqueta(p.name, p.price);
+                }
+            });
+        }
+    });
+}
+      function imprimirTicket(total, recibido, cambio, carrito) {
+    const fecha = new Date();
+    document.getElementById('ticket-date').innerText = `Fecha: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;
+
+    const listaItems = document.getElementById('ticket-items-list');
+    listaItems.innerHTML = carrito.map(item => `
+        <div class="flex justify-between">
+            <span>${item.qty}x ${item.name.substring(0, 15)}</span>
+            <span>$${(item.price * item.qty).toFixed(2)}</span>
+        </div>
+    `).join('');
+
+    document.getElementById('ticket-total').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('ticket-received').innerText = `$${recibido.toFixed(2)}`;
+    document.getElementById('ticket-change').innerText = `$${cambio.toFixed(2)}`;
+
+    Swal.fire({
+        title: 'Venta exitosa',
+        text: '¿Deseas imprimir el comprobante para el cliente?',
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-print"></i> Sí, imprimir',
+        cancelButtonText: 'No, finalizar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const ticketArea = document.getElementById('print-ticket-area');
+            document.body.classList.add('printing-ticket');
+            ticketArea.classList.remove('hidden');
+            
+            // Damos 100ms para que el navegador renderice antes de imprimir
+            setTimeout(() => {
+                window.print();
+                ticketArea.classList.add('hidden');
+                
+                // Limpieza después de imprimir
+                clearCart();
+                closeModal('checkout-modal');
+            }, 100);
+        } else {
+            // Limpieza si no quiso imprimir
+            clearCart();
+            closeModal('checkout-modal');
+        }
+    });
+}
+async function startQuickPriceUpdate() {
+    if (currentRole !== 'owner') {
+        Swal.fire('Acceso Restringido', 'Solo el dueño puede actualizar precios.', 'error');
+        return;
+    }
+
+    const { value: code } = await Swal.fire({
+        title: 'Actualizar Precio',
+        input: 'text',
+        inputLabel: 'Escanea o escribe el código del producto',
+        inputPlaceholder: 'Código de barras o nombre',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: '<i class="fas fa-search"></i> Buscar'
+    });
+
+    if (code) {
+        const q = code.toLowerCase().trim();
+        const product = db.products.find(p => p.code.toLowerCase() === q || p.name.toLowerCase().includes(q));
+        
+        if (product) {
+            const { value: newPrice } = await Swal.fire({
+                title: `Actualizar: ${product.name}`,
+                input: 'number',
+                inputLabel: `Precio actual de venta: $${Number(product.price || 0).toFixed(2)}`,
+                inputValue: product.price,
+                inputAttributes: { step: '0.01', min: '0' },
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonText: 'Cancelar',
+                confirmButtonText: '<i class="fas fa-save"></i> Guardar'
+            });
+
+            if (newPrice !== undefined && newPrice !== '') {
+                product.price = parseFloat(newPrice);
+                saveData(); // Guarda en localStorage y Firebase
+                
+                if (selectedInventoryCategory && typeof renderInventory === 'function') {
+                    renderInventory();
+                }
+
+                // --- CORRECCIÓN CLAVE AQUÍ ---
+                // Preguntamos si desea imprimir la etiqueta con el precio actualizado
+               Swal.fire({
+    icon: 'success',
+    title: '¡Precio Actualizado!',
+    text: `El nuevo precio es $${product.price.toFixed(2)}`,
+    showCancelButton: true,
+    confirmButtonText: '🖨️ Imprimir Etiqueta',
+    cancelButtonText: 'Continuar',
+    confirmButtonColor: '#10b981',
+    cancelButtonColor: '#6b7280'
+}).then((result) => {
+    if (result.isConfirmed) {
+        // Cambia imprimirEtiquetaPrecio por imprimirEtiqueta
+        imprimirEtiqueta(product.name, product.price);
+    }
+});
+            }
+        } else {
+            Swal.fire('Error', 'No se encontró ningún producto con ese dato.', 'error');
+        }
+    }
+}
+function updateShiftStatusBadge() {
+    const badge = document.getElementById('shift-status-badge');
+    if (!badge) return;
+    
+    if (db.shift && db.shift.active) {
+        if (db.shift.verifiedBy === 'owner') {
+            badge.innerHTML = '✅ Turno Verificado';
+            badge.className = 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold';
+        } else {
+            badge.innerHTML = '⚠️ Turno NO Verificado';
+            badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold';
+        }
+    } else {
+        badge.innerHTML = '⏸️ Sin Turno Activo';
+        badge.className = 'bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold';
+    }
+}
+function imprimirEtiqueta(nombre, precio) {
+    const labelArea = document.getElementById('print-label-area');
+    
+    labelArea.innerHTML = `
+        <div style="width: 100%; border: 2px solid black; padding: 10px; text-align: center; font-family: sans-serif; background: white;">
+            <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; color: #000;">${nombre}</div>
+            <div style="font-size: 35px; font-weight: 900; margin-top: 5px; color: black;">$${parseFloat(precio).toFixed(2)}</div>
+        </div>
+    `;
+    
+    // Activamos el modo etiqueta en el body y removemos la clase hidden
+    document.body.classList.add('printing-label');
+    labelArea.classList.remove('hidden');
+    
+    setTimeout(() => {
+        window.print();
+        // Limpiamos estados al terminar la impresión
+        labelArea.classList.add('hidden');
+        document.body.classList.remove('printing-label');
+    }, 100);
+}
+function clearSupplierHistory() {
+  // Validación estricta por rol
+  if (currentRole !== 'owner') {
+    Swal.fire({
+      icon: 'error',
+      title: 'Acceso Denegado',
+      text: 'Solo el administrador puede borrar el historial.',
+      confirmButtonColor: '#3b82f6'
+    });
+    return;
+  }
+
+  // Confirmación con SweetAlert2 para mantener consistencia en la UI
+  Swal.fire({
+    title: '¿Estás seguro?',
+    text: "Se borrará de forma permanente el historial de pagos a proveedores.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Sí, borrar historial',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // 1. Vaciar el arreglo de pagos
+      db.supplierPayments = [];
+      
+      // 2. Reiniciar el contador del turno actual (si existe)
+      if (db.shift) {
+        db.shift.supplierWithdrawals = 0;
+      }
+
+      // 3. Persistencia de datos unificada (LocalStorage + Firebase)
+      saveData();
+
+      // 4. Actualización de la interfaz
+      if (typeof renderOwnerSupplierSection === 'function') renderOwnerSupplierSection();
+      if (typeof renderCashCutView === 'function') renderCashCutView();
+
+      // Alerta de éxito
+      Swal.fire({
+        icon: 'success',
+        title: '¡Borrado!',
+        text: 'El historial ha sido eliminado correctamente.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+  });
+}
+function openSupplierPaymentModal() {
+    // Limpia campos anteriores
+    document.getElementById('sup-name').value = '';
+    document.getElementById('sup-amount').value = '';
+    document.getElementById('sup-notes').value = '';
+    
+    // Muestra el modal (usando tu lógica estándar para abrir modales)
+    const modal = document.getElementById('supplier-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function handleSupplierPayment(event) {
+    event.preventDefault();
+    
+    const supplierName = document.getElementById('sup-name').value.trim();
+    const amount = parseFloat(document.getElementById('sup-amount').value) || 0;
+    const notes = document.getElementById('sup-notes').value.trim();
+
+    if (amount <= 0) {
+        Swal.fire('Error', 'Ingresa una cantidad válida', 'error');
+        return;
+    }
+
+    // Validar si hay un turno activo para descontarlo de ahí
+    if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Turno Requerido',
+            text: 'Debes iniciar turno para registrar salidas de efectivo.',
+            confirmButtonColor: '#2563eb'
+        });
+        return;
+    }
+
+    if (!db.supplierPayments) db.supplierPayments = [];
+
+    const paymentRecord = {
+        id: Date.now(),
+        supplier: supplierName,
+        amount: amount,
+        notes: notes,
+        date: new Date().toISOString()
+    };
+
+    db.supplierPayments.push(paymentRecord);
+    
+    // Registrar el movimiento en el turno activo (reduce el efectivo esperado en caja)
+    if (db.shift && db.shift.active) {
+        if (!db.shift.supplierWithdrawals) db.shift.supplierWithdrawals = 0;
+        db.shift.supplierWithdrawals += amount;
+    }
+
+    // Registrar también en gastos diarios generales
+    db.dailyExpenses = (db.dailyExpenses || 0) + amount;
+
+    if (!db.cashDrawersMovements) db.cashDrawersMovements = [];
+    db.cashDrawersMovements.push({
+        type: 'OUT_SUPPLIER',
+        description: `Pago a proveedor: ${supplierName} (${notes})`,
+        amount: amount,
+        date: new Date().toISOString()
+    });
+
+    saveData();
+    closeModal('supplier-modal');
+    
+    // Si estamos en la vista de proveedores, actualizamos la tabla
+    if (typeof renderSuppliersHistory === 'function') {
+        renderSuppliersHistory();
+    }
+    updateDashboard();
+
+    Swal.fire({
+        icon: 'success',
+        title: '¡Retiro Registrado!',
+        text: `Se descontaron $${amount.toFixed(2)} del turno actual por pago a ${supplierName}`,
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+function filterPosCategory(category) {
+    const container = document.getElementById('product-grid'); // Asegúrate que este sea el ID del contenedor donde se despliegan tus tarjetas de productos en caja
+    if (!container) return;
+
+    if (category === 'All') {
+        document.getElementById('barcode-scanner').value = '';
+        searchProductPOS('');
+    } else {
+        const filtered = db.products.filter(p => p.category === category);
+        renderPosProducts(filtered); // Muestra solo los de la categoría elegida
+    }
+}
+// Función corregida para rellenar automáticamente la cantidad de dinero recibido
+function setCashAmount(amount) {
+    const cashInput = document.getElementById('cash-received');
+    if (cashInput) {
+        cashInput.value = amount;
+        calcChange(); // Llama directamente a tu función existente para calcular el cambio
+    }
+}
+
+// Función corregida para poner el monto exacto de la compra
+function setExactCash() {
+    let cart = carts[currentCartIndex];
+    let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    
+    const cashInput = document.getElementById('cash-received');
+    if (cashInput) {
+        cashInput.value = total.toFixed(2);
+        calcChange(); // Llama directamente a tu función existente para calcular el cambio
+    }
+}
+// Función para filtrar los productos de la caja al hacer clic en una categoría rápida
+function filterPosCategory(category) {
+    const grid = document.getElementById('product-grid');
+    const emptyState = document.getElementById('empty-state');
+    if (!grid) return;
+
+    if (category === 'All') {
+        // Si selecciona "Todos", limpiamos la barra de búsqueda y mostramos el estado vacío inicial o reseteamos
+        document.getElementById('barcode-scanner').value = '';
+        if(emptyState) emptyState.style.display = 'flex';
+        grid.style.display = 'none';
+        return;
+    }
+
+    // Ocultamos el estado vacío y mostramos la cuadrícula
+    if(emptyState) emptyState.style.display = 'none';
+    grid.style.display = 'grid';
+
+    // Filtramos los productos que pertenecen a esa categoría
+    const results = db.products.filter(p => p.category === category);
+    
+    if (results.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400 font-bold">No hay productos en esta categoría</div>';
+        return;
+    }
+
+    // Usamos la misma estructura visual que ya tiene tu sistema para las tarjetas de productos
+    grid.innerHTML = results.map(p => {
+        let priceLabel = `$${Number(p.price || 0).toFixed(2)}`;
+        if (p.type === 'mixto') {
+            priceLabel = `
+                <div class="text-right">
+                    <span class="text-[10px] text-blue-600 block font-bold leading-none">Cajetilla: $${Number(p.price || 0).toFixed(2)}</span>
+                    <span class="text-[10px] text-emerald-600 block font-bold leading-none mt-1">Cigarro: $${Number(p.piecePrice || 0).toFixed(2)}</span>
+                </div>
+            `;
+        }
+        
+        const sugerencias = obtenerSugerenciaProducto(p);
+        let htmlSugerencias = '';
+        if (sugerencias.length > 0) {
+            htmlSugerencias = `<div class="flex flex-wrap gap-1 mt-1 mb-1">` + 
+                sugerencias.map(s => `<span class="bg-gray-800 text-white text-[8px] px-1.5 py-0.5 rounded shadow-sm">${s}</span>`).join('') + 
+                `</div>`;
+        }
+
+        return `
+        <button onclick="addToCart(${p.id})" class="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-gray-100 hover:border-red-400 hover:shadow-md transition-all text-left flex flex-col justify-between aspect-square btn-action relative overflow-hidden group">
+            ${p.stock < 5 ? '<div class="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-xl shadow-sm z-10">¡POCO STOCK!</div>' : ''}
+            <div class="relative z-10">
+                <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest break-words mb-1">${p.code || 'S/C'}</div>
+                <div class="font-bold text-gray-800 text-sm md:text-base leading-tight uppercase line-clamp-2 group-hover:text-red-600 transition-colors">${p.name}</div>
+                ${htmlSugerencias}
+                ${p.type === 'mixto' ? '<span class="inline-block mt-1 bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded">CAJETILLA/SUELTO</span>' : ''}
+            </div>
+            <div class="flex justify-between items-end mt-2 relative z-10 border-t border-gray-50 pt-2">
+                <span class="text-[11px] text-gray-500 font-bold bg-gray-50 px-2 py-1 rounded-lg text-center leading-tight">
+                    ${p.type === 'mixto' ? `${Math.floor(p.stock / (p.piecesPerBox||20))} cajetillas<br>y ${p.stock % (p.piecesPerBox||20)} sueltos` : `Disp: ${p.stock}`}
+                </span>
+                <div class="font-black text-red-600 text-sm md:text-base">${priceLabel}</div>
+            </div>
+        </button>
+    `}).join('');
+}
+function setFinalCash(amount) {
+    const input = document.getElementById('final-cash-input');
+    if (input) {
+        input.value = amount;
+        calculateDifference(); // Actualiza la diferencia automáticamente
+    }
+}
+function deleteProduct(id) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción eliminará el producto del inventario de forma permanente.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#4b5563',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Filtramos el arreglo eliminando el producto con ese ID
+            db.products = db.products.filter(p => Number(p.id) !== Number(id));
+            
+            // Guardamos los cambios localmente y en Firebase
+            saveData();
+            
+            // Actualizamos la tabla del inventario y el tablero
+            if (selectedInventoryCategory) {
+                renderInventory();
+            }
+            updateDashboard();
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Eliminado!',
+                text: 'El producto ha sido borrado correctamente.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
+}
       function obtenerSugerenciaProducto(p) {
           let sugerencias = [];
           const stockMinimo = 5; 
@@ -1003,18 +1754,19 @@
           backToRoles();
       }
 
-      const navItems = [
-          { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
-          { id: 'view-pos', icon: 'fa-shopping-cart', text: 'Caja', role: 'all' },
-          { id: 'view-cash-cut', icon: 'fa-wallet', text: 'Turno', role: 'employee' },
-          { id: 'view-inventory', icon: 'fa-boxes', text: 'Inventario', role: 'owner' }
-      ];
-
-      function buildNav() {
+  const navItems = [
+        { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
+        { id: 'view-pos', icon: 'fa-shopping-cart', text: 'Caja', role: 'all' },
+        { id: 'view-cash-cut', icon: 'fa-wallet', text: 'Turno', role: 'employee' },
+        { id: 'view-inventory', icon: 'fa-boxes', text: 'Inventario', role: 'owner' },
+        { id: 'view-suppliers', icon: 'fa-truck-loading', text: 'Proveedores', role: 'employee' }
+    ];
+    function buildNav() {
           const nav = document.getElementById('nav-bar');
           nav.innerHTML = '';
           navItems.forEach(item => {
-              if (item.role === 'all' || item.role === currentRole) {
+              // Permitimos que aparezca si el rol es 'all', 'owner', o si es el empleado/dueño correspondiente
+              if (item.role === 'all' || item.role === currentRole || (item.id === 'view-suppliers' && (currentRole === 'employee' || currentRole === 'owner'))) {
                   const btn = document.createElement('button');
                   btn.className = `flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav mb-0`;
                   btn.onclick = () => switchView(item.id);
@@ -1058,6 +1810,9 @@
                   filterInventoryCategory(selectedInventoryCategory);
               }
           }
+          if(viewId === 'view-suppliers') {
+              renderSuppliersHistory();
+          }
           if(viewId === 'view-cash-cut') renderCashCutView();
       }
 
@@ -1083,7 +1838,53 @@
           document.getElementById('inventory-active-content').classList.remove('hidden');
           renderInventory();
       }
+function renderSuppliersHistory() {
+    const container = document.getElementById('suppliers-table-container');
+    if (!container) return;
 
+    const payments = db.supplierPayments || [];
+
+    if (payments.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 italic">Los pagos registrados aparecerán aquí.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-100 text-gray-400 text-xs uppercase font-black">
+                        <th class="py-3 px-4">Fecha / Hora</th>
+                        <th class="py-3 px-4">Proveedor</th>
+                        <th class="py-3 px-4">Concepto / Notas</th>
+                        <th class="py-3 px-4 text-right">Monto Retirado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                    ${payments.slice().reverse().map(p => `
+                        <tr>
+                            <td class="py-3 px-4 text-xs text-gray-500">${new Date(p.date).toLocaleString()}</td>
+                            <td class="py-3 px-4 font-bold text-gray-800 uppercase">${p.supplier}</td>
+                            <td class="py-3 px-4 text-gray-500">${p.notes || '-'}</td>
+                            <td class="py-3 px-4 text-right font-black text-red-600">$${Number(p.amount).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    const deleteBtn = document.getElementById('btn-delete-supplier-history');
+    if (deleteBtn) {
+        if (currentRole === 'owner') {
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.classList.add('flex'); // Lo mostramos y mantenemos tu diseño flex
+        } else {
+            deleteBtn.classList.add('hidden');
+            deleteBtn.classList.remove('flex'); // Lo ocultamos para el empleado
+        }
+    }
+
+}
       function renderInventory() {
           if (!selectedInventoryCategory) return;
           const searchText = document.getElementById('inventorySearchInput')?.value.toLowerCase() || "";
@@ -1159,7 +1960,267 @@
               `;
           }).join('');
       }
+ async function processReturnWithAuth() {
+  // Estilo forzado para que las casillas de texto SIEMPRE se vean claramente
+  const inputStyle = 'style="color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important; display: block !important; width: 90% !important; margin: 10px auto !important; padding: 8px !important; border-radius: 6px !important;"';
 
+  // PASO 1: Seleccionar el tipo de operación
+  const { value: typeOperation } = await Swal.fire({
+    title: '¿Qué operación deseas hacer?',
+    input: 'select',
+    inputOptions: {
+      cash: '💵 Devolución de dinero (Efectivo)',
+      same: '🔄 Cambio por MISMO producto (Garantía)',
+      different: '🛒 Cambio por OTRO producto'
+    },
+    inputPlaceholder: 'Selecciona una opción',
+    showCancelButton: true,
+    confirmButtonText: 'Siguiente',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3b82f6'
+  });
+
+  if (!typeOperation) return;
+
+  // PASO 2: Escanear el producto que REGRESA el cliente
+  const { value: productData } = await Swal.fire({
+    title: 'Producto a Devolver',
+    html:
+      '<div class="mb-2 text-sm text-gray-700 font-bold">Escanea o escribe el código o nombre del producto:</div>' +
+      `<input id="swal-return-barcode" class="swal2-input" ${inputStyle} placeholder="Código o Nombre">` +
+      '<div class="mt-3 mb-1 text-sm font-bold text-gray-700">Cantidad devuelta:</div>' +
+      `<input id="swal-return-qty" type="number" class="swal2-input" ${inputStyle} placeholder="Cantidad" min="1" value="1">`,
+    didOpen: () => {
+      const el = document.getElementById('swal-return-barcode');
+      if (el) el.focus();
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Continuar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3b82f6',
+    preConfirm: () => {
+      const barcode = document.getElementById('swal-return-barcode').value;
+      const qty = parseInt(document.getElementById('swal-return-qty').value);
+      if (!barcode || isNaN(qty) || qty < 1) {
+        Swal.showValidationMessage('Ingresa un producto y cantidad válidos.');
+        return false;
+      }
+      return { barcode, qty };
+    }
+  });
+
+  if (!productData) return;
+
+  // Búsqueda del producto en la base de datos
+  const searchValA = String(productData.barcode).trim().toLowerCase();
+  const productA = db.products.find(p => {
+    const pId = String(p.id || '').trim().toLowerCase();
+    const pBarcode = String(p.barcode || '').trim().toLowerCase();
+    const pName = String(p.name || '').trim().toLowerCase();
+    return (pId && pId === searchValA) || (pBarcode && pBarcode === searchValA) || (pName && pName.includes(searchValA));
+  });
+
+  if (!productA) {
+    return Swal.fire({ icon: 'error', title: 'No encontrado', text: `El producto "${searchValA}" no existe en el inventario.` });
+  }
+
+  // --- SOPORTE PARA PRODUCTOS MIXTOS (Cajetillas / Sueltos) ---
+  const isMixtoA = productA.type === 'mixto';
+  const piezasPorCajaA = Number(productA.piecesPerBox) || 20;
+  
+  let esCajetillaA = false;
+  if (isMixtoA) {
+      const { isConfirmed } = await Swal.fire({
+          title: '¿Qué devuelve el cliente?',
+          text: `El producto se vende por caja o suelto.`,
+          icon: 'question',
+          showDenyButton: true,
+          confirmButtonText: '📦 Cajetilla completa',
+          denyButtonText: '🚬 Cigarros sueltos',
+          confirmButtonColor: '#3b82f6',
+          denyButtonColor: '#6b7280'
+      });
+      esCajetillaA = isConfirmed;
+  }
+
+  let precioUnitarioA = Number(productA.price || 0);
+  if (isMixtoA && !esCajetillaA) {
+      precioUnitarioA = Number(productA.piecePrice || 0);
+  }
+  let totalA = precioUnitarioA * Number(productData.qty);
+
+  let productB = null;
+  let qtyB = 0;
+  let diferencia = 0;
+
+  if (typeOperation === 'different') {
+    const { value: newProdData } = await Swal.fire({
+      title: 'Nuevo Producto a Llevar',
+      html:
+        '<div class="mb-2 text-sm text-gray-700 font-bold">Escanea o escribe el producto que SE LLEVA:</div>' +
+        `<input id="swal-new-barcode" class="swal2-input" ${inputStyle} placeholder="Código o Nombre">` +
+        '<div class="mt-3 mb-1 text-sm font-bold text-gray-700">Cantidad que se lleva:</div>' +
+        `<input id="swal-new-qty" type="number" class="swal2-input" ${inputStyle} placeholder="Cantidad" min="1" value="1">`,
+      didOpen: () => {
+        const el = document.getElementById('swal-new-barcode');
+        if (el) el.focus();
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Continuar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3b82f6',
+      preConfirm: () => {
+        const barcode = document.getElementById('swal-new-barcode').value;
+        const qty = parseInt(document.getElementById('swal-new-qty').value);
+        if (!barcode || isNaN(qty) || qty < 1) {
+          Swal.showValidationMessage('Ingresa un producto y cantidad válidos.');
+          return false;
+        }
+        return { barcode, qty };
+      }
+    });
+
+    if (!newProdData) return;
+
+    const searchValB = String(newProdData.barcode).trim().toLowerCase();
+    productB = db.products.find(p => {
+      const pId = String(p.id || '').trim().toLowerCase();
+      const pBarcode = String(p.barcode || '').trim().toLowerCase();
+      const pName = String(p.name || '').trim().toLowerCase();
+      return (pId && pId === searchValB) || (pBarcode && pBarcode === searchValB) || (pName && pName.includes(searchValB));
+    });
+
+    if (!productB) {
+      return Swal.fire({ icon: 'error', title: 'No encontrado', text: `El producto nuevo "${searchValB}" no existe.` });
+    }
+
+    qtyB = newProdData.qty;
+    const totalB = Number(productB.price || 0) * qtyB;
+    diferencia = totalB - totalA;
+  }
+
+  // PASO 3: PIN Administrador
+  const { value: password } = await Swal.fire({
+    title: 'Autorización Requerida',
+    text: 'Ingresa el PIN de administrador:',
+    input: 'password',
+    inputAttributes: { 
+      autocapitalize: 'off', 
+      autocorrect: 'off', 
+      style: 'color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important;' 
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Autorizar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#dc2626'
+  });
+
+  if (!password) return;
+
+  const ownerPassword = localStorage.getItem("ownerPin") || "admin123";
+  if (password !== ownerPassword) {
+    return Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Contraseña incorrecta.' });
+  }
+
+  // PASO 4: Estado del producto
+  const { isConfirmed: isRestocked, isDismissed } = await Swal.fire({
+    title: '¿Estado del Producto Devuelto?',
+    text: `¿El producto (${productA.name}) se puede volver a vender?`,
+    icon: 'question',
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: 'Sí, regresar a estante',
+    denyButtonText: 'No, es merma/dañado',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3b82f6',
+    denyButtonColor: '#ef4444'
+  });
+
+  if (isDismissed) return;
+
+  // --- 1. ACTUALIZAR STOCK DEL PRODUCTO DEVUELTO ---
+  let qtyA_stock = Number(productData.qty) > 0 ? Number(productData.qty) : 1;
+  if (isMixtoA && esCajetillaA) {
+      qtyA_stock = qtyA_stock * piezasPorCajaA;
+  }
+
+  if (isRestocked) {
+    productA.stock = Number(productA.stock || 0) + qtyA_stock;
+  }
+
+  let mensajeFinal = '';
+
+  if (db.shift && db.shift.active) {
+    if (db.shift.devoluciones === undefined) db.shift.devoluciones = 0;
+    if (db.shift.sales === undefined) db.shift.sales = 0;
+  }
+
+  // --- 2. OPERACIONES DE DINERO / CAMBIO DE PRODUCTO ---
+  if (typeOperation === 'cash') {
+    if (db.shift && db.shift.active) {
+      db.shift.devoluciones += totalA; 
+      db.shift.sales -= totalA; 
+    }
+    db.dailySales = (db.dailySales || 0) - totalA; 
+    mensajeFinal = `Devolución aprobada. <b>ENTREGA $${totalA.toFixed(2)} MXN</b> en efectivo.`;
+  }
+  else if (typeOperation === 'same') {
+    productA.stock = Math.max(0, Number(productA.stock || 0) - qtyA_stock);
+    mensajeFinal = `Cambio realizado. Entrega la pieza NUEVA de <b>${productA.name}</b>.`;
+  }
+  else if (typeOperation === 'different') {
+    let qtyB_stock = Number(qtyB) > 0 ? Number(qtyB) : 1;
+    if (productB && productB.type === 'mixto') {
+        qtyB_stock = qtyB_stock * (Number(productB.piecesPerBox) || 20);
+    }
+
+    if (productB) {
+      productB.stock = Math.max(0, Number(productB.stock || 0) - qtyB_stock);
+    }
+
+    if (diferencia < 0) {
+      const devuelto = Math.abs(diferencia);
+      if (db.shift && db.shift.active) {
+        db.shift.devoluciones += devuelto;
+        db.shift.sales -= devuelto; 
+      }
+      db.dailySales = (db.dailySales || 0) - devuelto; 
+      mensajeFinal = `El nuevo producto es más barato. <b>REGRESA $${devuelto.toFixed(2)} MXN</b> al cliente.`;
+    } 
+    else if (diferencia > 0) {
+      if (db.shift && db.shift.active) {
+        db.shift.sales += diferencia; 
+      }
+      db.dailySales = (db.dailySales || 0) + diferencia; 
+      mensajeFinal = `El nuevo producto es más caro. <b>COBRA $${diferencia.toFixed(2)} MXN</b> de diferencia.`;
+    } 
+    else {
+      mensajeFinal = `Los productos tienen el mismo precio. Cambio completado.`;
+    }
+  }
+
+  // --- GUARDADO Y REFRESCADO TOTAL DE LA PANTALLA ---
+  saveData();
+  
+  if (typeof firebaseDb !== 'undefined' && firebaseDb) {
+    firebaseDb.ref('miniSuperDb').set(db);
+  }
+
+  // Se refrescan todas las posibles vistas para que el stock se actualice inmediatamente
+  if (typeof updateDashboard === 'function') updateDashboard();
+  if (typeof renderInventory === 'function') renderInventory();
+  if (typeof renderInventoryTable === 'function') renderInventoryTable();
+  if (typeof renderProducts === 'function') renderProducts();
+  if (typeof filterPosCategory === 'function') filterPosCategory('All');
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Devolución Procesada',
+    html: mensajeFinal,
+    confirmButtonText: 'Aceptar',
+    confirmButtonColor: '#10b981'
+  });
+}
       function toggleExpiryField() {
           const categorySelect = document.getElementById('p-category');
           const expiryContainer = document.getElementById('expiry-container');
@@ -1272,56 +2333,88 @@
           document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
           openModal('product-modal');
       }
-function handleProductSubmit(event) {
-          event.preventDefault();
-          if (!db.products) db.products = [];
-          const type = document.getElementById('p-type').value;
-          const pid = document.getElementById('p-id').value;
-          let stockVal = 0;
-          
-          if (type === 'mixto') {
-              const boxes = parseFloat(document.getElementById('p-stock-boxes').value) || 0;
-              const loose = parseFloat(document.getElementById('p-stock-loose').value) || 0;
-              const ppb = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
-              stockVal = (boxes * ppb) + loose;
-          } else {
-              stockVal = parseFloat(document.getElementById('p-stock').value) || 0;
-          }
+   function handleProductSubmit(event) {
+    event.preventDefault();
+    if (!db.products) db.products = []; 
+    
+    const type = document.getElementById('p-type').value;
+    const pid = document.getElementById('p-id').value;
+    const barcode = (document.getElementById('p-code').value || '').trim();
+    
+    let stockVal = 0;
+    if (type === 'mixto') {
+        const boxes = parseFloat(document.getElementById('p-stock-boxes').value) || 0;
+        const loose = parseFloat(document.getElementById('p-stock-loose').value) || 0;
+        const ppb = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
+        stockVal = (boxes * ppb) + loose;
+    } else {
+        stockVal = parseFloat(document.getElementById('p-stock').value) || 0;
+    }
 
-          const productData = {
-              id: pid ? Number(pid) : Date.now(),
-              code: (document.getElementById('p-code').value || '').trim(),
-              name: (document.getElementById('p-name').value || '').trim().toUpperCase(),
-              category: document.getElementById('p-category').value,
-              type: type,
-              cost: parseFloat(document.getElementById('p-cost').value) || 0,
-              stock: stockVal,
-              expiryDate: document.getElementById('p-expiry').value || null 
-          };
+    const productData = {
+        id: pid ? Number(pid) : Date.now(),
+        code: barcode,
+        name: (document.getElementById('p-name').value || '').trim().toUpperCase(),
+        category: document.getElementById('p-category').value,
+        type: type,
+        cost: parseFloat(document.getElementById('p-cost').value) || 0,
+        stock: stockVal,
+        expiryDate: document.getElementById('p-expiry').value || null 
+    };
 
-          if (type === 'mixto') {
-              productData.price = parseFloat(document.getElementById('p-price').value) || 0;
-              productData.piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
-              productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
-          } else {
-              productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
-              productData.piecePrice = null;
-              productData.piecesPerBox = null;
-          }
+    if (type === 'mixto') {
+        productData.price = parseFloat(document.getElementById('p-price').value) || 0;
+        productData.piecePrice = parseFloat(document.getElementById('p-piece-price').value) || 0;
+        productData.piecesPerBox = parseInt(document.getElementById('p-pieces-per-box').value) || 20;
+    } else {
+        productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
+        productData.piecePrice = null;
+        productData.piecesPerBox = null;
+    }
 
-          const existingIndex = db.products.findIndex(p => Number(p.id) === Number(productData.id));
-          if (existingIndex >= 0) {
-              db.products[existingIndex] = productData;
-          } else {
-              db.products.push(productData);
-          }
+    // Validación de código de barras duplicado
+    if (barcode !== '' && !pid) {
+        const existingByCode = db.products.find(p => p.code === barcode);
+        if (existingByCode) {
+            Swal.fire({
+                icon: 'warning',
+                title: '¡Código Existente!',
+                text: `El código de barras ya pertenece a: "${existingByCode.name}".`,
+                confirmButtonColor: '#dc2626'
+            });
+            return;
+        }
+    }
 
-          saveData();
-          if(selectedInventoryCategory) renderInventory();
-          updateDashboard();
-          closeModal('product-modal');
-          Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Producto guardado correctamente', timer: 1500, showConfirmButton: false });
-      }
+    const existingIndex = db.products.findIndex(p => Number(p.id) === Number(productData.id));
+    if (existingIndex >= 0) {
+        db.products[existingIndex] = productData;
+    } else {
+        db.products.push(productData);
+    }
+
+    saveData();
+    if(selectedInventoryCategory) renderInventory();
+    updateDashboard();
+    closeModal('product-modal');
+    
+    // Preguntar si desea imprimir la etiqueta del producto recién guardado/editado
+    Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: 'Producto guardado correctamente',
+        showCancelButton: true,
+        confirmButtonText: '🖨️ Imprimir Etiqueta',
+        cancelButtonText: 'Continuar',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // CORREGIDO: Se usa productData y el nombre correcto de la función
+            imprimirEtiqueta(productData.name, productData.price);
+        }
+    });
+}
       function searchProductPOS(query) {
           const grid = document.getElementById('product-grid');
           const emptyState = document.getElementById('empty-state');
@@ -1654,52 +2747,176 @@ function handleProductSubmit(event) {
           }
       }
 
-      function finalizeSale() {
-          let cart = carts[currentCartIndex];
-          let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-          let received = parseFloat(document.getElementById('cash-received').value) || 0;
-          
-          if (received < total) {
-              Swal.fire('Efectivo Insuficiente', 'El monto recibido es menor al total.', 'error');
-              return;
-          }
+    function finalizeSale() {
+    let cart = carts[currentCartIndex];
+    let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    let received = parseFloat(document.getElementById('cash-received').value) || 0;
+    
+    if (received < total) {
+        Swal.fire('Efectivo Insuficiente', 'El monto recibido es menor al total.', 'error');
+        return;
+    }
 
-          cart.forEach(item => {
-              const product = db.products.find(p => p.id === item.id);
-              if (product) {
-                  product.stock -= (item.piecesCount || item.qty);
-                  if (product.stock < 0) product.stock = 0;
-              }
-          });
+    // 1. Descuento de inventario (soporta piezas sueltas o paquetes)
+    cart.forEach(item => {
+        const product = db.products.find(p => p.id === item.id);
+        if (product) {
+            product.stock -= (item.piecesCount || item.qty);
+            if (product.stock < 0) product.stock = 0;
+        }
+    });
 
-          db.dailySales = (db.dailySales || 0) + total;
-          if (currentRole === 'employee' && db.shift && db.shift.active) {
-              db.shift.sales = (db.shift.sales || 0) + total;
-          }
+    // 2. Registro de la venta
+    const ultimaVentaRealizada = {
+        items: [...cart],
+        total: total,
+        received: received,
+        change: received - total,
+        date: new Date()
+    };
 
-          if (!db.salesHistory) db.salesHistory = [];
-          db.salesHistory.push({
-              date: new Date().toISOString(),
-              total: total,
-              items: cart,
-              seller: currentRole
-          });
+    db.dailySales = (db.dailySales || 0) + total;
+    if (currentRole === 'employee' && db.shift && db.shift.active) {
+        db.shift.sales = (db.shift.sales || 0) + total;
+    }
 
-          saveData();
-          updateDashboard();
-          if (selectedInventoryCategory) renderInventory();
+    if (!db.salesHistory) db.salesHistory = [];
+    db.salesHistory.push({
+        date: new Date().toISOString(),
+        total: total,
+        items: cart,
+        seller: currentRole
+    });
 
-          Swal.fire({
-              icon: 'success',
-              title: '¡Venta Completada!',
-              text: `Cambio a entregar: $${(received - total).toFixed(2)}`,
-              confirmButtonColor: '#10b981'
-          }).then(() => {
-              closeModal('checkout-modal');
-              clearCart();
-          });
-      }
+    // 3. Guardado y actualización visual de fondo
+    saveData();
+    updateDashboard();
+    
+    // Verificamos que la variable exista antes de intentar renderizar
+    if (typeof selectedInventoryCategory !== 'undefined' && selectedInventoryCategory) {
+        renderInventory();
+    }
 
+    // 4. PREGUNTA ÚNICA: Cambio y Ticket
+    Swal.fire({
+        icon: 'success',
+        title: '¡Venta Completada!',
+        html: `Cambio a entregar: <b class="text-emerald-600 text-xl">$${(received - total).toFixed(2)}</b><br><br>¿Deseas imprimir el ticket de venta?`,
+        showCancelButton: true,
+        confirmButtonText: '🖨️ Imprimir Ticket',
+        cancelButtonText: 'Continuar sin imprimir',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        allowOutsideClick: false
+    }).then((result) => {
+        // Se ejecuta la impresión si el usuario lo confirmó
+        if (result.isConfirmed) {
+            imprimirTicket58mm(ultimaVentaRealizada);
+        }
+        
+        // Limpiamos el modal y el carrito sin importar si imprimió o no
+        closeModal('checkout-modal');
+        clearCart();
+    });
+}
+function actualizarPrecio(productoId, nuevoPrecio) {
+    const product = db.products.find(p => p.id === productoId);
+    
+    if (product) {
+        product.price = parseFloat(nuevoPrecio);
+        
+        saveData(); 
+        if (typeof renderInventory === 'function') renderInventory();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Precio Actualizado',
+            text: `El nuevo precio de ${product.name} es $${product.price.toFixed(2)}.`,
+            showCancelButton: true,
+            confirmButtonText: '🖨️ Imprimir Etiqueta',
+            cancelButtonText: 'Cerrar',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Ahora usamos las propiedades del objeto encontrado
+                imprimirEtiqueta(product.name, product.price);
+            }
+        });
+    }
+}
+function imprimirEtiquetaPrecio(nombre, precio) {
+    let labelArea = document.getElementById('print-label-area');
+    if (!labelArea) {
+        labelArea = document.createElement('div');
+        labelArea.id = 'print-label-area';
+        document.body.appendChild(labelArea);
+    }
+    
+    // Validar que lleguen datos para que no se imprima vacío
+    const safeNombre = nombre || 'PRODUCTO';
+    const safePrecio = !isNaN(precio) ? Number(precio).toFixed(2) : '0.00';
+
+    labelArea.innerHTML = `
+        <div style="text-align: center; width: 100%; font-family: Arial, sans-serif; background: white; color: black;">
+            <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; line-height: 1.1;">${safeNombre}</p>
+            <p style="margin: 3px 0 0 0; font-size: 26px; font-weight: bold; line-height: 1;">$${safePrecio}</p>
+        </div>
+    `;
+
+    // Quitar la clase hidden si la tuviera por defecto y activar el modo impresión
+    labelArea.classList.remove('hidden');
+    document.body.classList.add('printing-label');
+    
+    // Forzar redibujado del DOM
+    void labelArea.offsetHeight;
+
+    setTimeout(() => {
+        window.print();
+        
+        // Limpiar después de cerrar la ventana de impresión
+        document.body.classList.remove('printing-label');
+        labelArea.classList.add('hidden');
+    }, 300);
+}
+function imprimirTicket58mm(venta) {
+    const ticketArea = document.getElementById('print-ticket-area');
+    if (!ticketArea) return;
+
+    document.getElementById('ticket-date').innerText = `Fecha: ${new Date(venta.date).toLocaleString()}`;
+    
+    const itemsContainer = document.getElementById('ticket-items-list');
+    itemsContainer.innerHTML = '';
+    
+    venta.items.forEach(item => {
+        const desc = item.name || 'Producto';
+        const qty = item.piecesCount || item.qty;
+        const subtotal = (item.price * item.qty).toFixed(2);
+        
+        itemsContainer.innerHTML += `
+            <div class="flex flex-col mb-1">
+                <span class="font-bold uppercase truncate">${desc}</span>
+                <div class="flex justify-between text-[8px] text-gray-700">
+                    <span>${qty} x $${Number(item.price).toFixed(2)}</span>
+                    <span class="font-bold">$${subtotal}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('ticket-total').innerText = `$${venta.total.toFixed(2)}`;
+    document.getElementById('ticket-received').innerText = `$${venta.received.toFixed(2)}`;
+    document.getElementById('ticket-change').innerText = `$${venta.change.toFixed(2)}`;
+    
+    document.body.classList.add('printing-ticket');
+    ticketArea.classList.remove('hidden');
+
+    setTimeout(() => {
+        window.print();
+        ticketArea.classList.add('hidden');
+        document.body.classList.remove('printing-ticket');
+    }, 250);
+}
       function sendReportWhatsApp() {
           const lowStock = db.products.filter(p => p.stock < 5);
           if(lowStock.length === 0) {
@@ -1803,33 +3020,49 @@ function handleProductSubmit(event) {
       }
 
       function processPriceUpdateByCode(query) {
-          const q = query.toLowerCase().trim();
-          const results = db.products.filter(p => p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q)));
-          
-          if (results.length === 0) {
-              Swal.fire('No encontrado', 'No se encontró ningún producto con ese dato.', 'error');
-              return;
-          }
-          
-          const p = results[0];
-          Swal.fire({
-              title: `Actualizar Precio: ${p.name}`,
-              input: 'number',
-              inputValue: p.price,
-              inputLabel: 'Nuevo Precio de Venta ($)',
-              inputAttributes: { step: '0.01', min: '0' },
-              showCancelButton: true,
-              confirmButtonText: 'Guardar'
-          }).then((res) => {
-              if (res.isConfirmed && res.value) {
-                  p.price = parseFloat(res.value);
-                  saveData();
-                  if (selectedInventoryCategory) renderInventory();
-                  Swal.fire('Actualizado', 'Precio actualizado correctamente.', 'success');
-              }
-          });
-      }
-
+    const q = query.toLowerCase().trim();
+    const results = db.products.filter(p => p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q)));
+      
+    if (results.length === 0) {
+        Swal.fire('No encontrado', 'No se encontró ningún producto con ese dato.', 'error');
+        return;
+    }
+      
+    const p = results[0];
+    Swal.fire({
+        title: `Actualizar Precio: ${p.name}`,
+        input: 'number',
+        inputValue: p.price,
+        inputLabel: 'Nuevo Precio de Venta ($)',
+        inputAttributes: { step: '0.01', min: '0' },
+        showCancelButton: true,
+        confirmButtonText: 'Guardar'
+    }).then((res) => {
+        if (res.isConfirmed && res.value) {
+            p.price = parseFloat(res.value);
+            saveData();
+            if (typeof selectedInventoryCategory !== 'undefined' && selectedInventoryCategory) {
+                renderInventory();
+            }
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Precio Actualizado!',
+                text: 'Precio actualizado correctamente.',
+                showCancelButton: true,
+                confirmButtonText: '🖨️ Imprimir Etiqueta',
+                cancelButtonText: 'Continuar',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Cambiamos 'product' por 'p' que es la variable correcta aquí
+                    imprimirEtiqueta(p.name, p.price);
+                }
+            });
+        }
+    });
+}
       function mostrarResumenDia() {
           Swal.fire({
               title: 'Resumen del Día',
@@ -1873,64 +3106,875 @@ function handleProductSubmit(event) {
           reader.readAsText(file);
       }
 
-      function renderCashCutView() {
-          const openPanel = document.getElementById('shift-open-panel');
-          const closePanel = document.getElementById('shift-close-panel');
-          if (db.shift && db.shift.active) {
-              openPanel.classList.add('hidden');
-              closePanel.classList.remove('hidden');
-              document.getElementById('display-initial-cash').innerText = `$${(db.shift.initialCash || 0).toFixed(2)}`;
-              document.getElementById('display-shift-sales').innerText = `$${(db.shift.sales || 0).toFixed(2)}`;
-              document.getElementById('display-expected-cash').innerText = `$${((db.shift.initialCash || 0) + (db.shift.sales || 0)).toFixed(2)}`;
-              calculateDifference();
-          } else {
-              openPanel.classList.remove('hidden');
-              closePanel.classList.add('hidden');
-              document.getElementById('initial-cash-input').value = '';
-          }
-      }
+    function renderCashCutView() {
+    const initial = db.shift && db.shift.initialCash ? db.shift.initialCash : 0;
+    const sales = db.shift && db.shift.sales ? db.shift.sales : 0;
+    const withdrawals = db.shift && db.shift.supplierWithdrawals ? db.shift.supplierWithdrawals : 0;
+    
+    const expectedCash = (initial + sales) - withdrawals;
 
-      function startShift() {
-          const initial = parseFloat(document.getElementById('initial-cash-input').value) || 0;
-          db.shift = { active: true, initialCash: initial, sales: 0, startTime: new Date().toISOString() };
-          saveData();
-          renderCashCutView();
-          Swal.fire('Turno Iniciado', 'Fondo registrado exitosamente. Ya puedes realizar cobros.', 'success');
-      }
+    const openPanel = document.getElementById('shift-open-panel');
+    const closePanel = document.getElementById('shift-close-panel');
 
-      function calculateDifference() {
-          const expected = (db.shift.initialCash || 0) + (db.shift.sales || 0);
-          const final = parseFloat(document.getElementById('final-cash-input').value) || 0;
-          const diff = final - expected;
-          const display = document.getElementById('display-difference');
-          if (diff >= 0) {
-              display.innerText = `+$${diff.toFixed(2)}`;
-              display.className = "text-2xl font-black text-emerald-500";
-          } else {
-              display.innerText = `-$${Math.abs(diff).toFixed(2)}`;
-              display.className = "text-2xl font-black text-red-500";
-          }
-      }
+    if (db.shift && db.shift.active) {
+        openPanel.classList.add('hidden');
+        closePanel.classList.remove('hidden');
+        
+        document.getElementById('display-initial-cash').innerText = `$${initial.toFixed(2)}`;
+        document.getElementById('display-shift-sales').innerText = `$${sales.toFixed(2)}`;
+        document.getElementById('display-expected-cash').innerText = `$${expectedCash.toFixed(2)}`;
+        
+        // --- ACTUALIZAR EL PANEL DE INFORMACIÓN ---
+        const infoPanel = document.getElementById('shift-info-panel');
+        if (infoPanel) {
+            const verifiedBy = db.shift.verifiedBy || 'No verificado';
+            const verifiedAt = db.shift.verifiedAt ? new Date(db.shift.verifiedAt).toLocaleString() : 'N/A';
+            const openedBy = db.shift.openedBy || 'N/A';
+            
+            const verificadoIcon = verifiedBy === 'owner' ? '✅' : '⚠️';
+            const verificadoText = verifiedBy === 'owner' ? 'Verificado por Dueño' : 'NO verificado';
+            const verificadoColor = verifiedBy === 'owner' ? 'text-green-400' : 'text-yellow-400';
+            
+            infoPanel.innerHTML = `
+                <div class="flex flex-wrap items-center gap-3 text-xs">
+                    <span class="font-bold text-gray-400">👑 Abierto por:</span>
+                    <span class="font-bold text-white">${openedBy === 'owner' ? 'DUEÑO' : 'EMPLEADO'}</span>
+                    
+                    <span class="text-gray-600">|</span>
+                    
+                    <span class="font-bold text-gray-400">${verificadoIcon} Estado:</span>
+                    <span class="font-bold ${verificadoColor}">${verificadoText}</span>
+                    
+                    ${verifiedAt !== 'N/A' ? `
+                        <span class="text-gray-600">|</span>
+                        <span class="font-bold text-gray-400">🕐 Hora:</span>
+                        <span class="text-gray-300">${verifiedAt}</span>
+                    ` : ''}
+                    
+                    ${db.shift.initialCash ? `
+                        <span class="text-gray-600">|</span>
+                        <span class="font-bold text-gray-400">💰 Fondo:</span>
+                        <span class="text-emerald-400 font-bold">$${db.shift.initialCash.toFixed(2)}</span>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Actualizar badge de estado
+        const badge = document.getElementById('shift-status-badge-turno');
+        if (badge) {
+            if (db.shift.verifiedBy === 'owner') {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white';
+                badge.textContent = '✅ Verificado';
+            } else {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-yellow-600 text-white';
+                badge.textContent = '⚠️ Pendiente';
+            }
+        }
+        
+        calculateDifference();
+    } else {
+        openPanel.classList.remove('hidden');
+        closePanel.classList.add('hidden');
+        const initialInput = document.getElementById('initial-cash-input');
+        if (initialInput) initialInput.value = '';
+        
+        // Resetear panel de información cuando no hay turno activo
+        const infoPanel = document.getElementById('shift-info-panel');
+        if (infoPanel) {
+            infoPanel.innerHTML = `
+                <span class="text-gray-400">⏸️ No hay turno activo</span>
+            `;
+        }
+        
+        // Resetear badge
+        const badge = document.getElementById('shift-status-badge-turno');
+        if (badge) {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-gray-700 text-gray-300';
+            badge.textContent = '⏸️ Sin turno';
+        }
+    }
+}
+     function startShift() {
+    const initial = parseFloat(document.getElementById('initial-cash-input').value) || 0;
+    
+    if (initial <= 0) {
+        Swal.fire('Error', 'Debes ingresar un monto válido para el fondo inicial.', 'error');
+        return;
+    }
 
-      function closeShift() {
-          const expected = (db.shift.initialCash || 0) + (db.shift.sales || 0);
-          const final = parseFloat(document.getElementById('final-cash-input').value) || 0;
-          const diff = final - expected;
+    // Verificar si el usuario actual es dueño
+    if (currentRole === 'owner') {
+        // Si es dueño, solicitar contraseña para verificar el efectivo
+        Swal.fire({
+            title: '🔐 Verificación de Fondo Inicial',
+            text: `El fondo inicial es $${initial.toFixed(2)}. Ingresa tu contraseña para confirmar.`,
+            input: 'password',
+            inputPlaceholder: 'Contraseña del dueño',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off',
+                style: 'color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important;'
+            },
+            showCancelButton: true,
+            confirmButtonText: '✅ Verificar y Iniciar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#6b7280',
+            preConfirm: (password) => {
+                if (!password) {
+                    Swal.showValidationMessage('Debes ingresar la contraseña');
+                    return false;
+                }
+                const ownerPassword = localStorage.getItem("ownerPin") || "admin123";
+                if (password !== ownerPassword) {
+                    Swal.showValidationMessage('❌ Contraseña incorrecta');
+                    return false;
+                }
+                return true;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Contraseña correcta, iniciar turno
+                db.shift = { 
+                    active: true, 
+                    initialCash: initial, 
+                    sales: 0, 
+                    startTime: new Date().toISOString(),
+                    verifiedBy: 'owner',
+                    verifiedAt: new Date().toISOString()
+                };
+                saveData();
+                renderCashCutView();
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Turno Iniciado',
+                    html: `Fondo inicial de <b>$${initial.toFixed(2)}</b> verificado.<br>¡Ya puedes realizar cobros!`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    } else {
+        // Si es empleado, iniciar turno sin verificación pero con registro
+        db.shift = { 
+            active: true, 
+            initialCash: initial, 
+            sales: 0, 
+            startTime: new Date().toISOString(),
+            verifiedBy: 'employee',
+            verifiedAt: new Date().toISOString(),
+            openedBy: currentRole
+        };
+        saveData();
+        renderCashCutView();
+        Swal.fire({
+            icon: 'success',
+            title: '✅ Turno Iniciado',
+            html: `Fondo inicial de <b>$${initial.toFixed(2)}</b> registrado.<br>¡Ya puedes realizar cobros!`,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+}
+     function calculateDifference() {
+    const input = document.getElementById('final-cash-input');
+    if (!input) {
+        console.error('❌ Elemento final-cash-input no encontrado');
+        return;
+    }
+    
+    const expected = (db.shift.initialCash || 0) + (db.shift.sales || 0) - (db.shift.supplierWithdrawals || 0);
+    const final = parseFloat(input.value) || 0;
+    const diff = final - expected;
+    
+    const display = document.getElementById('display-difference');
+    if (display) {
+        if (diff >= 0) {
+            display.innerText = `+$${diff.toFixed(2)} (Sobrante)`;
+            display.className = "text-2xl font-black text-emerald-500";
+        } else {
+            display.innerText = `-$${Math.abs(diff).toFixed(2)} (Faltante)`;
+            display.className = "text-2xl font-black text-red-500";
+        }
+    }
+}
+function closeShift() {
+    // Verificar si hay turno activo
+    if (!db.shift || !db.shift.active) {
+        Swal.fire({
+            icon: 'warning',
+            title: '⚠️ Sin Turno Activo',
+            text: 'No hay un turno activo para cerrar.',
+            confirmButtonColor: '#6b7280'
+        });
+        return;
+    }
+
+    // Obtener valores
+    const initial = db.shift.initialCash || 0;
+    const sales = db.shift.sales || 0;
+    const withdrawals = db.shift.supplierWithdrawals || 0;
+    const expected = (initial + sales) - withdrawals;
+    
+    // Obtener el efectivo físico ingresado
+    const finalInput = document.getElementById('final-cash-input');
+    const final = parseFloat(finalInput?.value) || 0;
+    
+    // Validar que se haya ingresado un monto
+    if (final <= 0) {
+        Swal.fire({
+            icon: 'error',
+            title: '❌ Campo Requerido',
+            text: 'Debes ingresar el efectivo físico contado al cierre.',
+            confirmButtonColor: '#dc2626'
+        });
+        finalInput?.focus();
+        return;
+    }
+
+    // Calcular diferencia
+    const diff = final - expected;
+
+    // Mostrar resumen antes de cerrar
+    Swal.fire({
+        title: '📊 Resumen de Cierre de Turno',
+        html: `
+            <div class="text-left space-y-2 p-2">
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <span class="text-gray-600">💰 Fondo Inicial:</span>
+                    <span class="font-bold">$${initial.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <span class="text-gray-600">📈 Ventas del Turno:</span>
+                    <span class="font-bold text-emerald-600">$${sales.toFixed(2)}</span>
+                </div>
+                ${withdrawals > 0 ? `
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <span class="text-gray-600">💸 Retiros a Proveedores:</span>
+                    <span class="font-bold text-red-600">-$${withdrawals.toFixed(2)}</span>
+                </div>
+                ` : ''}
+                <div class="flex justify-between border-b-2 border-gray-300 pb-2 pt-1">
+                    <span class="font-bold text-gray-800">📌 Total Esperado:</span>
+                    <span class="font-bold text-blue-600">$${expected.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between pt-1">
+                    <span class="font-bold text-gray-800">💵 Efectivo Contado:</span>
+                    <span class="font-bold">$${final.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between border-t-2 border-gray-300 pt-2 mt-1">
+                    <span class="font-bold text-gray-800">📊 Diferencia:</span>
+                    <span class="font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}">
+                        ${diff >= 0 ? '+' : ''}$${diff.toFixed(2)}
+                        ${diff >= 0 ? ' (Sobrante)' : ' (Faltante)'}
+                    </span>
+                </div>
+                ${db.supplierPayments && db.supplierPayments.length > 0 ? `
+                <div class="border-t border-gray-200 pt-2 mt-2">
+                    <p class="text-xs font-bold text-gray-500 uppercase">📦 Pagos a Proveedores:</p>
+                    ${db.supplierPayments.slice(-5).map(p => `
+                        <div class="flex justify-between text-xs text-gray-600">
+                            <span>${p.supplier}</span>
+                            <span class="font-bold text-red-500">-$${p.amount.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                    ${db.supplierPayments.length > 5 ? `<p class="text-xs text-gray-400">... y ${db.supplierPayments.length - 5} más</p>` : ''}
+                </div>
+                ` : ''}
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: false,
+        confirmButtonText: '✅ Cerrar Turno',
+        confirmButtonColor: '#dc2626',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 🔒 MOSTRAR BLOQUEO
+            mostrarBloqueo('⏳ Procesando cierre de turno...');
+            
+            // PROCESAR CIERRE DEL TURNO (con setTimeout para que se vea el bloqueo)
+            setTimeout(() => {
+                try {
+                    // 1. Registrar la diferencia en gastos/ingresos
+                    if (diff < 0) {
+                        db.dailyExpenses = (db.dailyExpenses || 0) + Math.abs(diff);
+                    } else if (diff > 0) {
+                        db.dailySales = (db.dailySales || 0) + diff;
+                    }
+                    
+                    // 2. Guardar el arqueo en el historial
+                    if (!db.shiftHistory) db.shiftHistory = [];
+                    const shiftRecord = {
+                        id: Date.now(),
+                        startTime: db.shift.startTime,
+                        endTime: new Date().toISOString(),
+                        initialCash: initial,
+                        sales: sales,
+                        withdrawals: withdrawals,
+                        expected: expected,
+                        finalCash: final,
+                        difference: diff,
+                        verifiedBy: db.shift.verifiedBy || 'No verificado',
+                        openedBy: db.shift.openedBy || 'Desconocido',
+                        closedBy: currentRole || 'Desconocido',
+                        supplierPayments: [...(db.supplierPayments || [])]
+                    };
+                    db.shiftHistory.push(shiftRecord);
+                    
+                    // 3. Limpiar los pagos a proveedores del turno
+                    db.supplierPayments = [];
+                    
+                    // 4. Cerrar el turno
+                    db.shift = { active: false };
+                    
+                    // 5. Guardar datos
+                    saveData();
+                    
+                    // 6. Actualizar vista
+                    renderCashCutView();
+                    updateDashboard();
+                    
+                    // 7. 🔒 ACTUALIZAR BLOQUEO - Solicitar contraseña
+                    actualizarBloqueo('🔐 Guardando reporte en carpeta segura...', 'info');
+                    
+                    // 8. Continuar con el guardado del reporte
+                    setTimeout(() => {
+                        guardarReporteSeguro(shiftRecord);
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error al cerrar turno:', error);
+                    quitarBloqueo();
+                    Swal.fire({
+                        icon: 'error',
+                        title: '❌ Error',
+                        text: 'Ocurrió un error al cerrar el turno: ' + error.message,
+                        confirmButtonColor: '#dc2626'
+                    });
+                }
+            }, 800);
+        }
+    });
+}
+function guardarReporteSeguro(shiftData) {
+    // Solicitar contraseña para guardar el reporte
+    Swal.fire({
+        title: '🔒 Guardar Reporte',
+        text: 'Ingresa una contraseña para proteger el reporte:',
+        input: 'password',
+        inputPlaceholder: 'Mínimo 4 caracteres',
+        inputAttributes: {
+            autocapitalize: 'off',
+            autocorrect: 'off',
+            style: 'color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important;'
+        },
+        showCancelButton: false,
+        confirmButtonText: '✅ Guardar y Enviar',
+        confirmButtonColor: '#2563eb',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        preConfirm: (password) => {
+            if (!password || password.length < 4) {
+                Swal.showValidationMessage('❌ La contraseña debe tener al menos 4 caracteres');
+                return false;
+            }
+            return password;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const password = result.value;
+            
+            try {
+                // Generar nombre del archivo
+                const fecha = new Date(shiftData.endTime);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                const horaStr = fecha.toTimeString().slice(0,8).replace(/:/g, '-');
+                const filename = `reporte_turno_${fechaStr}_${horaStr}.json`;
+                
+                // Crear el reporte completo
+                const reporte = {
+                    ...shiftData,
+                    password: password,
+                    fechaGeneracion: new Date().toISOString(),
+                    generadoPor: currentRole || 'Desconocido'
+                };
+                
+                // Guardar en localStorage
+                if (!db.reportesGuardados) db.reportesGuardados = [];
+                db.reportesGuardados.push({
+                    id: shiftData.id,
+                    filename: filename,
+                    password: password,
+                    data: reporte,
+                    fecha: new Date().toISOString()
+                });
+                
+                // Descarga automática del archivo
+                const dataStr = JSON.stringify(reporte, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                // Guardar en Firebase si está configurado
+                if (firebaseDb) {
+                    firebaseDb.ref('reportesSeguros/' + shiftData.id).set({
+                        id: shiftData.id,
+                        fecha: new Date().toISOString(),
+                        filename: filename,
+                        password: password
+                    });
+                }
+                
+                // Actualizar localStorage
+                saveData();
+                
+                // 🔓 QUITAR BLOQUEO
+                quitarBloqueo();
+                
+                // Continuar con el envío por WhatsApp
+                enviarReporteWhatsApp(shiftData, password);
+                
+            } catch (error) {
+                console.error('Error al guardar reporte:', error);
+                quitarBloqueo();
+                Swal.fire({
+                    icon: 'error',
+                    title: '❌ Error',
+                    text: 'Ocurrió un error al guardar el reporte: ' + error.message,
+                    confirmButtonColor: '#dc2626'
+                });
+            }
+        }
+    });
+}
+function enviarReporteWhatsApp(shiftData, password) {
+    try {
+        const fecha = new Date(shiftData.endTime);
+        const fechaStr = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const horaStr = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        
+        // Obtener los pagos a proveedores
+        const pagos = shiftData.supplierPayments || [];
+        let proveedoresText = '';
+        if (pagos.length > 0) {
+            proveedoresText = '\n📦 *PAGOS A PROVEEDORES:*\n';
+            pagos.forEach(p => {
+                proveedoresText += `  • ${p.supplier}: $${p.amount.toFixed(2)} ${p.notes ? `(${p.notes})` : ''}\n`;
+            });
+            proveedoresText += `  💸 *Total Proveedores: $${shiftData.withdrawals.toFixed(2)}*\n`;
+        }
+
+        // Obtener los últimos 5 productos más vendidos del turno
+        let productosText = '';
+        if (db.salesHistory && db.salesHistory.length > 0) {
+            const ventasTurno = db.salesHistory.filter(s => new Date(s.date) >= new Date(shiftData.startTime));
+            if (ventasTurno.length > 0) {
+                const ventasMap = {};
+                ventasTurno.forEach(v => {
+                    v.items.forEach(item => {
+                        const key = item.id || item.name;
+                        if (!ventasMap[key]) {
+                            ventasMap[key] = { name: item.name, qty: 0, total: 0 };
+                        }
+                        ventasMap[key].qty += (item.qty || 1);
+                        ventasMap[key].total += (item.price * item.qty || 0);
+                    });
+                });
+                const topVentas = Object.values(ventasMap)
+                    .sort((a, b) => b.qty - a.qty)
+                    .slice(0, 5);
+                
+                if (topVentas.length > 0) {
+                    productosText = '\n🔥 *TOP PRODUCTOS VENDIDOS:*\n';
+                    topVentas.forEach((p, i) => {
+                        productosText += `  ${i+1}. ${p.name}: ${p.qty} unidades ($${p.total.toFixed(2)})\n`;
+                    });
+                }
+            }
+        }
+
+        // Construir el mensaje completo
+        const mensaje = `
+📊 *REPORTE DE CIERRE DE TURNO*
+🏪 *MINI SUPER CARLITOS*
+
+📅 *Fecha:* ${fechaStr}
+🕐 *Hora:* ${horaStr}
+👤 *Cerrado por:* ${shiftData.closedBy === 'owner' ? '👑 Dueño' : '👤 Empleado'}
+
+💰 *Fondo Inicial:* $${shiftData.initialCash.toFixed(2)}
+📈 *Ventas del Turno:* $${shiftData.sales.toFixed(2)}
+${shiftData.withdrawals > 0 ? `💸 *Retiros a Proveedores:* -$${shiftData.withdrawals.toFixed(2)}` : ''}
+📌 *Total Esperado en Caja:* $${shiftData.expected.toFixed(2)}
+💵 *Efectivo Contado:* $${shiftData.finalCash.toFixed(2)}
+📊 *Diferencia:* ${shiftData.difference >= 0 ? '+' : ''}$${shiftData.difference.toFixed(2)} ${shiftData.difference >= 0 ? '✅ Sobrante' : '❌ Faltante'}
+${proveedoresText}
+${productosText}
+${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : '⚠️ *Turno NO Verificado por Dueño*'}
+
+⏱️ *Duración del Turno:* ${calcularDuracionTurno(shiftData)}
+
+🔐 *Contraseña del reporte:* ${password}
+
+---
+*¡Gracias por tu trabajo!* 🙌
+        `;
+
+        // 🔓 PRIMERO: Quitar el bloqueo ANTES de abrir WhatsApp
+        quitarBloqueo();
+
+        // Mostrar mensaje de éxito
+        Swal.fire({
+            icon: 'success',
+            title: '✅ Turno Cerrado y Reporte Guardado',
+            html: `
+                <div class="text-left">
+                    <p>✅ Reporte guardado en carpeta segura</p>
+                    <p>🔐 Contraseña: <strong class="text-red-600">${password}</strong></p>
+                    <p class="text-xs text-gray-500 mt-2">⚠️ *Guarda esta contraseña para acceder al reporte*</p>
+                </div>
+            `,
+            confirmButtonText: '📱 Enviar por WhatsApp',
+            cancelButtonText: 'Omitir',
+            showCancelButton: true,
+            confirmButtonColor: '#25D366',
+            cancelButtonColor: '#6b7280',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Abrir WhatsApp con el mensaje
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+                window.open(whatsappUrl, '_blank');
+                
+                // Mostrar confirmación final
+                Swal.fire({
+                    icon: 'success',
+                    title: '📱 WhatsApp Abierto',
+                    text: 'El mensaje está listo para enviar. Solo presiona el botón de enviar en WhatsApp.',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#10b981'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: '📱 Envío omitido',
+                    text: 'El reporte se guardó correctamente en la carpeta segura.',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#6b7280'
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('Error al enviar WhatsApp:', error);
+        quitarBloqueo();
+        Swal.fire({
+            icon: 'error',
+            title: '❌ Error',
+            text: 'El reporte se guardó pero hubo un error al abrir WhatsApp: ' + error.message,
+            confirmButtonColor: '#dc2626'
+        });
+    }
+}
+function mostrarBloqueo(mensaje) {
+    // Crear overlay de bloqueo si no existe
+    let overlay = document.getElementById('bloqueo-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'bloqueo-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(8px);
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    overlay.innerHTML = `
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-red-500"></div>
+            <p class="text-2xl font-bold">${mensaje}</p>
+            <p class="text-sm text-gray-400">No cierres esta ventana</p>
+        </div>
+    `;
+    overlay.style.display = 'flex';
+}
+
+function actualizarBloqueo(mensaje, tipo) {
+    const overlay = document.getElementById('bloqueo-overlay');
+    if (overlay) {
+        const icon = tipo === 'success' ? '✅' : '⚠️';
+        overlay.innerHTML = `
+            <div class="flex flex-col items-center gap-4 text-center">
+                <div class="text-6xl">${icon}</div>
+                <p class="text-2xl font-bold">${mensaje}</p>
+                <p class="text-sm text-gray-400">Preparando envío por WhatsApp...</p>
+            </div>
+        `;
+    }
+}
+function quitarBloqueo() {
+    console.log('🔓 Quitando bloqueo...');
+    const overlay = document.getElementById('bloqueo-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        overlay.remove(); // Eliminar completamente el elemento
+    }
+    // También asegurarse de que el body pueda hacer scroll si es necesario
+    document.body.style.overflow = 'auto';
+}
+
+// 🔓 FUNCIÓN PARA VER REPORTES GUARDADOS (NUEVA)
+function verReportesGuardados() {
+    if (!db.reportesGuardados || db.reportesGuardados.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: '📂 Sin Reportes',
+            text: 'No hay reportes guardados en la carpeta segura.',
+            confirmButtonColor: '#6b7280'
+        });
+        return;
+    }
+
+    // Listar reportes guardados
+    let html = `<div class="text-left max-h-60 overflow-y-auto">`;
+    db.reportesGuardados.forEach((r, i) => {
+        const fecha = new Date(r.fecha);
+        html += `
+            <div class="border-b border-gray-100 py-2 flex justify-between items-center">
+                <div>
+                    <p class="font-bold text-sm">📄 ${r.filename}</p>
+                    <p class="text-xs text-gray-500">${fecha.toLocaleString()}</p>
+                </div>
+                <button onclick="verReporteDetalle(${i})" class="bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold">
+                    Ver
+                </button>
+            </div>
+        `;
+    });
+    html += `</div>`;
+
+    Swal.fire({
+        title: '📂 Reportes Guardados',
+        html: html,
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#6b7280',
+        width: '500px'
+    });
+}
+
+// 🔓 VER DETALLE DE REPORTE CON CONTRASEÑA
+function verReporteDetalle(index) {
+    const reporte = db.reportesGuardados[index];
+    if (!reporte) return;
+
+    Swal.fire({
+        title: '🔐 Reporte Protegido',
+        text: 'Ingresa la contraseña para ver el reporte:',
+        input: 'password',
+        inputAttributes: {
+            autocapitalize: 'off',
+            autocorrect: 'off',
+            style: 'color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important;'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Ver Reporte',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+        preConfirm: (password) => {
+            if (password !== reporte.password) {
+                Swal.showValidationMessage('❌ Contraseña incorrecta');
+                return false;
+            }
+            return true;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const data = reporte.data;
+            const fecha = new Date(data.endTime);
+            
+            Swal.fire({
+                title: '📊 Reporte de Turno',
+                html: `
+                    <div class="text-left text-sm space-y-1">
+                        <p><strong>📅 Fecha:</strong> ${fecha.toLocaleDateString()}</p>
+                        <p><strong>🕐 Hora:</strong> ${fecha.toLocaleTimeString()}</p>
+                        <p><strong>👤 Cerrado por:</strong> ${data.closedBy === 'owner' ? 'Dueño' : 'Empleado'}</p>
+                        <hr class="my-2">
+                        <p><strong>💰 Fondo Inicial:</strong> $${data.initialCash.toFixed(2)}</p>
+                        <p><strong>📈 Ventas:</strong> $${data.sales.toFixed(2)}</p>
+                        <p><strong>💸 Retiros Proveedores:</strong> $${data.withdrawals.toFixed(2)}</p>
+                        <p><strong>📌 Total Esperado:</strong> $${data.expected.toFixed(2)}</p>
+                        <p><strong>💵 Efectivo Contado:</strong> $${data.finalCash.toFixed(2)}</p>
+                        <p><strong>📊 Diferencia:</strong> ${data.difference >= 0 ? '+' : ''}$${data.difference.toFixed(2)}</p>
+                        <hr class="my-2">
+                        <p><strong>⏱️ Duración:</strong> ${calcularDuracionTurno(data)}</p>
+                        <p><strong>🔐 Contraseña:</strong> ${reporte.password}</p>
+                    </div>
+                `,
+                confirmButtonText: 'Cerrar',
+                confirmButtonColor: '#6b7280',
+                width: '500px'
+            });
+        }
+    });
+}
+// 📱 FUNCIÓN PARA ENVIAR REPORTE POR WHATSAPP
+function enviarReporteCierreTurno(shiftData) {
+    const fecha = new Date(shiftData.endTime);
+    const fechaStr = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const horaStr = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    
+    // Obtener los pagos a proveedores
+    const pagos = shiftData.supplierPayments || [];
+    let proveedoresText = '';
+    if (pagos.length > 0) {
+        proveedoresText = '\n📦 *PAGOS A PROVEEDORES:*\n';
+        pagos.forEach(p => {
+            proveedoresText += `  • ${p.supplier}: $${p.amount.toFixed(2)} ${p.notes ? `(${p.notes})` : ''}\n`;
+        });
+        proveedoresText += `  💸 *Total Proveedores: $${shiftData.withdrawals.toFixed(2)}*\n`;
+    }
+
+    // Obtener los últimos 5 productos más vendidos del turno
+    let productosText = '';
+    if (db.salesHistory && db.salesHistory.length > 0) {
+        const ventasTurno = db.salesHistory.filter(s => new Date(s.date) >= new Date(shiftData.startTime));
+        if (ventasTurno.length > 0) {
+            const ventasMap = {};
+            ventasTurno.forEach(v => {
+                v.items.forEach(item => {
+                    const key = item.id || item.name;
+                    if (!ventasMap[key]) {
+                        ventasMap[key] = { name: item.name, qty: 0, total: 0 };
+                    }
+                    ventasMap[key].qty += (item.qty || 1);
+                    ventasMap[key].total += (item.price * item.qty || 0);
+                });
+            });
+            const topVentas = Object.values(ventasMap)
+                .sort((a, b) => b.qty - a.qty)
+                .slice(0, 5);
+            
+            if (topVentas.length > 0) {
+                productosText = '\n🔥 *TOP PRODUCTOS VENDIDOS:*\n';
+                topVentas.forEach((p, i) => {
+                    productosText += `  ${i+1}. ${p.name}: ${p.qty} unidades ($${p.total.toFixed(2)})\n`;
+                });
+            }
+        }
+    }
+
+    // Construir el mensaje completo
+    const mensaje = `
+📊 *REPORTE DE CIERRE DE TURNO*
+🏪 *MINI SUPER CARLITOS*
+
+📅 *Fecha:* ${fechaStr}
+🕐 *Hora:* ${horaStr}
+👤 *Cerrado por:* ${shiftData.closedBy === 'owner' ? '👑 Dueño' : '👤 Empleado'}
+
+💰 *Fondo Inicial:* $${shiftData.initialCash.toFixed(2)}
+📈 *Ventas del Turno:* $${shiftData.sales.toFixed(2)}
+${shiftData.withdrawals > 0 ? `💸 *Retiros a Proveedores:* -$${shiftData.withdrawals.toFixed(2)}` : ''}
+📌 *Total Esperado en Caja:* $${shiftData.expected.toFixed(2)}
+💵 *Efectivo Contado:* $${shiftData.finalCash.toFixed(2)}
+📊 *Diferencia:* ${shiftData.difference >= 0 ? '+' : ''}$${shiftData.difference.toFixed(2)} ${shiftData.difference >= 0 ? '✅ Sobrante' : '❌ Faltante'}
+${proveedoresText}
+${productosText}
+${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : '⚠️ *Turno NO Verificado por Dueño*'}
+
+⏱️ *Duración del Turno:* ${calcularDuracionTurno(shiftData)}
+
+---
+*¡Gracias por tu trabajo!* 🙌
+    `;
+
+    // Abrir WhatsApp con el mensaje
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+}
+function calcularDuracionTurno(shiftData) {
+    if (!shiftData || !shiftData.startTime || !shiftData.endTime) return 'N/A';
+    const start = new Date(shiftData.startTime);
+    const end = new Date(shiftData.endTime);
+    const diffMs = end - start;
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${diffHrs}h ${diffMins}m`;
+}
+      // Función helper para renderizar productos en la vista de POS
+      function renderPosProducts(productos) {
+          const grid = document.getElementById('product-grid');
+          const emptyState = document.getElementById('empty-state');
+          if (!grid) return;
           
-          if (diff < 0) {
-              db.dailyExpenses = (db.dailyExpenses || 0) + Math.abs(diff);
+          if (!productos || productos.length === 0) {
+              if(emptyState) emptyState.style.display = 'flex';
+              grid.style.display = 'none';
+              return;
           }
           
-          db.shift = { active: false };
-          saveData();
-          renderCashCutView();
-          Swal.fire('Turno Cerrado', `Arqueo guardado correctamente.<br>Diferencia: <b>$${diff.toFixed(2)}</b>`, 'success');
-      }
+          if(emptyState) emptyState.style.display = 'none';
+          grid.style.display = 'grid';
+          
+          grid.innerHTML = productos.map(p => {
+              let priceLabel = `$${Number(p.price || 0).toFixed(2)}`;
+              if (p.type === 'mixto') {
+                  priceLabel = `
+                      <div class="text-right">
+                          <span class="text-[10px] text-blue-600 block font-bold leading-none">Cajetilla: $${Number(p.price || 0).toFixed(2)}</span>
+                          <span class="text-[10px] text-emerald-600 block font-bold leading-none mt-1">Cigarro: $${Number(p.piecePrice || 0).toFixed(2)}</span>
+                      </div>
+                  `;
+              }
+              
+              const sugerencias = obtenerSugerenciaProducto(p);
+              let htmlSugerencias = '';
+              if (sugerencias.length > 0) {
+                  htmlSugerencias = `<div class="flex flex-wrap gap-1 mt-1 mb-1">` + 
+                      sugerencias.map(s => `<span class="bg-gray-800 text-white text-[8px] px-1.5 py-0.5 rounded shadow-sm">${s}</span>`).join('') + 
+                      `</div>`;
+              }
 
-      setInterval(() => {
-          const clock = document.getElementById('clock');
-          if (clock) clock.innerText = new Date().toLocaleTimeString('es-MX', { hour12: false });
-      }, 1000);
+              return `
+              <button onclick="addToCart(${p.id})" class="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-gray-100 hover:border-red-400 hover:shadow-md transition-all text-left flex flex-col justify-between aspect-square btn-action relative overflow-hidden group">
+                  ${p.stock < 5 ? '<div class="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-xl shadow-sm z-10">¡POCO STOCK!</div>' : ''}
+                  <div class="relative z-10">
+                      <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest break-words mb-1">${p.code || 'S/C'}</div>
+                      <div class="font-bold text-gray-800 text-sm md:text-base leading-tight uppercase line-clamp-2 group-hover:text-red-600 transition-colors">${p.name}</div>
+                      ${htmlSugerencias}
+                      ${p.type === 'mixto' ? '<span class="inline-block mt-1 bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded">CAJETILLA/SUELTO</span>' : ''}
+                  </div>
+                  <div class="flex justify-between items-end mt-2 relative z-10 border-t border-gray-50 pt-2">
+                      <span class="text-[11px] text-gray-500 font-bold bg-gray-50 px-2 py-1 rounded-lg text-center leading-tight">
+                          ${p.type === 'mixto' ? `${Math.floor(p.stock / (p.piecesPerBox||20))} cajetillas<br>y ${p.stock % (p.piecesPerBox||20)} sueltos` : `Disp: ${p.stock}`}
+                      </span>
+                      <div class="font-black text-red-600 text-sm md:text-base">${priceLabel}</div>
+                  </div>
+              </button>
+          `}).join('');
+      }
 
   </script>
 </body>
