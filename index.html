@@ -161,52 +161,28 @@ body.dark-mode .ticket-font {
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 @media print {
-    body {
+    body * {
         visibility: hidden !important;
-        background: white !important;
     }
-
-    body.printing-label,
-    body.printing-label #print-label-area,
-    body.printing-label #print-label-area * {
+    /* Asegura que solo se vea el área del ticket al imprimir */
+    #print-ticket-area, #print-ticket-area * {
         visibility: visible !important;
     }
-
-    body.printing-label #print-label-area {
-        position: fixed !important;
+    #print-ticket-area {
+        position: absolute !important;
         left: 0 !important;
         top: 0 !important;
         width: 58mm !important;
-        display: block !important;
-        background: white !important;
-        color: black !important;
-        margin: 0 !important;
-        padding: 2mm !important;
-        z-index: 999999 !important;
-    }
-
-    body.printing-ticket,
-    body.printing-ticket #print-ticket-area,
-    body.printing-ticket #print-ticket-area * {
-        visibility: visible !important;
-    }
-
-    body.printing-ticket #print-ticket-area {
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 58mm !important;
-        display: block !important;
         background: white !important;
         color: black !important;
         margin: 0 !important;
         padding: 0 !important;
-        z-index: 999999 !important;
+        z-index: 9999 !important;
     }
-
+    /* ESTA ES LA PARTE QUE CORRIGE EL TAMAÑO DEL PAPEL */
     @page {
-        margin: 0;
-        size: 58mm auto;
+        size: 58mm auto; 
+        margin: 0mm;
     }
 }
         @media (max-width: 768px) {
@@ -3424,44 +3400,210 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             }, 100);
         }
 
-        function imprimirTicket58mm(venta) {
-            const ticketArea = document.getElementById('print-ticket-area');
-            if (!ticketArea) return;
+      function imprimirTicket58mm(venta) {
+    // 1. Generar el HTML del ticket con diseño mejorado (Estilo Tienda)
+    const fecha = new Date(venta.date);
+    const fechaStr = fecha.toLocaleString('es-MX', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit', hour12: true 
+    });
 
-            document.getElementById('ticket-date').innerText = `Fecha: ${new Date(venta.date).toLocaleString()}`;
-            
-            const itemsContainer = document.getElementById('ticket-items-list');
-            itemsContainer.innerHTML = '';
-            
-            venta.items.forEach(item => {
-                const desc = item.name || 'Producto';
-                const qty = item.piecesCount || item.qty;
-                const subtotal = (item.price * item.qty).toFixed(2);
-                
-                itemsContainer.innerHTML += `
-                    <div class="flex flex-col mb-1">
-                        <span class="font-bold uppercase truncate">${desc}</span>
-                        <div class="flex justify-between text-[8px] text-gray-700">
-                            <span>${qty} x $${Number(item.price).toFixed(2)}</span>
-                            <span class="font-bold">$${subtotal}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('ticket-total').innerText = `$${venta.total.toFixed(2)}`;
-            document.getElementById('ticket-received').innerText = `$${venta.received.toFixed(2)}`;
-            document.getElementById('ticket-change').innerText = `$${venta.change.toFixed(2)}`;
-            
-            document.body.classList.add('printing-ticket');
-            ticketArea.classList.remove('hidden');
+    // Generar lista de items
+    let itemsHtml = '';
+    venta.items.forEach(item => {
+        const desc = item.name || 'Producto';
+        const qty = item.piecesCount || item.qty;
+        const subtotal = (item.price * item.qty).toFixed(2);
+        const precioUnitario = Number(item.price).toFixed(2);
+        
+        itemsHtml += `
+            <tr style="border-bottom: 1px dashed #ccc;">
+                <td style="padding: 4px 0; font-size: 11px; font-weight: bold; text-align: left; vertical-align: top; width: 30px;">${qty}</td>
+                <td style="padding: 4px 0; font-size: 11px; font-weight: bold; text-align: left; vertical-align: top; line-height: 1.2;">${desc}</td>
+                <td style="padding: 4px 0; font-size: 11px; text-align: right; vertical-align: top;">$${subtotal}</td>
+            </tr>
+        `;
+    });
 
-            setTimeout(() => {
-                window.print();
-                ticketArea.classList.add('hidden');
-                document.body.classList.remove('printing-ticket');
-            }, 250);
-        }
+    // 2. Construir el documento completo con estilos CSS en línea (para que se vea bien en la ventana emergente)
+    const ticketHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Ticket de Venta</title>
+        <meta charset="UTF-8">
+        <style>
+            /* Estilos CSS para la impresión */
+            @page {
+                size: 58mm auto;
+                margin: 0mm;
+            }
+            body {
+                font-family: 'Courier New', Courier, monospace;
+                margin: 0;
+                padding: 0;
+                width: 58mm;
+                background: white;
+                color: #000;
+                font-size: 12px;
+            }
+            .ticket-container {
+                padding: 3mm;
+                max-width: 58mm;
+                margin: 0 auto;
+            }
+            .header {
+                text-align: center;
+                border-bottom: 2px solid #000;
+                padding-bottom: 5px;
+                margin-bottom: 8px;
+            }
+            .header h2 {
+                margin: 0;
+                font-size: 16px;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                font-weight: 900;
+            }
+            .header p {
+                margin: 2px 0;
+                font-size: 10px;
+                color: #333;
+            }
+            .header .sistema {
+                font-size: 8px;
+                color: #666;
+                margin-top: 2px;
+            }
+            .info-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+            .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 5px 0;
+            }
+            .items-table th {
+                border-top: 2px solid #000;
+                border-bottom: 1px solid #000;
+                padding: 4px 0;
+                font-size: 10px;
+                text-transform: uppercase;
+                text-align: left;
+            }
+            .items-table th:last-child {
+                text-align: right;
+            }
+            .totals-box {
+                border-top: 2px solid #000;
+                margin-top: 5px;
+                padding-top: 5px;
+            }
+            .total-row {
+                display: flex;
+                justify-content: space-between;
+                font-weight: bold;
+                font-size: 14px;
+                margin-bottom: 2px;
+            }
+            .total-row span:last-child {
+                font-size: 16px;
+            }
+            .payment-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 11px;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 10px;
+                border-top: 1px dashed #000;
+                padding-top: 8px;
+                font-size: 10px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="ticket-container">
+            <!-- Encabezado -->
+            <div class="header">
+                <h2>MINI SUPER CARLITOS</h2>
+                <div class="sistema">SISTEMA DE ING.CHARS</div>
+                <div class="info-row" style="margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 4px;">
+                    <span>${fechaStr}</span>
+                    <span>Ticket #${Date.now().toString().slice(-4)}</span>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Cant</th>
+                        <th>Descripción</th>
+                        <th>Importe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+
+            <!-- Totales y pagos -->
+            <div class="totals-box">
+                <div class="total-row">
+                    <span>TOTAL A PAGAR</span>
+                    <span>$${venta.total.toFixed(2)}</span>
+                </div>
+                <div class="payment-row">
+                    <span>Efectivo Recibido</span>
+                    <span>$${venta.received.toFixed(2)}</span>
+                </div>
+                <div class="payment-row" style="font-weight: bold; font-size: 12px; margin-top: 2px;">
+                    <span>Cambio</span>
+                    <span style="color: #d32f2f;">$${venta.change.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                ¡GRACIAS POR SU COMPRA!<br>
+                VUELVA PRONTO
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // 3. Lógica de impresión silenciosa (ventana emergente)
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (printWindow) {
+        printWindow.document.write(ticketHtml);
+        printWindow.document.close();
+        
+        // Esperar a que cargue y ejecutar print
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+            // Cerrar la ventana después de imprimir (opcional, algunos navegadores lo bloquean si se cierra muy rápido)
+            setTimeout(() => { 
+                try { printWindow.close(); } catch(e){} 
+            }, 500);
+        }, 300);
+    } else {
+        // Si el navegador bloqueó la ventana emergente, usa el método estándar
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'El navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio.',
+            confirmButtonText: 'Entendido'
+        });
+    }
+}
 
         // ===== FUNCIONES DE WHATSAPP =====
         function sendReportWhatsApp() {
