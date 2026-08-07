@@ -3341,9 +3341,10 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             };
 
             db.dailySales = (db.dailySales || 0) + total;
-            if (currentRole === 'employee' && db.shift && db.shift.active) {
-                db.shift.sales = (db.shift.sales || 0) + total;
-            }
+// CORRECCIÓN: Si hay un turno activo, se suma SIN importar quién sea el rol
+if (db.shift && db.shift.active) {
+    db.shift.sales = (db.shift.sales || 0) + total;
+}
 
             if (!db.salesHistory) db.salesHistory = [];
             db.salesHistory.push({
