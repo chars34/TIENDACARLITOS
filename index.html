@@ -260,6 +260,10 @@ body.dark-mode .ticket-font {
                 ⏸️ Sin Turno
             </span>
         </div>
+        <!-- Badge de estado de red. El contenido y los colores los inyecta JS -->
+<div id="network-status" class="flex items-center px-3 py-1.5 rounded-full border shadow-sm transition-colors duration-300">
+    <!-- El estado inicial se carga vacío y JS lo llena al instante -->
+</div>
         <button onclick="toggleTheme()" class="bg-white/10 hover:bg-white/25 text-white p-2.5 px-4 rounded-xl transition-all duration-300 border border-white/20 flex items-center gap-2 hover:shadow-lg backdrop-blur-sm active:scale-95 theme-toggle">
     <i id="theme-icon" class="fas fa-moon text-lg"></i>
 </button>
@@ -586,6 +590,9 @@ body.dark-mode .ticket-font {
                     <button onclick="filterInventoryCategory('Alcohol')" data-category="Alcohol" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
                         <i class="fas fa-wine-bottle text-2xl text-purple-600"></i> Alcohol
                     </button>
+                     <button onclick="filterInventoryCategory('Cerveza')" data-category="Cerveza" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
+    <i class="fas fa-beer-mug-empty text-2xl text-amber-500"></i> Cerveza
+</button>
                     <button onclick="filterInventoryCategory('Alimentos')" data-category="Alimentos" class="cat-filter-btn bg-white text-gray-700 p-4 rounded-2xl font-bold uppercase text-xs border border-gray-200 hover:bg-red-50 hover:border-red-300 transition-all flex flex-col items-center gap-2 shadow-sm">
                         <i class="fas fa-utensils text-2xl text-red-500"></i> Alimentos
                     </button>
@@ -845,6 +852,7 @@ body.dark-mode .ticket-font {
                             <optgroup label="Bebidas y Licores">
                                 <option value="Refrescos">Refrescos</option>
                                 <option value="Alcohol">Alcohol</option>
+                                <option value="Cerveza">Cerveza</option>
                             </optgroup>
                             <optgroup label="Alimentos y Botanas">
                                 <option value="Sabritas">Sabritas</option>
@@ -1048,7 +1056,7 @@ body.dark-mode .ticket-font {
             products: [],
             dailySales: 0,
             dailyExpenses: 0,
-            salesHistory: [],
+            salesHistory: [], // Solo para el dashboard (últimos 30 días)
             shift: { active: false },
             lastResetDate: new Date().toISOString().split('T')[0],
             supplierPayments: [],
@@ -1083,17 +1091,27 @@ body.dark-mode .ticket-font {
                 firebase.initializeApp(firebaseConfig);
                 firebaseDb = firebase.database();
                 
+                // Habilitar persistencia offline
+                firebaseDb.goOnline();
+                
+                // Escuchar cambios en el nodo principal (solo productos y configuraciones)
                 firebaseDb.ref('miniSuperDb').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
+                        // Mantener el historial de ventas local (no sobrescribir con el de Firebase)
+                        const oldSalesHistory = db.salesHistory || [];
+                        const oldShiftHistory = db.shiftHistory || [];
+                        const oldReportesGuardados = db.reportesGuardados || [];
+                        
                         db = data;
+                        db.salesHistory = oldSalesHistory;
+                        db.shiftHistory = oldShiftHistory;
+                        db.reportesGuardados = oldReportesGuardados;
+                        
                         if (!db.products) db.products = [];
-                        if (!db.salesHistory) db.salesHistory = [];
                         if (!db.shift) db.shift = { active: false };
                         if (!db.supplierPayments) db.supplierPayments = [];
                         if (!db.cashDrawersMovements) db.cashDrawersMovements = [];
-                        if (!db.reportesGuardados) db.reportesGuardados = [];
-                        if (!db.shiftHistory) db.shiftHistory = [];
                         if (!db.empleados) db.empleados = [];
                         
                         localStorage.setItem("pos_data", JSON.stringify(db));
@@ -1106,6 +1124,18 @@ body.dark-mode .ticket-font {
                         saveData();
                     }
                 });
+                
+                // Escuchar nuevas ventas históricas (solo los registros nuevos)
+                firebaseDb.ref('ventasHistoricas').limitToLast(50).on('child_added', (snapshot) => {
+                    const venta = snapshot.val();
+                    if (venta && !db.salesHistory.find(s => s.id === venta.id)) {
+                        db.salesHistory.push(venta);
+                        // Mantener solo los últimos 30 días
+                        limpiarHistorialVentasLocal();
+                        updateDashboard();
+                    }
+                });
+                
             } catch (e) {
                 console.log("Firebase no se inicializó. Usando solo Storage local.", e);
                 loadLocalData();
@@ -1126,6 +1156,9 @@ body.dark-mode .ticket-font {
                         { id: 3, nombre: "Juan", activo: true }
                     ];
                 }
+                if (!db.salesHistory) db.salesHistory = [];
+                if (!db.shiftHistory) db.shiftHistory = [];
+                if (!db.reportesGuardados) db.reportesGuardados = [];
             } else {
                 db.products = [
                     { id: 1, code: "75010011", name: "COCA COLA 600ML", cost: 12.00, price: 18.00, stock: 24, type: "pieza", category: "Refrescos" },
@@ -1138,6 +1171,9 @@ body.dark-mode .ticket-font {
                     { id: 2, nombre: "María", activo: true },
                     { id: 3, nombre: "Juan", activo: true }
                 ];
+                db.salesHistory = [];
+                db.shiftHistory = [];
+                db.reportesGuardados = [];
             }
 
             const today = new Date().toISOString().split('T')[0];
@@ -1151,17 +1187,177 @@ body.dark-mode .ticket-font {
                 saveData();
             }
             updateInventoryIndicators();
+            // Limpiar historial de ventas antiguo (más de 30 días)
+            limpiarHistorialVentasLocal();
         }
 
         function saveData() {
             localStorage.setItem("pos_data", JSON.stringify(db));
             if(firebaseDb) {
-                firebaseDb.ref('miniSuperDb').set(db);
+                // Solo guardar productos y configuraciones en el nodo principal
+                const dataToSave = {
+                    products: db.products,
+                    dailySales: db.dailySales,
+                    dailyExpenses: db.dailyExpenses,
+                    shift: db.shift,
+                    lastResetDate: db.lastResetDate,
+                    supplierPayments: db.supplierPayments,
+                    cashDrawersMovements: db.cashDrawersMovements,
+                    reportesGuardados: db.reportesGuardados,
+                    shiftHistory: db.shiftHistory,
+                    empleados: db.empleados
+                };
+                firebaseDb.ref('miniSuperDb').update(dataToSave);
             }
             updateInventoryIndicators();
         }
 
-        // ===== FUNCIONES DE LOGIN =====
+        // ===== FUNCIÓN PARA GUARDAR VENTA EN HISTORIAL (ATÓMICO) =====
+        function guardarVentaHistorica(venta) {
+            // Asignar ID único
+            venta.id = Date.now() + Math.random() * 1000;
+            
+            // Guardar localmente
+            db.salesHistory.push(venta);
+            limpiarHistorialVentasLocal();
+            
+            // Guardar en Firebase de forma atómica (solo este registro)
+            if (firebaseDb) {
+                firebaseDb.ref('ventasHistoricas').push(venta).catch(err => {
+                    console.error('Error guardando venta histórica:', err);
+                    // Si falla, se guardará en la cola de sincronización
+                    guardarEnCola('venta', venta);
+                });
+            }
+            
+            // Guardar cambios en el nodo principal
+            saveData();
+        }
+
+        // ===== COLA DE SINCRONIZACIÓN PARA MODO OFFLINE =====
+        let syncQueue = JSON.parse(localStorage.getItem('syncQueue_carlitos')) || [];
+
+        function guardarEnCola(tipo, datos) {
+            const operacion = {
+                id: Date.now() + Math.random() * 1000,
+                tipo: tipo,
+                datos: datos,
+                fecha: new Date().toISOString()
+            };
+            syncQueue.push(operacion);
+            localStorage.setItem('syncQueue_carlitos', JSON.stringify(syncQueue));
+        }
+
+        async function sincronizarDatosPendientes() {
+            if (syncQueue.length === 0 || !firebaseDb) return;
+            
+            console.log(`Sincronizando ${syncQueue.length} operaciones pendientes...`);
+            let exitosos = [];
+            
+            for (let op of syncQueue) {
+                try {
+                    if (op.tipo === 'venta') {
+                        await firebaseDb.ref('ventasHistoricas').push(op.datos);
+                    } else if (op.tipo === 'producto') {
+                        // Actualizar producto específico
+                        await firebaseDb.ref(`miniSuperDb/products/${op.datos.id}`).update(op.datos);
+                    }
+                    exitosos.push(op.id);
+                } catch (e) {
+                    console.error('Error sincronizando operación:', e);
+                }
+            }
+            
+            // Filtrar las operaciones exitosas
+            syncQueue = syncQueue.filter(op => !exitosos.includes(op.id));
+            localStorage.setItem('syncQueue_carlitos', JSON.stringify(syncQueue));
+            
+            if (exitosos.length > 0) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Sincronización Completa!',
+                    text: `${exitosos.length} operaciones sincronizadas con la nube.`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        }
+
+        // ===== LIMPIEZA AUTOMÁTICA DE HISTORIAL (30 días) =====
+        function limpiarHistorialVentasLocal() {
+            const hoy = new Date();
+            const treintaDiasAtras = new Date(hoy);
+            treintaDiasAtras.setDate(treintaDiasAtras.getDate() - 30);
+            
+            // Filtrar ventas de los últimos 30 días
+            const ventasRecientes = (db.salesHistory || []).filter(v => {
+                const fechaVenta = new Date(v.fecha || v.date);
+                return fechaVenta >= treintaDiasAtras;
+            });
+            
+            if (ventasRecientes.length !== (db.salesHistory || []).length) {
+                db.salesHistory = ventasRecientes;
+                saveData();
+                console.log('Historial de ventas limpiado (últimos 30 días)');
+            }
+        }
+
+        // ===== FUNCIÓN PARA ACTUALIZAR STOCK DE FORMA ATÓMICA =====
+        function actualizarStockProducto(id, cantidad) {
+            const producto = db.products.find(p => p.id === id);
+            if (!producto) return false;
+            
+            producto.stock = Math.max(0, (producto.stock || 0) + cantidad);
+            
+            // Guardar en Firebase de forma atómica
+            if (firebaseDb) {
+                firebaseDb.ref(`miniSuperDb/products/${id}/stock`).set(producto.stock).catch(err => {
+                    console.error('Error actualizando stock:', err);
+                    guardarEnCola('producto', { id: id, stock: producto.stock });
+                });
+            }
+            
+            return true;
+        }
+
+        // ===== EVENT LISTENERS PARA MODO OFFLINE =====
+        window.addEventListener('online', () => {
+            sincronizarDatosPendientes();
+        });
+
+        window.addEventListener('load', () => {
+            if (navigator.onLine) {
+                sincronizarDatosPendientes();
+            }
+            actualizarEstadoRed();
+        });
+
+        // ===== FUNCIÓN DE ESTADO DE RED =====
+        function actualizarEstadoRed() {
+            const statusBadge = document.getElementById('network-status');
+            if (!statusBadge) return;
+            
+            if (navigator.onLine) {
+                statusBadge.innerHTML = `
+                    <i class="fas fa-wifi text-emerald-500"></i> 
+                    <span class="text-emerald-500 text-sm font-bold ml-1">En línea</span>
+                `;
+                statusBadge.className = 'flex items-center px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 shadow-sm transition-colors duration-300';
+            } else {
+                statusBadge.innerHTML = `
+                    <i class="fas fa-wifi-slash text-red-500"></i> 
+                    <span class="text-red-500 text-sm font-bold ml-1">Offline</span>
+                `;
+                statusBadge.className = 'flex items-center px-3 py-1.5 rounded-full border border-red-200 bg-red-50 shadow-sm transition-colors duration-300';
+            }
+        }
+
+        window.addEventListener('online', actualizarEstadoRed);
+        window.addEventListener('offline', actualizarEstadoRed);
+
+        // ===== FUNCIÓN DE LOGIN (sin cambios) =====
         function selectRole(role) {
             selectedRoleAttempt = role;
             document.getElementById('role-selection').classList.add('hidden');
@@ -1198,7 +1394,7 @@ body.dark-mode .ticket-font {
             }
         }
 
-        // ===== FUNCIÓN LOGIN ÚNICA (CORREGIDA) =====
+        // ===== FUNCIÓN LOGIN =====
         function login(role) {
             localStorage.setItem("role", role);
             currentRole = role;
@@ -1207,7 +1403,6 @@ body.dark-mode .ticket-font {
             document.getElementById('role-indicator').classList.remove('hidden');
             document.getElementById('role-indicator').classList.add('inline-flex');
             
-            // Mostrar/ocultar botón de reportes según rol
             const btnReportesDash = document.getElementById('btn-ver-reportes-dashboard');
             if (btnReportesDash) {
                 if (role === 'owner') {
@@ -1230,717 +1425,333 @@ body.dark-mode .ticket-font {
                 }
             }
             
+            loadTheme();
             buildNav();
             checkExpiryAlerts();
             updateShiftStatusBadge();
             
             if(role === 'employee') {
-                // Mostrar selector de empleado
                 mostrarSelectorEmpleado();
             } else {
                 switchView('view-dashboard');
             }
         }
-function cambiarPasswordDueño() {
+function gestionarDispositivos() {
     if (currentRole !== 'owner') {
-        Swal.fire({
-            icon: 'error',
-            title: '⛔ Acceso Denegado',
-            text: 'Solo el dueño puede cambiar la contraseña.',
-            confirmButtonColor: '#dc2626'
-        });
+        Swal.fire('Acceso Denegado', 'Solo el dueño puede configurar dispositivos.', 'error');
         return;
     }
 
-    // Asegurar que existe la contraseña por defecto
-    if (!localStorage.getItem("ownerPin")) {
-        localStorage.setItem("ownerPin", "admin123");
+    // Cargar configuración guardada
+    const config = JSON.parse(localStorage.getItem('dispositivos_config')) || {
+        scanner: 'camara',
+        impresora: 'termica_usb',
+        impresoraBluetooth: '',
+        ipImpresora: ''
+    };
+
+    // Determinar qué opciones mostrar según la selección
+    let camposAdicionales = '';
+    if (config.impresora === 'bluetooth') {
+        camposAdicionales = `
+            <div class="mt-3">
+                <label class="text-xs font-black text-gray-500 uppercase block mb-1">Nombre del dispositivo Bluetooth:</label>
+                <input type="text" id="impresora-bluetooth" value="${config.impresoraBluetooth || ''}" 
+                       placeholder="Ej: ZJ-58" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold">
+                <p class="text-xs text-gray-400 mt-1">💡 Ve a Configuración > Bluetooth para ver el nombre</p>
+            </div>
+        `;
+    } else if (config.impresora === 'ip') {
+        camposAdicionales = `
+            <div class="mt-3">
+                <label class="text-xs font-black text-gray-500 uppercase block mb-1">Dirección IP de la impresora:</label>
+                <input type="text" id="impresora-ip" value="${config.ipImpresora || ''}" 
+                       placeholder="Ej: 192.168.1.100" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold">
+                <p class="text-xs text-gray-400 mt-1">💡 La IP la encuentras en el panel de configuración de la impresora</p>
+            </div>
+        `;
     }
 
     Swal.fire({
-        title: '🔑 Cambiar Contraseña de Dueño',
+        title: '🖥️ Configuración de Dispositivos',
         html: `
             <div class="text-left">
-                <p class="text-sm text-gray-600 mb-2">🔐 Ingresa la <strong>contraseña actual</strong>:</p>
-                <input type="password" id="swal-current-pass" class="swal2-input" placeholder="Contraseña actual" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
-                
-                <p class="text-sm text-gray-600 mt-3">🔑 Ingresa la <strong>nueva contraseña</strong> (mínimo 4 caracteres):</p>
-                <input type="password" id="swal-new-pass" class="swal2-input" placeholder="Nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
-                
-                <p class="text-sm text-gray-600 mt-1">✅ Confirma la <strong>nueva contraseña</strong>:</p>
-                <input type="password" id="swal-confirm-pass" class="swal2-input" placeholder="Confirmar nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
+                <!-- ESCÁNER -->
+                <div class="mb-4 p-4 bg-gray-50 rounded-xl">
+                    <h4 class="font-bold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                        <i class="fas fa-barcode text-blue-600"></i> Escáner de Códigos
+                    </h4>
+                    <select id="scanner-tipo" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold">
+                        <option value="camara" ${config.scanner === 'camara' ? 'selected' : ''}>📷 Cámara del dispositivo</option>
+                        <option value="usb" ${config.scanner === 'usb' ? 'selected' : ''}>🔌 Escáner USB (HID)</option>
+                        <option value="bluetooth" ${config.scanner === 'bluetooth' ? 'selected' : ''}>📡 Escáner Bluetooth</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">💡 Selecciona cómo escanearás los productos</p>
+                </div>
+
+                <!-- IMPRESORA -->
+                <div class="mb-2 p-4 bg-gray-50 rounded-xl">
+                    <h4 class="font-bold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                        <i class="fas fa-print text-green-600"></i> Impresora de Tickets
+                    </h4>
+                    <select id="impresora-tipo" onchange="cambiarOpcionesImpresora()" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold">
+                        <option value="ninguna" ${config.impresora === 'ninguna' ? 'selected' : ''}>🚫 Sin impresora</option>
+                        <option value="termica_usb" ${config.impresora === 'termica_usb' ? 'selected' : ''}>🖨️ Impresora Térmica USB</option>
+                        <option value="bluetooth" ${config.impresora === 'bluetooth' ? 'selected' : ''}>📱 Impresora Bluetooth</option>
+                        <option value="ip" ${config.impresora === 'ip' ? 'selected' : ''}>🌐 Impresora por IP (Red)</option>
+                    </select>
+                    <div id="campos-impresora" class="mt-3">
+                        ${camposAdicionales}
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">💡 Recomendación: Usa impresora térmica de 58mm</p>
+                </div>
+
+                <div class="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                    <p class="text-xs text-blue-700 font-bold">
+                        ⚙️ Los cambios se guardarán automáticamente y se aplicarán al imprimir tickets.
+                    </p>
+                </div>
             </div>
         `,
-        showCancelButton: true,
-        confirmButtonText: '✅ Cambiar Contraseña',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        allowOutsideClick: false,
-        preConfirm: () => {
-            const currentPass = document.getElementById('swal-current-pass').value;
-            const newPass = document.getElementById('swal-new-pass').value;
-            const confirmPass = document.getElementById('swal-confirm-pass').value;
-            
-            const ownerPassword = localStorage.getItem("ownerPin") || "admin123";
-            
-            if (!currentPass) {
-                Swal.showValidationMessage('❌ Ingresa la contraseña actual');
-                return false;
-            }
-            if (currentPass !== ownerPassword) {
-                Swal.showValidationMessage('❌ Contraseña actual incorrecta');
-                return false;
-            }
-            if (!newPass || newPass.length < 4) {
-                Swal.showValidationMessage('❌ La nueva contraseña debe tener al menos 4 caracteres');
-                return false;
-            }
-            if (newPass !== confirmPass) {
-                Swal.showValidationMessage('❌ Las contraseñas no coinciden');
-                return false;
-            }
-            return true;
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const newPass = document.getElementById('swal-new-pass').value;
-            localStorage.setItem("ownerPin", newPass);
-            
-            Swal.fire({
-                icon: 'success',
-                title: '✅ Contraseña Actualizada',
-                text: 'La contraseña del dueño ha sido cambiada exitosamente.',
-                confirmButtonColor: '#10b981',
-                timer: 3000
-            });
-        }
-    });
-}
-        // ===== SELECTOR DE EMPLEADO =====
-        function mostrarSelectorEmpleado() {
-            if (!db.empleados || db.empleados.length === 0) {
-                db.empleados = [
-                    { id: 1, nombre: "Carlos", activo: true },
-                    { id: 2, nombre: "María", activo: true },
-                    { id: 3, nombre: "Juan", activo: true }
-                ];
-                saveData();
-            }
-
-            const empleadosActivos = db.empleados.filter(e => e.activo !== false);
-            
-            let html = `<div class="text-left">`;
-            html += `<p class="text-sm font-bold text-gray-600 mb-3">👤 Selecciona tu nombre:</p>`;
-            empleadosActivos.forEach(e => {
-                html += `
-                    <button onclick="seleccionarEmpleado(${e.id})" 
-                            class="w-full text-left p-3 mb-2 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all font-bold text-gray-700">
-                        ${e.nombre}
-                    </button>
-                `;
-            });
-            html += `<p class="text-xs text-gray-400 mt-2">Si no apareces, contacta al administrador.</p>`;
-            html += `</div>`;
-
-            Swal.fire({
-                title: 'Selecciona tu nombre',
-                html: html,
-                showConfirmButton: false,
-                allowOutsideClick: false,
-                width: '400px'
-            });
-        }
-
-        function seleccionarEmpleado(id) {
-            const empleado = db.empleados.find(e => e.id === id);
-            if (!empleado) return;
-            
-            localStorage.setItem("empleadoActual", empleado.nombre);
-            Swal.close();
-            
-            if (!db.shift || !db.shift.active) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Turno Requerido',
-                    text: 'Debes iniciar turno antes de poder vender.',
-                    confirmButtonColor: '#2563eb'
-                });
-                switchView('view-cash-cut');
-            } else {
-                switchView('view-pos');
-            }
-        }
-function getTopProductos() {
-    const ventasMap = {};
-    
-    if (!db.salesHistory || db.salesHistory.length === 0) {
-        return [];
-    }
-    
-    db.salesHistory.forEach(sale => {
-        sale.items.forEach(item => {
-            const key = item.id || item.name;
-            if (!ventasMap[key]) {
-                ventasMap[key] = { 
-                    id: item.id, 
-                    name: item.name, 
-                    qty: 0, 
-                    total: 0,
-                    price: item.price || 0
-                };
-            }
-            ventasMap[key].qty += (item.qty || 1);
-            ventasMap[key].total += (item.price * item.qty || 0);
-        });
-    });
-    
-    return Object.values(ventasMap)
-        .sort((a, b) => b.qty - a.qty)
-        .slice(0, 10);
-}
-function toggleTheme() {
-    const body = document.body;
-    const icon = document.getElementById('theme-icon');
-    
-    if (body.classList.contains('dark-mode')) {
-        body.classList.remove('dark-mode');
-        icon.className = 'fas fa-moon text-lg';
-        localStorage.setItem('theme', 'light');
-    } else {
-        body.classList.add('dark-mode');
-        icon.className = 'fas fa-sun text-lg';
-        localStorage.setItem('theme', 'dark');
-    }
-}
-
-// Cargar tema guardado al inicio
-function loadTheme() {
-    const theme = localStorage.getItem('theme');
-    const icon = document.getElementById('theme-icon');
-    if (theme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (icon) icon.className = 'fas fa-sun text-lg';
-    } else {
-        document.body.classList.remove('dark-mode');
-        if (icon) icon.className = 'fas fa-moon text-lg';
-    }
-}
-
-// Llamar a loadTheme() después de login
-// Agregar en la función login(): loadTheme();
-function mostrarTopProductos() {
-    const top = getTopProductos();
-    
-    if (top.length === 0) {
-        Swal.fire({
-            icon: 'info',
-            title: '📊 Sin Datos',
-            text: 'No hay ventas registradas para mostrar el top de productos.',
-            confirmButtonColor: '#6b7280'
-        });
-        return;
-    }
-    
-    let html = `
-        <div class="text-left max-h-60 overflow-y-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 sticky top-0">
-                    <tr class="text-gray-500 text-xs uppercase font-black">
-                        <th class="py-2 px-2 text-center">#</th>
-                        <th class="py-2 px-2 text-left">Producto</th>
-                        <th class="py-2 px-2 text-center">Cantidad</th>
-                        <th class="py-2 px-2 text-right">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    top.forEach((p, i) => {
-        const icono = i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📦';
-        html += `
-            <tr class="border-b border-gray-100 ${i === 0 ? 'bg-yellow-50' : ''}">
-                <td class="py-2 px-2 text-center font-bold">${icono} ${i+1}</td>
-                <td class="py-2 px-2 font-bold text-gray-800 truncate max-w-[120px]">${p.name}</td>
-                <td class="py-2 px-2 text-center font-bold text-blue-600">${p.qty}</td>
-                <td class="py-2 px-2 text-right font-bold text-emerald-600">$${p.total.toFixed(2)}</td>
-            </tr>
-        `;
-    });
-    
-    html += `
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-3 text-xs text-gray-400 text-center">
-            📊 Total de productos vendidos: ${top.reduce((sum, p) => sum + p.qty, 0)}
-        </div>
-    `;
-    
-    Swal.fire({
-        title: '🏆 Top 10 Productos Más Vendidos',
-        html: html,
-        confirmButtonText: 'Cerrar',
-        confirmButtonColor: '#6b7280',
-        width: '550px'
-    });
-}
-        // ===== GESTIÓN DE EMPLEADOS (SOLO DUEÑO) =====
-        function gestionarEmpleados() {
-            if (currentRole !== 'owner') {
-                Swal.fire('Acceso Denegado', 'Solo el dueño puede gestionar empleados.', 'error');
-                return;
-            }
-
-            let html = `<div class="text-left max-h-60 overflow-y-auto">`;
-            db.empleados.forEach((e, i) => {
-                const estado = e.activo !== false ? '✅ Activo' : '❌ Inactivo';
-                html += `
-                    <div class="flex justify-between items-center border-b border-gray-100 py-2">
-                        <span class="font-bold">${e.nombre}</span>
-                        <div class="flex gap-2">
-                            <span class="text-xs ${e.activo !== false ? 'text-green-500' : 'text-red-500'}">${estado}</span>
-                            <button onclick="toggleEmpleado(${i})" class="text-xs bg-${e.activo !== false ? 'yellow' : 'green'}-500 text-white px-2 py-1 rounded">
-                                ${e.activo !== false ? 'Desactivar' : 'Activar'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
-
-            Swal.fire({
-                title: '👥 Gestión de Empleados',
-                html: html + `
-                    <div class="mt-4 flex gap-2">
-                        <input type="text" id="nuevo-empleado-input" placeholder="Nombre del nuevo empleado" class="flex-1 p-2 border-2 border-gray-200 rounded-xl font-bold">
-                        <button onclick="agregarEmpleado()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold">Agregar</button>
-                    </div>
-                `,
-                confirmButtonText: 'Cerrar',
-                confirmButtonColor: '#6b7280',
-                width: '500px'
-            });
-        }
-
-        function agregarEmpleado() {
-            const input = document.getElementById('nuevo-empleado-input');
-            const nombre = input?.value.trim();
-            if (!nombre) {
-                Swal.fire('Error', 'Ingresa un nombre válido.', 'error');
-                return;
-            }
-            db.empleados.push({ id: Date.now(), nombre: nombre, activo: true });
-            saveData();
-            Swal.fire('Éxito', `Empleado "${nombre}" agregado.`, 'success');
-            gestionarEmpleados();
-        }
-
-        function toggleEmpleado(index) {
-            db.empleados[index].activo = db.empleados[index].activo !== false ? false : true;
-            saveData();
-            gestionarEmpleados();
-        }
-
-        function logout() {
-            currentRole = null;
-            localStorage.removeItem("role");
-            localStorage.removeItem("empleadoActual");
-            document.getElementById('login-overlay').classList.remove('hidden');
-            backToRoles();
-        }
-
-        // ===== NAVEGACIÓN =====
-        const navItems = [
-            { id: 'view-dashboard', icon: 'fa-chart-pie', text: 'Resumen', role: 'owner' },
-            { id: 'view-pos', icon: 'fa-shopping-cart', text: 'Caja', role: 'all' },
-            { id: 'view-cash-cut', icon: 'fa-wallet', text: 'Turno', role: 'employee' },
-            { id: 'view-inventory', icon: 'fa-boxes', text: 'Inventario', role: 'owner' },
-            { id: 'view-suppliers', icon: 'fa-truck-loading', text: 'Proveedores', role: 'employee' }
-        ];
-
-        function buildNav() {
-            const nav = document.getElementById('nav-bar');
-            nav.innerHTML = '';
-            // Agregar botón de gestión de empleados (solo dueño)
-            if (currentRole === 'owner') {
-                const btnEmpleados = document.createElement('button');
-                btnEmpleados.className = `flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav mb-0`;
-                btnEmpleados.onclick = gestionarEmpleados;
-                btnEmpleados.innerHTML = `<i class="fas fa-users text-lg md:text-xl mb-1"></i><span>Empleados</span>`;
-                nav.appendChild(btnEmpleados);
-            }
-            
-            navItems.forEach(item => {
-                if (item.role === 'all' || item.role === currentRole || (item.id === 'view-suppliers' && (currentRole === 'employee' || currentRole === 'owner'))) {
-                    const btn = document.createElement('button');
-                    btn.className = `flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav mb-0`;
-                    btn.onclick = () => switchView(item.id);
-                    btn.dataset.target = item.id;
-                    btn.innerHTML = `<i class="fas ${item.icon} text-lg md:text-xl mb-1"></i><span>${item.text}</span>`;
-                    nav.appendChild(btn);
-                }
-            });
-        }
-let chartInstance = null;
-
-function cargarGraficoVentas(dias = 7) {
-    // Obtener ventas de los últimos N días
-    const fechas = [];
-    const montos = [];
-    
-    for (let i = dias - 1; i >= 0; i--) {
-        const fecha = new Date();
-        fecha.setDate(fecha.getDate() - i);
-        const fechaStr = fecha.toISOString().split('T')[0];
-        const fechaDisplay = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-        
-        const total = (db.salesHistory || [])
-            .filter(s => s.date && s.date.startsWith(fechaStr))
-            .reduce((sum, s) => sum + (s.total || 0), 0);
-        
-        fechas.push(fechaDisplay);
-        montos.push(total);
-    }
-    
-    const ctx = document.getElementById('ventasChart').getContext('2d');
-    
-    // Destruir gráfico anterior si existe
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
-    
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: fechas,
-            datasets: [{
-                label: 'Ventas ($)',
-                data: montos,
-                backgroundColor: 'rgba(220, 38, 38, 0.7)',
-                borderColor: 'rgba(220, 38, 38, 1)',
-                borderWidth: 2,
-                borderRadius: 6,
-                barPercentage: 0.6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return '$' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value.toFixed(0);
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
-}
-
-        function switchView(viewId) {
-            if (currentRole === 'employee' && viewId === 'view-pos') {
-                if (!db.shift || !db.shift.active) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Turno Requerido',
-                        text: 'Debes iniciar tu turno antes de poder ingresar a la caja.',
-                        confirmButtonColor: '#2563eb'
-                    });
-                    viewId = 'view-cash-cut';
-                }
-            }
-
-            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
-            
-            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('tab-active'));
-            const activeBtn = document.querySelector(`.btn-nav[data-target="${viewId}"]`);
-            if(activeBtn) activeBtn.classList.add('tab-active');
-
-            if(viewId === 'view-dashboard') {
-                updateDashboard();
-            }
-            if(viewId === 'view-pos') {
-                searchProductPOS(document.getElementById('barcode-scanner')?.value || '');
-                renderCart();
-            }
-            if(viewId === 'view-inventory') {
-                updateInventoryIndicators(); 
-                if(selectedInventoryCategory) {
-                    filterInventoryCategory(selectedInventoryCategory);
-                }
-            }
-            if(viewId === 'view-suppliers') {
-                renderSuppliersHistory();
-            }
-            if(viewId === 'view-cash-cut') renderCashCutView();
-        }
-
-        function updateShiftStatusBadge() {
-    const badge = document.getElementById('shift-status-badge');
-    if (!badge) return;
-    
-    if (db.shift && db.shift.active) {
-        const quienAbre = db.shift.abiertoPor || 'Empleado';
-        const autorizado = db.shift.verifiedBy === 'owner';
-        
-        if (autorizado) {
-            badge.innerHTML = `✅ ${quienAbre} (Verificado)`;
-            badge.className = 'bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold';
-        } else {
-            badge.innerHTML = `⚠️ ${quienAbre} (Pendiente)`;
-            badge.className = 'bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold';
-        }
-    } else {
-        badge.innerHTML = '⏸️ Sin Turno';
-        badge.className = 'bg-gray-600 text-gray-300 px-3 py-1 rounded-full text-xs font-bold';
-    }
-}
-
-       function startShift() {
-    const initial = parseFloat(document.getElementById('initial-cash-input').value) || 0;
-    
-    if (initial <= 0) {
-        Swal.fire({
-            icon: 'error',
-            title: '❌ Error',
-            text: 'Debes ingresar un monto válido para el fondo inicial.',
-            confirmButtonColor: '#dc2626'
-        });
-        return;
-    }
-
-    const userRole = localStorage.getItem("role") || currentRole || 'employee';
-    const empleadoNombre = localStorage.getItem("empleadoActual") || 'Empleado';
-    
-    console.log('🔍 Rol detectado:', userRole);
-
-    // ✅ SIEMPRE pedir contraseña del dueño para iniciar turno
-    // (Tanto si es dueño como si es empleado)
-    
-    // Asegurar que existe la contraseña del dueño
-    if (!localStorage.getItem("ownerPin")) {
-        localStorage.setItem("ownerPin", "admin123");
-    }
-    
-    Swal.fire({
-        title: '🔐 Verificación Requerida',
-        html: `
-            <div class="text-left">
-                <p class="text-sm text-gray-600 mb-3">💰 Fondo inicial: <strong class="text-emerald-600">$${initial.toFixed(2)}</strong></p>
-                <p class="text-sm text-gray-600">👤 Iniciado por: <strong>${userRole === 'owner' ? 'Dueño' : empleadoNombre}</strong></p>
-                <p class="text-sm text-gray-600 mt-2">👑 El <strong>dueño</strong> debe autorizar el inicio del turno ingresando su contraseña:</p>
-             </div>
-        `,
-        input: 'password',
-        inputPlaceholder: 'Contraseña del dueño',
-        inputAttributes: {
-            autocapitalize: 'off',
-            autocorrect: 'off',
-            style: 'color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important; border-radius: 8px !important; padding: 12px !important;'
-        },
-        showCancelButton: true,
-        confirmButtonText: '✅ Verificar e Iniciar Turno',
+        confirmButtonText: '💾 Guardar Configuración',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#2563eb',
         cancelButtonColor: '#6b7280',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        preConfirm: (password) => {
-            if (!password) {
-                Swal.showValidationMessage('❌ Debes ingresar la contraseña del dueño');
-                return false;
+        width: '550px',
+        didOpen: () => {
+            // Agregar evento para mostrar/ocultar campos según selección
+            const select = document.getElementById('impresora-tipo');
+            if (select) {
+                select.onchange = cambiarOpcionesImpresora;
             }
-            const ownerPassword = localStorage.getItem("ownerPin") || "admin123";
-            if (password !== ownerPassword) {
-                Swal.showValidationMessage('❌ Contraseña incorrecta. Intenta de nuevo.');
-                return false;
+        },
+        preConfirm: () => {
+            const scanner = document.getElementById('scanner-tipo').value;
+            const impresora = document.getElementById('impresora-tipo').value;
+            const impresoraBluetooth = document.getElementById('impresora-bluetooth')?.value || '';
+            const ipImpresora = document.getElementById('impresora-ip')?.value || '';
+            
+            const config = {
+                scanner: scanner,
+                impresora: impresora,
+                impresoraBluetooth: impresoraBluetooth,
+                ipImpresora: ipImpresora,
+                actualizado: new Date().toISOString()
+            };
+            
+            localStorage.setItem('dispositivos_config', JSON.stringify(config));
+            
+            // Guardar en Firebase
+            if (firebaseDb) {
+                firebaseDb.ref('configuracion/dispositivos').set(config);
             }
-            return true;
+            
+            return config;
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // ✅ Contraseña correcta - Iniciar turno con verificación
-            const quienAbre = userRole === 'owner' ? 'Dueño' : empleadoNombre;
-            
-            db.shift = { 
-                active: true, 
-                initialCash: initial, 
-                sales: 0, 
-                startTime: new Date().toISOString(),
-                verifiedBy: 'owner',
-                verifiedAt: new Date().toISOString(),
-                openedBy: userRole,
-                abiertoPor: quienAbre,
-                autorizadoPor: 'Dueño'
-            };
-            saveData();
-            renderCashCutView();
-            updateShiftStatusBadge();
-            
             Swal.fire({
                 icon: 'success',
-                title: '✅ Turno Verificado e Iniciado',
-                html: `
-                    <div class="text-left">
-                        <p>💰 Fondo inicial: <strong>$${initial.toFixed(2)}</strong></p>
-                        <p>👤 Abierto por: <strong>${quienAbre}</strong></p>
-                        <p>👑 Autorizado por: <strong>Dueño</strong></p>
-                        <p class="text-sm text-gray-500 mt-2">¡Ya puedes comenzar a vender!</p>
-                    </div>
-                `,
-                timer: 3500,
+                title: '✅ Configuración Guardada',
+                text: 'Los dispositivos han sido configurados correctamente.',
+                timer: 2000,
                 showConfirmButton: false
-            });
-        } else {
-            // Si cancela, mostrar mensaje
-            Swal.fire({
-                icon: 'info',
-                title: '⏸️ Turno Cancelado',
-                text: 'El turno no fue iniciado. Se requiere autorización del dueño.',
-                confirmButtonColor: '#6b7280'
             });
         }
     });
 }
-        function renderCashCutView() {
-            const initial = db.shift && db.shift.initialCash ? db.shift.initialCash : 0;
-            const sales = db.shift && db.shift.sales ? db.shift.sales : 0;
-            const withdrawals = db.shift && db.shift.supplierWithdrawals ? db.shift.supplierWithdrawals : 0;
-            
-            const expectedCash = (initial + sales) - withdrawals;
 
-            const openPanel = document.getElementById('shift-open-panel');
-            const closePanel = document.getElementById('shift-close-panel');
-
-            if (db.shift && db.shift.active) {
-                openPanel.classList.add('hidden');
-                closePanel.classList.remove('hidden');
-                
-                document.getElementById('display-initial-cash').innerText = `$${initial.toFixed(2)}`;
-                document.getElementById('display-shift-sales').innerText = `$${sales.toFixed(2)}`;
-                document.getElementById('display-expected-cash').innerText = `$${expectedCash.toFixed(2)}`;
-                
-             // Dentro de renderCashCutView(), en la parte donde se actualiza infoPanel
-const infoPanel = document.getElementById('shift-info-panel');
-if (infoPanel) {
-    const verifiedBy = db.shift.verifiedBy || 'No verificado';
-    const verifiedAt = db.shift.verifiedAt ? new Date(db.shift.verifiedAt).toLocaleString() : 'N/A';
-    const openedBy = db.shift.abiertoPor || db.shift.openedBy || 'N/A';
-    const autorizadoPor = db.shift.autorizadoPor || 'No autorizado';
+// Función para cambiar opciones de impresora dinámicamente
+function cambiarOpcionesImpresora() {
+    const select = document.getElementById('impresora-tipo');
+    const contenedor = document.getElementById('campos-impresora');
+    if (!select || !contenedor) return;
     
-    const verificadoIcon = verifiedBy === 'owner' ? '✅' : '⚠️';
-    const verificadoText = verifiedBy === 'owner' ? `Autorizado por: ${autorizadoPor}` : 'NO autorizado';
-    const verificadoColor = verifiedBy === 'owner' ? 'text-green-400' : 'text-yellow-400';
+    const valor = select.value;
+    let html = '';
     
-    infoPanel.innerHTML = `
-        <div class="flex flex-wrap items-center gap-3 text-xs">
-            <span class="font-bold text-gray-400">👤 Abierto por:</span>
-            <span class="font-bold text-white">${openedBy}</span>
-            
-            <span class="text-gray-600">|</span>
-            
-            <span class="font-bold text-gray-400">${verificadoIcon} Estado:</span>
-            <span class="font-bold ${verificadoColor}">${verificadoText}</span>
-            
-            ${verifiedAt !== 'N/A' ? `
-                <span class="text-gray-600">|</span>
-                <span class="font-bold text-gray-400">🕐 Hora:</span>
-                <span class="text-gray-300">${verifiedAt}</span>
-            ` : ''}
-            
-            ${db.shift.initialCash ? `
-                <span class="text-gray-600">|</span>
-                <span class="font-bold text-gray-400">💰 Fondo:</span>
-                <span class="text-emerald-400 font-bold">$${db.shift.initialCash.toFixed(2)}</span>
-            ` : ''}
-        </div>
-    `;
+    if (valor === 'bluetooth') {
+        html = `
+            <div class="mt-3">
+                <label class="text-xs font-black text-gray-500 uppercase block mb-1">Nombre del dispositivo Bluetooth:</label>
+                <input type="text" id="impresora-bluetooth" placeholder="Ej: ZJ-58" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold">
+                <p class="text-xs text-gray-400 mt-1">💡 Ve a Configuración > Bluetooth para ver el nombre</p>
+            </div>
+        `;
+    } else if (valor === 'ip') {
+        html = `
+            <div class="mt-3">
+                <label class="text-xs font-black text-gray-500 uppercase block mb-1">Dirección IP de la impresora:</label>
+                <input type="text" id="impresora-ip" placeholder="Ej: 192.168.1.100" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold">
+                <p class="text-xs text-gray-400 mt-1">💡 La IP la encuentras en el panel de configuración de la impresora</p>
+            </div>
+        `;
+    } else {
+        html = `<p class="text-xs text-gray-400 mt-2">✅ No se requieren datos adicionales</p>`;
+    }
+    
+    contenedor.innerHTML = html;
 }
-                
-                const badge = document.getElementById('shift-status-badge-turno');
-                if (badge) {
-                    if (db.shift.verifiedBy === 'owner') {
-                        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white';
-                        badge.textContent = '✅ Verificado';
-                    } else {
-                        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-yellow-600 text-white';
-                        badge.textContent = '⚠️ Pendiente';
-                    }
-                }
-                
-                calculateDifference();
-            } else {
-                openPanel.classList.remove('hidden');
-                closePanel.classList.add('hidden');
-                const initialInput = document.getElementById('initial-cash-input');
-                if (initialInput) initialInput.value = '';
-                
-                const infoPanel = document.getElementById('shift-info-panel');
-                if (infoPanel) {
-                    infoPanel.innerHTML = `<span class="text-gray-400">⏸️ No hay turno activo</span>`;
-                }
-                
-                const badge = document.getElementById('shift-status-badge-turno');
-                if (badge) {
-                    badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-gray-700 text-gray-300';
-                    badge.textContent = '⏸️ Sin turno';
-                }
-            }
-        }
-
-        function calculateDifference() {
-            const input = document.getElementById('final-cash-input');
-            if (!input) {
-                console.error('❌ Elemento final-cash-input no encontrado');
+      function buildNav() {
+    const nav = document.getElementById('nav-bar');
+    nav.innerHTML = '';
+    
+    // Botón para gestionar empleados (solo dueño)
+    if (currentRole === 'owner') {
+        const btnEmpleados = document.createElement('button');
+        btnEmpleados.className = `flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav mb-0`;
+        btnEmpleados.onclick = gestionarEmpleados;
+        btnEmpleados.innerHTML = `<i class="fas fa-users text-lg md:text-xl mb-1"></i><span>Empleados</span>`;
+        nav.appendChild(btnEmpleados);
+    }
+    
+    // ✅ NUEVO: Botón para gestionar dispositivos (solo dueño)
+    if (currentRole === 'owner') {
+        const btnDispositivos = document.createElement('button');
+        btnDispositivos.className = `flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav mb-0`;
+        btnDispositivos.onclick = gestionarDispositivos;
+        btnDispositivos.innerHTML = `<i class="fas fa-print text-lg md:text-xl mb-1"></i><span>Dispositivos</span>`;
+        nav.appendChild(btnDispositivos);
+    }
+    
+  
+}
+        function finalizeSale() {
+            let cart = carts[currentCartIndex];
+            let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let received = parseFloat(document.getElementById('cash-received').value) || 0;
+            
+            if (received < total) {
+                Swal.fire('Efectivo Insuficiente', 'El monto recibido es menor al total.', 'error');
                 return;
             }
-            
-            const expected = (db.shift.initialCash || 0) + (db.shift.sales || 0) - (db.shift.supplierWithdrawals || 0);
-            const final = parseFloat(input.value) || 0;
-            const diff = final - expected;
-            
-            const display = document.getElementById('display-difference');
-            if (display) {
-                if (diff >= 0) {
-                    display.innerText = `+$${diff.toFixed(2)} (Sobrante)`;
-                    display.className = "text-2xl font-black text-emerald-500";
-                } else {
-                    display.innerText = `-$${Math.abs(diff).toFixed(2)} (Faltante)`;
-                    display.className = "text-2xl font-black text-red-500";
+
+            // Actualizar stock de forma atómica
+            cart.forEach(item => {
+                const product = db.products.find(p => p.id === item.id);
+                if (product) {
+                    const cantidadARestar = -(item.piecesCount || item.qty);
+                    actualizarStockProducto(product.id, cantidadARestar);
                 }
+            });
+
+            const ultimaVentaRealizada = {
+                items: [...cart],
+                total: total,
+                received: received,
+                change: received - total,
+                fecha: new Date().toISOString(),
+                seller: currentRole
+            };
+
+            db.dailySales = (db.dailySales || 0) + total;
+            if (currentRole === 'employee' && db.shift && db.shift.active) {
+                db.shift.sales = (db.shift.sales || 0) + total;
             }
+
+            // Guardar en historial (con separación)
+            guardarVentaHistorica(ultimaVentaRealizada);
+
+            saveData();
+            updateDashboard();
+            
+            if (typeof selectedInventoryCategory !== 'undefined' && selectedInventoryCategory) {
+                renderInventory();
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Venta Completada!',
+                html: `Cambio a entregar: <b class="text-emerald-600 text-xl">$${(received - total).toFixed(2)}</b><br><br>¿Deseas imprimir el ticket de venta?`,
+                showCancelButton: true,
+                confirmButtonText: '🖨️ Imprimir Ticket',
+                cancelButtonText: 'Continuar sin imprimir',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    imprimirTicket58mm(ultimaVentaRealizada);
+                }
+                closeModal('checkout-modal');
+                clearCart();
+            });
         }
 
-        function setFinalCash(amount) {
-            const input = document.getElementById('final-cash-input');
-            if (input) {
-                input.value = amount;
-                calculateDifference();
+        // ===== FUNCIÓN PARA CARGAR GRÁFICO DE VENTAS (usando historial) =====
+        function cargarGraficoVentas(dias = 7) {
+            const fechas = [];
+            const montos = [];
+            
+            for (let i = dias - 1; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(fecha.getDate() - i);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                const fechaDisplay = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+                
+                const total = (db.salesHistory || [])
+                    .filter(s => s.fecha && s.fecha.startsWith(fechaStr))
+                    .reduce((sum, s) => sum + (s.total || 0), 0);
+                
+                fechas.push(fechaDisplay);
+                montos.push(total);
             }
+            
+            const ctx = document.getElementById('ventasChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: fechas,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: montos,
+                        backgroundColor: 'rgba(220, 38, 38, 0.7)',
+                        borderColor: 'rgba(220, 38, 38, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
         }
 
+        // ===== FUNCIÓN DE CIERRE DE TURNO (con limpieza de historial) =====
         function closeShift() {
             if (!db.shift || !db.shift.active) {
                 Swal.fire({
@@ -2047,6 +1858,9 @@ if (infoPanel) {
                     updateShiftStatusBadge();
                     
                     guardarReporteSeguro(shiftRecord);
+                    
+                    // Limpiar historial de ventas antiguo al cerrar turno
+                    limpiarHistorialVentasLocal();
                 }
             });
         }
@@ -2588,34 +2402,36 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             openModal('product-modal');
         }
 
-        function editProduct(id) {
-            const p = db.products.find(item => item.id === id);
-            if (!p) return;
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-code').value = p.code || '';
-            document.getElementById('p-name').value = p.name || '';
-            document.getElementById('p-cost').value = p.cost || '';
-            document.getElementById('p-type').value = p.type || 'pieza';
-            document.getElementById('p-category').value = p.category || 'Otros';
-            document.getElementById('p-expiry').value = p.expiryDate || '';
-            
-            toggleMixedFields();
-            toggleExpiryField();
-            
-            if (p.type === 'mixto') {
-                const ppb = p.piecesPerBox || 20;
-                document.getElementById('p-price').value = p.price || '';
-                document.getElementById('p-piece-price').value = p.piecePrice || '';
-                document.getElementById('p-pieces-per-box').value = ppb;
-                document.getElementById('p-stock-boxes').value = Math.floor((p.stock || 0) / ppb);
-                document.getElementById('p-stock-loose').value = (p.stock || 0) % ppb;
-            } else {
-                document.getElementById('standard-p-price').value = p.price || '';
-                document.getElementById('p-stock').value = p.stock || 0;
-            }
-            document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
-            openModal('product-modal');
+    function editProduct(id) {
+        const p = db.products.find(item => item.id === id);
+        if (!p) return;
+        document.getElementById('p-id').value = p.id;
+        document.getElementById('p-code').value = p.code || '';
+        document.getElementById('p-name').value = p.name || '';
+        document.getElementById('p-cost').value = p.cost || '';
+        document.getElementById('p-type').value = p.type || 'pieza';
+        document.getElementById('p-category').value = p.category || 'Otros';
+        document.getElementById('p-expiry').value = p.expiryDate || '';
+        
+        toggleMixedFields();
+        toggleExpiryField();
+        
+        const ppb = Number(p.piecesPerBox) || (p.category === 'Cerveza' ? 12 : 20);
+        
+        if (p.type === 'mixto' || p.category === 'Cerveza') {
+            document.getElementById('p-price').value = p.price || '';
+            document.getElementById('p-piece-price').value = p.piecePrice || '';
+            document.getElementById('p-pieces-per-box').value = ppb;
+            document.getElementById('p-stock-boxes').value = Math.floor((p.stock || 0) / ppb);
+            document.getElementById('p-stock-loose').value = (p.stock || 0) % ppb;
+        } else {
+            const standardPriceInput = document.getElementById('standard-p-price') || document.getElementById('p-price');
+            if (standardPriceInput) standardPriceInput.value = p.price || '';
+            document.getElementById('p-stock').value = p.stock || 0;
         }
+        document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
+        openModal('product-modal');
+    }
 
                    function handleProductSubmit(event) {
             event.preventDefault();
@@ -3140,6 +2956,76 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
                 </button>
             `}).join('');
         }
+        // Función para manejar las notificaciones y la interfaz gráfica
+function actualizarEstadoRed() {
+    const statusBadge = document.getElementById('network-status');
+    
+    if (navigator.onLine) {
+        // Alerta de conexión restablecida
+        Swal.fire({
+            icon: 'success',
+            title: 'Conexión Restablecida',
+            text: 'El sistema está en línea nuevamente.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+        // Actualizar el badge en la interfaz a verde
+        if (statusBadge) {
+            statusBadge.innerHTML = `
+                <i class="fas fa-wifi text-emerald-500"></i> 
+                <span class="text-emerald-500 text-sm font-bold ml-1">En línea</span>
+            `;
+            statusBadge.classList.replace('border-red-200', 'border-emerald-200');
+            statusBadge.classList.replace('bg-red-50', 'bg-emerald-50');
+        }
+
+    } else {
+        // Alerta de pérdida de conexión
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin Conexión a Internet',
+            text: 'Modo offline activado. Los datos se guardarán temporalmente.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4500,
+            timerProgressBar: true
+        });
+
+        // Actualizar el badge en la interfaz a rojo
+        if (statusBadge) {
+            statusBadge.innerHTML = `
+                <i class="fas fa-wifi-slash text-red-500"></i> 
+                <span class="text-red-500 text-sm font-bold ml-1">Offline</span>
+            `;
+            statusBadge.classList.replace('border-emerald-200', 'border-red-200');
+            statusBadge.classList.replace('bg-emerald-50', 'bg-red-50');
+        }
+    }
+}
+
+// Escuchar los eventos de red del navegador en tiempo real
+window.addEventListener('online', actualizarEstadoRed);
+window.addEventListener('offline', actualizarEstadoRed);
+
+// Ejecutar una validación silenciosa al cargar el sistema (opcional)
+// Para que el badge tome el color correcto desde el inicio sin lanzar alerta
+window.addEventListener('load', () => {
+    const statusBadge = document.getElementById('network-status');
+    if (statusBadge) {
+        if (navigator.onLine) {
+            statusBadge.innerHTML = '<i class="fas fa-wifi text-emerald-500"></i> <span class="text-emerald-500 text-sm font-bold ml-1">En línea</span>';
+            statusBadge.classList.add('bg-emerald-50', 'border-emerald-200');
+        } else {
+            statusBadge.innerHTML = '<i class="fas fa-wifi-slash text-red-500"></i> <span class="text-red-500 text-sm font-bold ml-1">Offline</span>';
+            statusBadge.classList.add('bg-red-50', 'border-red-200');
+        }
+    }
+});
 
         function obtenerSugerenciaProducto(p) {
             let sugerencias = [];
@@ -3161,164 +3047,234 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
 
             return sugerencias;
         }
+function addToCart(id) {
+    if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
+        Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Debes iniciar tu turno antes de poder vender.', confirmButtonColor: '#dc2626' });
+        switchView('view-cash-cut');
+        return;
+    }
 
-        function addToCart(id) {
-            if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
-                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Debes iniciar tu turno antes de poder vender.', confirmButtonColor: '#dc2626' });
-                switchView('view-cash-cut');
-                return;
-            }
+    let cart = carts[currentCartIndex];
+    const product = db.products.find(p => p.id === id);
+    if (!product) return;
+    if (product.stock <= 0) {
+        Swal.fire('Sin Stock', 'No hay unidades disponibles en inventario', 'error');
+        return;
+    }
 
-            let cart = carts[currentCartIndex];
-            const product = db.products.find(p => p.id === id);
-            if (!product) return;
-            if (product.stock <= 0) {
-                Swal.fire('Sin Stock', 'No hay unidades disponibles en inventario', 'error');
-                return;
-            }
-
-                       // 👇 CORRECCIÓN: Aceptar tanto 'mixto' como 'cajetilla' para preguntar por caja/cajetilla
-            if (product.type === 'mixto' || product.type === 'cajetilla') {
-                // Si el producto es Cigarros (categoría Cigarros O tipo cajetilla), preguntamos
-                if (product.category === 'Cigarros' || product.type === 'cajetilla') {
-                    const boxPrice = Number(product.price) || 0;
-                    const piecePrice = Number(product.piecePrice) || 0;
-                    const piecesPerBox = Number(product.piecesPerBox) || 20;
-
-                    Swal.fire({
-                        title: product.name,
-                        html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
-                               <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} cigarros</p>`,
-                        showDenyButton: true, showCancelButton: true,
-                        confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
-                        denyButtonText: `🚬 Cigarro Suelto ($${piecePrice.toFixed(2)})`,
-                        cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const qtyPieces = piecesPerBox;
-                            const cartItemId = `${product.id}_Caja`;
-                            const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                            if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                                Swal.fire('Stock Insuficiente', `No hay suficientes cigarros para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} cigarros disponibles)`, 'warning');
-                                return;
-                            }
-                            const exist = cart.find(c => c.cartItemId === cartItemId);
-                            if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                                cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
-                            }
-                            renderCart();
-                            document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                        } else if (result.isDenied) {
-                            const qtyPieces = 1;
-                            const cartItemId = `${product.id}_Pieza`;
-                            const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                            if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                                Swal.fire('Sin Stock', 'No hay suficientes cigarros sueltos disponibles', 'warning');
-                                return;
-                            }
-                            const exist = cart.find(c => c.cartItemId === cartItemId);
-                            if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                                cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
-                            }
-                            renderCart();
-                            document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                        }
-                    });
-                    return;
+    // ⭐ CORRECCIÓN: Cerveza (Pieza, Six, Caja) con cálculo exacto por multiplicador
+    if (product.category === 'Cerveza' || (product.name && product.name.toLowerCase().includes("cerveza"))) {
+        Swal.fire({
+            title: product.name,
+            html: `
+                <p class="text-sm font-bold text-gray-600 mb-4">¿Cómo desea vender este producto?</p>
+                <input type="hidden" id="beer-sale-type" value="">
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='caja'; Swal.clickConfirm();" class="bg-[#dc2626] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-red-700 transition-colors w-full text-center">📦 CAJA</button>
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='six'; Swal.clickConfirm();" class="bg-[#2563eb] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-blue-700 transition-colors w-full text-center">🍺 SIX</button>
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='pieza'; Swal.clickConfirm();" class="bg-gray-500 text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-gray-600 transition-colors w-full text-center">🍾 PIEZA</button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const type = document.getElementById('beer-sale-type').value;
+                if (!type) {
+                    Swal.showValidationMessage('Selecciona una opción');
+                    return false;
                 }
+                return type;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const tipoVenta = result.value;
+                const cartItemId = `${product.id}_${tipoVenta}`;
+                
+                let multiplier = 1;
+                let unitPrice = Number(product.price) || 0;
 
-                // ⭐ PARA EL RESTO DE PRODUCTOS (Agua, Refrescos, etc.): Vender siempre por pieza
-                const qtyPieces = 1; 
-                const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                
-                if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                    Swal.fire('Sin Stock', 'No hay suficientes piezas disponibles', 'warning');
-                    return;
-                }
-                
-                const exist = cart.find(c => c.id === product.id && !c.cartItemId);
-                if (exist) {
-                    exist.qty++;
-                    exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
+                if (tipoVenta === 'six') {
+                    multiplier = 6;
+                } else if (tipoVenta === 'caja') {
+                    multiplier = Number(product.piecesPerBox) || 12;
                 } else {
-                    // Guardamos el precio unitario (el precio estándar rojo de abajo)
-                    cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
+                    multiplier = 1;
                 }
+
+                const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                if ((totalPiecesInCart + multiplier) > product.stock) {
+                    Swal.fire('Stock Insuficiente', `No hay suficientes unidades disponibles (Disponibles: ${product.stock - totalPiecesInCart})`, 'warning');
+                    return;
+                }
+
+                const exist = cart.find(c => c.cartItemId === cartItemId);
+                
+                if (exist) { 
+                    exist.qty++; 
+                    exist.piecesCount = exist.qty * exist.multiplier;
+                    exist.price = exist.unitPrice * exist.multiplier * exist.qty;
+                } else {
+                    cart.push({ 
+                        ...product, 
+                        cartItemId: cartItemId, 
+                        qty: 1, 
+                        multiplier: multiplier,
+                        unitPrice: unitPrice,
+                        piecesCount: multiplier, 
+                        price: unitPrice * multiplier, 
+                        sellType: tipoVenta, 
+                        name: `${product.name} (${tipoVenta.toUpperCase()})` 
+                    });
+                }
+                
                 renderCart();
-                document.getElementById('barcode-scanner').value = '';
+                document.getElementById('barcode-scanner').value = ''; 
                 searchProductPOS('');
-                return;
-            
             }
+        });
+        return;
+    }
 
-            if (product.type === 'granel') {
-                Swal.fire({
-                    title: `Venta: ${product.name}`,
-                    html: `
-                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Selecciona una cantidad rápida:</p>
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            <button type="button" onclick="setGranelQty(0.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>½ Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(0.500)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(1.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>1 Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(1.000)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(1.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>1 ½ Kilos</span><span class="text-[10px] font-normal text-gray-500">(1.500)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(2.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>2 Kilos</span><span class="text-[10px] font-normal text-gray-500">(2.000)</span>
-                            </button>
-                        </div>
-                        <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">O ingresa un peso exacto:</label>
-                            <input type="number" id="custom-granel-qty" step="0.001" min="0.001" placeholder="Ej: 0.250 para 250 gramos" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:border-red-500 text-center text-lg">
-                        </div>
-                    `,
-                    showCancelButton: true, confirmButtonText: 'AGREGAR AL CARRITO', cancelButtonText: 'CANCELAR', confirmButtonColor: '#dc2626',
-                    preConfirm: () => {
-                        const qty = parseFloat(document.getElementById('custom-granel-qty').value);
-                        if (!qty || isNaN(qty) || qty <= 0) {
-                            Swal.showValidationMessage('Selecciona un botón o ingresa un peso válido');
-                            return false;
-                        }
-                        return qty;
+    // 👇 PARA CIGARROS (Cajetilla o Suelto)
+    if (product.type === 'mixto' || product.type === 'cajetilla') {
+        if (product.category === 'Cigarros' || product.type === 'cajetilla') {
+            const boxPrice = Number(product.price) || 0;
+            const piecePrice = Number(product.piecePrice) || 0;
+            const piecesPerBox = Number(product.piecesPerBox) || 20;
+
+            Swal.fire({
+                title: product.name,
+                html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
+                       <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} cigarros</p>`,
+                showDenyButton: true, showCancelButton: true,
+                confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
+                denyButtonText: `🚬 Cigarro Suelto ($${piecePrice.toFixed(2)})`,
+                cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const qtyPieces = piecesPerBox;
+                    const cartItemId = `${product.id}_Caja`;
+                    const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                    if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                        Swal.fire('Stock Insuficiente', `No hay suficientes cigarros para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} cigarros disponibles)`, 'warning');
+                        return;
                     }
-                }).then((result) => {
-                    if (result.isConfirmed && result.value) {
-                        const qty = result.value;
-                        if (qty > product.stock) { Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning'); return; }
-                        const exist = cart.find(c => c.id === id);
-                        if (exist) { exist.qty += qty; exist.piecesCount += qty; } else { cart.push({ ...product, qty: qty, piecesCount: qty, price: Number(product.price) || 0 }); }
-                        renderCart(); document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+                    const exist = cart.find(c => c.cartItemId === cartItemId);
+                    if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                        cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
                     }
-                });
-                return;
-            }
-
-            const totalPiecesInCart = cart.filter(c => c.id === id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-            if (totalPiecesInCart >= product.stock) {
-                Swal.fire('Límite', 'No hay más stock disponible', 'warning');
-                return;
-            }
-
-            const exist = cart.find(c => c.id === id && !c.cartItemId);
-            if(exist) {
-                exist.qty++;
-                exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
-            } else {
-                cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
-            }
-            renderCart();
-            document.getElementById('barcode-scanner').value = '';
-            searchProductPOS('');
+                    renderCart();
+                    document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+                } else if (result.isDenied) {
+                    const qtyPieces = 1;
+                    const cartItemId = `${product.id}_Pieza`;
+                    const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                    if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                        Swal.fire('Sin Stock', 'No hay suficientes cigarros sueltos disponibles', 'warning');
+                        return;
+                    }
+                    const exist = cart.find(c => c.cartItemId === cartItemId);
+                    if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                        cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
+                    }
+                    renderCart();
+                    document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+                }
+            });
+            return;
         }
 
-        window.setGranelQty = function(amount) {
-            const input = document.getElementById('custom-granel-qty');
-            if (input) input.value = amount;
-        };
+        const qtyPieces = 1; 
+        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+        
+        if ((totalPiecesInCart + qtyPieces) > product.stock) {
+            Swal.fire('Sin Stock', 'No hay suficientes piezas disponibles', 'warning');
+            return;
+        }
+        
+        const exist = cart.find(c => c.id === product.id && !c.cartItemId);
+        if (exist) {
+            exist.qty++;
+            exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
+        } else {
+            cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
+        }
+        renderCart();
+        document.getElementById('barcode-scanner').value = '';
+        searchProductPOS('');
+        return;
+    }
 
+    // 👇 PARA PRODUCTOS A GRANEL
+    if (product.type === 'granel') {
+        Swal.fire({
+            title: `Venta: ${product.name}`,
+            html: `
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Selecciona una cantidad rápida:</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button type="button" onclick="setGranelQty(0.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>½ Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(0.500)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(1.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>1 Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(1.000)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(1.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>1 ½ Kilos</span><span class="text-[10px] font-normal text-gray-500">(1.500)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(2.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>2 Kilos</span><span class="text-[10px] font-normal text-gray-500">(2.000)</span>
+                    </button>
+                </div>
+                <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">O ingresa un peso exacto:</label>
+                    <input type="number" id="custom-granel-qty" step="0.001" min="0.001" placeholder="Ej: 0.250 para 250 gramos" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:border-red-500 text-center text-lg">
+                </div>
+            `,
+            showCancelButton: true, confirmButtonText: 'AGREGAR AL CARRITO', cancelButtonText: 'CANCELAR', confirmButtonColor: '#dc2626',
+            preConfirm: () => {
+                const qty = parseFloat(document.getElementById('custom-granel-qty').value);
+                if (!qty || isNaN(qty) || qty <= 0) {
+                    Swal.showValidationMessage('Selecciona un botón o ingresa un peso válido');
+                    return false;
+                }
+                return qty;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const qty = result.value;
+                if (qty > product.stock) { Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning'); return; }
+                const exist = cart.find(c => c.id === id);
+                if (exist) { exist.qty += qty; exist.piecesCount += qty; } else { cart.push({ ...product, qty: qty, piecesCount: qty, price: Number(product.price) || 0 }); }
+                renderCart(); document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+            }
+        });
+        return;
+    }
+
+    // 👇 PARA EL RESTO DE PRODUCTOS NORMALES
+    const totalPiecesInCart = cart.filter(c => c.id === id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+    if (totalPiecesInCart >= product.stock) {
+        Swal.fire('Límite', 'No hay más stock disponible', 'warning');
+        return;
+    }
+
+    const exist = cart.find(c => c.id === id && !c.cartItemId);
+    if(exist) {
+        exist.qty++;
+        exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
+    } else {
+        cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
+    }
+    renderCart();
+    document.getElementById('barcode-scanner').value = '';
+    searchProductPOS('');
+}
+
+window.setGranelQty = function(amount) {
+    const input = document.getElementById('custom-granel-qty');
+    if (input) input.value = amount;
+};
         function renderCart() {
             const cartList = document.getElementById('cart-list');
             const cartTotal = document.getElementById('cart-total');
@@ -3481,6 +3437,29 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             }
         }
 
+       // ===== REINICIO AUTOMÁTICO CADA 24 HORAS (POR CAMBIO DE DÍA) =====
+function verificarNuevoDia() {
+    // Obtiene la fecha actual en formato YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Compara si la fecha guardada es diferente a la de hoy
+    if (db.lastResetDate !== today) {
+        db.dailySales = 0;       // Reinicia las ventas del día
+        db.dailyExpenses = 0;    // Reinicia los gastos del día
+        db.lastResetDate = today; // Actualiza la última fecha registrada
+        
+        if (db.shift) {
+            db.shift.active = false; // Desactiva el turno si aplica
+        }
+        
+        saveData(); // Guarda los cambios en localStorage y Firebase
+    }
+}
+
+// Ejecutar la función cada vez que se cargue la aplicación o al iniciar sesión
+window.addEventListener('DOMContentLoaded', () => {
+    verificarNuevoDia();
+});
         function finalizeSale() {
             let cart = carts[currentCartIndex];
             let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
@@ -3546,27 +3525,142 @@ ${shiftData.verifiedBy === 'owner' ? '🔒 *Turno Verificado por Dueño* ✅' : 
             });
         }
 
-        // ===== FUNCIONES DE IMPRESIÓN =====
-        function imprimirEtiqueta(nombre, precio) {
-            const labelArea = document.getElementById('print-label-area');
-            
-            labelArea.innerHTML = `
-                <div style="width: 100%; border: 2px solid black; padding: 10px; text-align: center; font-family: sans-serif; background: white;">
-                    <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; color: #000;">${nombre}</div>
-                    <div style="font-size: 35px; font-weight: 900; margin-top: 5px; color: black;">$${parseFloat(precio).toFixed(2)}</div>
-                </div>
-            `;
-            
-            document.body.classList.add('printing-label');
-            labelArea.classList.remove('hidden');
-            
-            setTimeout(() => {
-                window.print();
-                labelArea.classList.add('hidden');
-                document.body.classList.remove('printing-label');
-            }, 100);
-        }
+       function imprimirEtiqueta(nombre, precio, codigo = '') {
+    // Formatear precio
+    const precioNum = parseFloat(precio) || 0;
+    const precioFormateado = precioNum.toFixed(2);
+    
+    // Si no se pasa un código, generar uno visual basado en la hora o texto opcional
+    const codigoMostrar = codigo || `*${Math.floor(100000 + Math.random() * 900000)}*`;
 
+    // 1. Plantilla HTML con diseño moderno y elegante
+    const etiquetaHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Etiqueta de Producto</title>
+        <meta charset="UTF-8">
+        <style>
+            @page {
+                size: 58mm auto;
+                margin: 0mm;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family: 'Arial', sans-serif;
+                margin: 0;
+                padding: 4px;
+                width: 58mm;
+                background: #ffffff;
+                color: #000000;
+                -webkit-print-color-adjust: exact;
+            }
+            .label-card {
+                border: 2px solid #000;
+                border-radius: 6px;
+                padding: 6px 4px;
+                text-align: center;
+                background: #fff;
+            }
+            .store-header {
+                font-size: 8px;
+                font-weight: 900;
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+                color: #000;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 3px;
+                margin-bottom: 5px;
+            }
+            .product-name {
+                font-size: 12px;
+                font-weight: 800;
+                text-transform: uppercase;
+                line-height: 1.2;
+                margin: 4px 0 6px 0;
+                word-wrap: break-word;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .price-box {
+                background: #000;
+                color: #fff;
+                border-radius: 4px;
+                padding: 4px 2px;
+                margin: 4px 0;
+            }
+            .price-label {
+                font-size: 7px;
+                letter-spacing: 1px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .price-amount {
+                font-size: 26px;
+                font-weight: 900;
+                line-height: 1;
+                margin-top: 1px;
+            }
+            .barcode-area {
+                margin-top: 5px;
+                border-top: 1px dotted #000;
+                padding-top: 3px;
+            }
+            .barcode-text {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                font-weight: bold;
+                letter-spacing: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="label-card">
+            <div class="store-header">MINI SUPER CARLITOS</div>
+            
+            <div class="product-name">${nombre}</div>
+            
+            <div class="price-box">
+                <div class="price-label">PRECIO </div>
+                <div class="price-amount">$${precioFormateado}</div>
+            </div>
+            
+            <div class="barcode-area">
+                <div class="barcode-text">${codigoMostrar}</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // 2. Abrir ventana limpia e imprimir (igual a la lógica del ticket)
+    const printWindow = window.open('', '_blank', 'width=400,height=400');
+    if (printWindow) {
+        printWindow.document.write(etiquetaHtml);
+        printWindow.document.close();
+        
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+            setTimeout(() => { 
+                try { printWindow.close(); } catch(e){} 
+            }, 500);
+        }, 300);
+    } else {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Atención',
+                text: 'Permite las ventanas emergentes para poder imprimir la etiqueta.',
+                confirmButtonText: 'Entendido'
+            });
+        }
+    }
+}
       function imprimirTicket58mm(venta) {
     // 1. Generar el HTML del ticket con diseño mejorado (Estilo Tienda)
     const fecha = new Date(venta.date);
