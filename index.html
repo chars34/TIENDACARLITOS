@@ -874,8 +874,7 @@
                     </div>
                     <div>
                         <label class="text-xs font-black text-gray-500 uppercase ml-2 block mb-2 tracking-wide">Categoría</label>
-                        <select id="p-category" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400">
-                            <optgroup label="Bebidas y Licores">
+                      <select id="p-category" onchange="toggleCervezaFields()" class="w-full p-4 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:border-red-400"><optgroup label="Bebidas y Licores">
                                 <option value="Refrescos">Refrescos</option>
                                 <option value="Alcohol">Alcohol</option>
                                 <option value="Cerveza">Cerveza</option>
@@ -904,6 +903,7 @@
                             </optgroup>
                         </select>
                     </div>
+                  
                     <div id="expiry-container" class="hidden">
                         <label class="text-xs font-black text-gray-500 uppercase ml-2 block mb-2 tracking-wide text-amber-600">
                             <i class="fas fa-calendar-alt"></i> Fecha de Caducidad (Opcional)
@@ -956,6 +956,28 @@
                         </div>
                     </div>
                 </div>
+                  <!-- BLOQUE DE CONFIGURACIÓN (Solo Cerveza) -->
+<div id="cerveza-fields" class="hidden space-y-4 bg-amber-50/60 p-5 rounded-2xl border border-amber-300 shadow-sm">
+    <div class="text-xs font-black text-amber-900 uppercase tracking-widest flex items-center gap-2 border-b border-amber-300 pb-2">
+        <i class="fas fa-beer"></i> Precios Especiales: Cerveza
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1">Precio x Six</label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">$</span>
+                <input type="number" id="p-price-six" step="0.01" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-white border-2 border-amber-200 rounded-xl font-bold text-amber-900 outline-none focus:border-amber-500 text-right text-base">
+            </div>
+        </div>
+        <div>
+            <label class="text-[11px] font-black text-amber-800 uppercase block mb-1">Precio x Caja</label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">$</span>
+                <input type="number" id="p-price-caja-cerveza" step="0.01" min="0" placeholder="0.00" class="w-full p-3 pl-8 bg-white border-2 border-amber-200 rounded-xl font-bold text-amber-900 outline-none focus:border-amber-500 text-right text-base">
+            </div>
+        </div>
+    </div>
+</div>
                 <!-- BLOQUE DE CONFIGURACIÓN (Cajetilla/Cigarro) -->
                 <div id="mixed-fields-cajetilla" class="hidden space-y-4 bg-amber-50/60 p-5 rounded-2xl border border-amber-200 shadow-sm">
                     <div class="text-xs font-black text-amber-900 uppercase tracking-widest flex items-center gap-2 border-b border-amber-200 pb-2">
@@ -1206,31 +1228,29 @@
                     return false;
                 });
         }
-
-        async function sincronizarDatosPendientes() {
-            if (syncQueue.length === 0) return;
-            console.log(`Sincronizando ${syncQueue.length} operaciones pendientes...`);
-            let operacionesExitosas = [];
-            for (let operacion of syncQueue) {
-                let exito = await subirAFirebase(operacion);
-                if (exito) {
-                    operacionesExitosas.push(operacion.id_local);
-                }
-            }
-            syncQueue = syncQueue.filter(op => !operacionesExitosas.includes(op.id_local));
-            localStorage.setItem('syncQueue_carlitos', JSON.stringify(syncQueue));
-            if (operacionesExitosas.length > 0) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Sincronización Completa!',
-                    text: 'Las operaciones en espera se han subido a la nube.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            }
-        }
+ function toggleCervezaFields() {
+    const categoryElem = document.getElementById('p-category');
+    const cervezaFields = document.getElementById('cerveza-fields');
+    
+    if (!categoryElem || !cervezaFields) return;
+    
+    // Comparación flexible por si viene en minúsculas o con espacios
+    const categoryVal = categoryElem.value.trim().toLowerCase();
+    
+    if (categoryVal === 'cerveza') {
+        cervezaFields.classList.remove('hidden');
+        cervezaFields.style.display = 'block'; // Asegura visibilidad si no usas Tailwind CSS
+    } else {
+        cervezaFields.classList.add('hidden');
+        cervezaFields.style.display = 'none';
+        
+        // Limpia los valores si se cambia a otra categoría
+        const inputSix = document.getElementById('p-price-six');
+        const inputCaja = document.getElementById('p-price-caja-cerveza');
+        if (inputSix) inputSix.value = '';
+        if (inputCaja) inputCaja.value = '';
+    }
+}
 
         // ===== FUNCIONES DE DATOS =====
         function loadLocalData() {
@@ -3456,133 +3476,192 @@ function addPackStock(id, cantidadPiezas) {
             openModal('product-modal');
         }
 
-        function editProduct(id) {
-            const p = db.products.find(item => item.id === id);
-            if (!p) return;
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-code').value = p.code || '';
-            document.getElementById('p-name').value = p.name || '';
-            document.getElementById('p-cost').value = p.cost || '';
-            document.getElementById('p-type').value = p.type || 'pieza';
-            document.getElementById('p-category').value = p.category || 'Otros';
-            document.getElementById('p-expiry').value = p.expiryDate || '';
-            
-            toggleMixedFields();
-            toggleExpiryField();
-            
-            const ppb = Number(p.piecesPerBox) || (p.category === 'Cerveza' ? 12 : 20);
-            
-            if (p.type === 'cajetilla') {
-                document.getElementById('p-price-cajetilla').value = p.price || '';
-                document.getElementById('p-piece-price-cajetilla').value = p.piecePrice || '';
-                document.getElementById('p-pieces-per-box-cajetilla').value = ppb;
-                document.getElementById('p-stock-boxes-cajetilla').value = Math.floor((p.stock || 0) / ppb);
-                document.getElementById('p-stock-loose-cajetilla').value = (p.stock || 0) % ppb;
-            } else if (p.type === 'cajapieza') {
-                document.getElementById('p-pieces-per-box').value = ppb;
-                document.getElementById('p-stock-boxes').value = Math.floor((p.stock || 0) / ppb);
-                document.getElementById('p-stock-loose').value = (p.stock || 0) % ppb;
-                document.getElementById('standard-p-price').value = p.price || '';
-            } else {
-                const standardPriceInput = document.getElementById('standard-p-price');
-                if (standardPriceInput) standardPriceInput.value = p.price || '';
-                document.getElementById('p-stock').value = p.stock || 0;
-            }
-            document.getElementById('modal-title-text').innerText = 'EDITAR PRODUCTO';
-            openModal('product-modal');
+function editProduct(id) {
+    // Comparación numérica tolerante a tipos (string vs number)
+    const p = db.products.find(item => Number(item.id) === Number(id));
+    if (!p) return;
+    
+    // Función auxiliar para asignar valores de forma segura sin romper la ejecución
+    const setVal = (elemId, val) => {
+        const el = document.getElementById(elemId);
+        if (el) el.value = val !== undefined && val !== null ? val : '';
+    };
+
+    setVal('p-id', p.id);
+    setVal('p-code', p.code);
+    setVal('p-name', p.name);
+    setVal('p-cost', p.cost);
+    setVal('p-type', p.type || 'pieza');
+    setVal('p-category', p.category || 'Otros');
+    setVal('p-expiry', p.expiryDate);
+    
+    // Disparar la visibilidad de los campos correspondientes
+    if (typeof toggleMixedFields === 'function') toggleMixedFields();
+    if (typeof toggleExpiryField === 'function') toggleExpiryField();
+    if (typeof toggleCervezaFields === 'function') toggleCervezaFields(); // Muestra/oculta los campos de Cerveza
+    
+    const ppb = Number(p.piecesPerBox) || (p.category === 'Cerveza' ? 12 : 20);
+    
+    // Carga de inventario y precios según el tipo de producto
+    if (p.type === 'cajetilla') {
+        setVal('p-price-cajetilla', p.price);
+        setVal('p-piece-price-cajetilla', p.piecePrice);
+        setVal('p-pieces-per-box-cajetilla', ppb);
+        setVal('p-stock-boxes-cajetilla', Math.floor((p.stock || 0) / ppb));
+        setVal('p-stock-loose-cajetilla', (p.stock || 0) % ppb);
+    } else if (p.type === 'cajapieza') {
+        setVal('p-pieces-per-box', ppb);
+        setVal('p-stock-boxes', Math.floor((p.stock || 0) / ppb));
+        setVal('p-stock-loose', (p.stock || 0) % ppb);
+        setVal('standard-p-price', p.price);
+    } else {
+        setVal('standard-p-price', p.price);
+        setVal('p-stock', p.stock || 0);
+    }
+
+    // --- CARGAR PRECIOS ESPECIALES (SIX Y CAJA DE CERVEZA) ---
+    setVal('p-price-six', p.priceSix);
+
+    // Búsqueda prioritaria de 'p-price-caja-cerveza'
+    const elCaja = document.getElementById('p-price-caja-cerveza') || 
+                   document.getElementById('p-price-caja') || 
+                   document.getElementById('p-price-24');
+    if (elCaja) {
+        elCaja.value = p.priceCaja !== undefined ? p.priceCaja : (p.price24 || '');
+    }
+
+    const titleElem = document.getElementById('modal-title-text');
+    if (titleElem) titleElem.innerText = 'EDITAR PRODUCTO';
+
+    if (typeof openModal === 'function') {
+        openModal('product-modal');
+    }
+}
+function obtenerSubtotalItem(item) {
+    if (item.category === 'Cerveza' && (item.priceSix > 0 || item.priceCaja > 0)) {
+        const resultado = calcularTotalCerveza(item, item.qty);
+        item.detallesEspeciales = resultado.desglose; // Opción para mostrar en el ticket/carrito
+        return resultado.total;
+    }
+    
+    // Cálculo estándar para otros productos
+    return item.price * item.qty;
+}function handleProductSubmit(event) {
+    event.preventDefault();
+    if (!db.products) db.products = []; 
+    
+    const type = document.getElementById('p-type')?.value || 'estandar';
+    const pid = document.getElementById('p-id')?.value;
+    const barcode = (document.getElementById('p-code')?.value || '').trim();
+    const category = document.getElementById('p-category')?.value || '';
+    
+    let stockVal = 0;
+    let piecesPerBox = null;
+    
+    // Cálculo de stock según tipo de empaque
+    if (type === 'cajapieza') {
+        const boxes = parseFloat(document.getElementById('p-stock-boxes')?.value) || 0;
+        const ppb = parseInt(document.getElementById('p-pieces-per-box')?.value) || 1;
+        const loose = parseFloat(document.getElementById('p-stock-loose')?.value) || 0;
+        stockVal = (boxes * ppb) + loose;
+        piecesPerBox = ppb;
+    } else if (type === 'cajetilla') {
+        const boxes = parseFloat(document.getElementById('p-stock-boxes-cajetilla')?.value) || 0;
+        const ppb = parseInt(document.getElementById('p-pieces-per-box-cajetilla')?.value) || 1;
+        const loose = parseFloat(document.getElementById('p-stock-loose-cajetilla')?.value) || 0;
+        stockVal = (boxes * ppb) + loose;
+        piecesPerBox = ppb;
+    } else {
+        stockVal = parseFloat(document.getElementById('p-stock')?.value) || 0;
+    }
+
+    // Helper para extraer el valor numérico comprobando varios IDs posibles
+    const getInputValue = (ids) => {
+        for (let id of ids) {
+            const el = document.getElementById(id);
+            if (el && el.value !== '') return parseFloat(el.value) || 0;
         }
+        return 0;
+    };
 
-        function handleProductSubmit(event) {
-            event.preventDefault();
-            if (!db.products) db.products = []; 
-            
-            const type = document.getElementById('p-type').value;
-            const pid = document.getElementById('p-id').value;
-            const barcode = (document.getElementById('p-code').value || '').trim();
-            
-            let stockVal = 0;
-            let piecesPerBox = null;
-            
-            if (type === 'cajapieza') {
-                const boxes = parseFloat(document.getElementById('p-stock-boxes').value) || 0;
-                const ppb = parseInt(document.getElementById('p-pieces-per-box').value) || 1;
-                const loose = parseFloat(document.getElementById('p-stock-loose').value) || 0;
-                stockVal = (boxes * ppb) + loose;
-                piecesPerBox = ppb;
-            } else if (type === 'cajetilla') {
-                const boxes = parseFloat(document.getElementById('p-stock-boxes-cajetilla').value) || 0;
-                const ppb = parseInt(document.getElementById('p-pieces-per-box-cajetilla').value) || 1;
-                const loose = parseFloat(document.getElementById('p-stock-loose-cajetilla').value) || 0;
-                stockVal = (boxes * ppb) + loose;
-                piecesPerBox = ppb;
-            } else {
-                stockVal = parseFloat(document.getElementById('p-stock').value) || 0;
-            }
+    // Captura segura de precios (se incluye 'p-price-caja-cerveza')
+    const priceSix = getInputValue(['p-price-six', 'price-six', 'p-six-price']);
+    const priceCaja = getInputValue(['p-price-caja-cerveza', 'p-price-caja', 'price-caja', 'p-box-price']);
 
-            const productData = {
-                id: pid ? Number(pid) : Date.now(),
-                code: barcode,
-                name: (document.getElementById('p-name').value || '').trim().toUpperCase(),
-                category: document.getElementById('p-category').value,
-                type: type,
-                cost: parseFloat(document.getElementById('p-cost').value) || 0,
-                stock: stockVal,
-                piecesPerBox: Number(piecesPerBox) || 1, 
-                expiryDate: document.getElementById('p-expiry').value || null 
-            };
+    let priceVal = 0;
+    let piecePriceVal = null;
 
-            if (type === 'cajetilla') {
-                productData.price = parseFloat(document.getElementById('p-price-cajetilla').value) || 0;
-                productData.piecePrice = parseFloat(document.getElementById('p-piece-price-cajetilla').value) || 0;
-            } else if (type === 'cajapieza') {
-                productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
-                productData.piecePrice = null;
-            } else {
-                productData.price = parseFloat(document.getElementById('standard-p-price').value) || 0;
-                productData.piecePrice = null;
-            }
+    if (type === 'cajetilla') {
+        priceVal = getInputValue(['p-price-cajetilla', 'p-price']);
+        piecePriceVal = getInputValue(['p-piece-price-cajetilla']);
+    } else {
+        priceVal = getInputValue(['standard-p-price', 'p-price', 'p-precio-venta']);
+        piecePriceVal = null;
+    }
 
-            if (barcode !== '' && !pid) {
-                const existingByCode = db.products.find(p => p.code === barcode);
-                if (existingByCode) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '¡Código Existente!',
-                        text: `El código de barras ya pertenece a: "${existingByCode.name}".`,
-                        confirmButtonColor: '#dc2626'
-                    });
-                    return;
-                }
-            }
+    // Construcción del objeto de producto
+    const productData = {
+        id: pid ? Number(pid) : Date.now(),
+        code: barcode,
+        name: (document.getElementById('p-name')?.value || '').trim().toUpperCase(),
+        category: category,
+        type: type,
+        cost: getInputValue(['p-cost']),
+        stock: stockVal,
+        piecesPerBox: Number(piecesPerBox) || 1, 
+        expiryDate: document.getElementById('p-expiry')?.value || null,
+        price: priceVal,
+        piecePrice: piecePriceVal,
+        priceSix: priceSix,
+        priceCaja: priceCaja
+    };
 
-            const existingIndex = db.products.findIndex(p => Number(p.id) === Number(productData.id));
-            if (existingIndex >= 0) {
-                db.products[existingIndex] = productData;
-            } else {
-                db.products.push(productData);
-            }
-
-            saveData();
-            if(selectedInventoryCategory) renderInventory();
-            updateDashboard();
-            closeModal('product-modal');
-            
+    // Validación de código de barras duplicado para nuevos registros
+    if (barcode !== '' && !pid) {
+        const existingByCode = db.products.find(p => p.code === barcode);
+        if (existingByCode) {
             Swal.fire({
-                icon: 'success',
-                title: '¡Guardado!',
-                text: 'Producto guardado correctamente',
-                showCancelButton: true,
-                confirmButtonText: '🖨️ Imprimir Etiqueta',
-                cancelButtonText: 'Continuar',
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    imprimirEtiqueta(productData.name, productData.price);
-                }
+                icon: 'warning',
+                title: '¡Código Existente!',
+                text: `El código de barras ya pertenece a: "${existingByCode.name}".`,
+                confirmButtonColor: '#dc2626'
             });
+            return;
         }
+    }
 
+    // Actualizar o insertar registro
+    const existingIndex = db.products.findIndex(p => Number(p.id) === Number(productData.id));
+    if (existingIndex >= 0) {
+        db.products[existingIndex] = productData;
+    } else {
+        db.products.push(productData);
+    }
+
+    // Persistencia y actualización de UI
+    if (typeof saveData === 'function') saveData();
+    if (typeof selectedInventoryCategory !== 'undefined' && typeof renderInventory === 'function') {
+        renderInventory();
+    }
+    if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof closeModal === 'function') closeModal('product-modal');
+    
+    // Alerta de éxito e impresión de etiqueta
+    Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: 'Producto guardado correctamente',
+        showCancelButton: true,
+        confirmButtonText: '🖨️ Imprimir Etiqueta',
+        cancelButtonText: 'Continuar',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280'
+    }).then((result) => {
+        if (result.isConfirmed && typeof imprimirEtiqueta === 'function') {
+            imprimirEtiqueta(productData.name, productData.price);
+        }
+    });
+}
         function toggleMixedFields() {
             const type = document.getElementById('p-type').value;
             const mixedFieldsCajapieza = document.getElementById('mixed-fields-cajapieza');
@@ -4223,244 +4302,253 @@ function calcularMargen() {
 costInput.addEventListener('input', calcularPrecio);
 marginInput.addEventListener('input', calcularPrecio);
 priceInput.addEventListener('input', calcularMargen);
-        // ===== FUNCIONES DE CARRITO =====
-        function addToCart(id) {
-            if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
-                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Debes iniciar tu turno antes de poder vender.', confirmButtonColor: '#dc2626' });
-                switchView('view-cash-cut');
-                return;
+       // ===== FUNCIONES DE CARRITO =====
+function addToCart(id) {
+    if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
+        Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Debes iniciar tu turno antes de poder vender.', confirmButtonColor: '#dc2626' });
+        switchView('view-cash-cut');
+        return;
+    }
+
+    let cart = carts[currentCartIndex];
+    const product = db.products.find(p => p.id === id);
+    if (!product) return;
+    if (product.stock <= 0) {
+        Swal.fire('Sin Stock', 'No hay unidades disponibles en inventario', 'error');
+        return;
+    }
+
+    // --- LÓGICA DE CERVEZA (PRECIOS ESPECIALES SIX Y CAJA) ---
+    if (product.category === 'Cerveza' || (product.name && product.name.toLowerCase().includes("cerveza"))) {
+        Swal.fire({
+            title: product.name,
+            html: `
+                <p class="text-sm font-bold text-gray-600 mb-4">¿Cómo desea vender este producto?</p>
+                <input type="hidden" id="beer-sale-type" value="">
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='caja'; Swal.clickConfirm();" class="bg-[#dc2626] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-red-700 transition-colors w-full text-center">📦 CAJA</button>
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='six'; Swal.clickConfirm();" class="bg-[#2563eb] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-blue-700 transition-colors w-full text-center">🍺 SIX</button>
+                    <button type="button" onclick="document.getElementById('beer-sale-type').value='pieza'; Swal.clickConfirm();" class="bg-gray-500 text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-gray-600 transition-colors w-full text-center">🍾 PIEZA</button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const type = document.getElementById('beer-sale-type').value;
+                if (!type) {
+                    Swal.showValidationMessage('Selecciona una opción');
+                    return false;
+                }
+                return type;
             }
-
-            let cart = carts[currentCartIndex];
-            const product = db.products.find(p => p.id === id);
-            if (!product) return;
-            if (product.stock <= 0) {
-                Swal.fire('Sin Stock', 'No hay unidades disponibles en inventario', 'error');
-                return;
-            }
-
-            if (product.category === 'Cerveza' || (product.name && product.name.toLowerCase().includes("cerveza"))) {
-                Swal.fire({
-                    title: product.name,
-                    html: `
-                        <p class="text-sm font-bold text-gray-600 mb-4">¿Cómo desea vender este producto?</p>
-                        <input type="hidden" id="beer-sale-type" value="">
-                        <div class="grid grid-cols-3 gap-2">
-                            <button type="button" onclick="document.getElementById('beer-sale-type').value='caja'; Swal.clickConfirm();" class="bg-[#dc2626] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-red-700 transition-colors w-full text-center">📦 CAJA</button>
-                            <button type="button" onclick="document.getElementById('beer-sale-type').value='six'; Swal.clickConfirm();" class="bg-[#2563eb] text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-blue-700 transition-colors w-full text-center">🍺 SIX</button>
-                            <button type="button" onclick="document.getElementById('beer-sale-type').value='pieza'; Swal.clickConfirm();" class="bg-gray-500 text-white text-sm font-bold py-3 px-1 rounded-lg hover:bg-gray-600 transition-colors w-full text-center">🍾 PIEZA</button>
-                        </div>
-                    `,
-                    showConfirmButton: false,
-                    showCancelButton: true,
-                    cancelButtonText: 'Cancelar',
-                    preConfirm: () => {
-                        const type = document.getElementById('beer-sale-type').value;
-                        if (!type) {
-                            Swal.showValidationMessage('Selecciona una opción');
-                            return false;
-                        }
-                        return type;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed && result.value) {
-                        const tipoVenta = result.value;
-                        const cartItemId = `${product.id}_${tipoVenta}`;
-                        
-                        let multiplier = 1;
-                        let unitPrice = Number(product.price) || 0;
-
-                        if (tipoVenta === 'six') {
-                            multiplier = 6;
-                        } else if (tipoVenta === 'caja') {
-                            multiplier = Number(product.piecesPerBox) || 12;
-                        } else {
-                            multiplier = 1;
-                        }
-
-                        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                        if ((totalPiecesInCart + multiplier) > product.stock) {
-                            Swal.fire('Stock Insuficiente', `No hay suficientes unidades disponibles (Disponibles: ${product.stock - totalPiecesInCart})`, 'warning');
-                            return;
-                        }
-
-                        const exist = cart.find(c => c.cartItemId === cartItemId);
-                        
-                        if (exist) { 
-                            exist.qty++; 
-                            exist.piecesCount = exist.qty * exist.multiplier;
-                            exist.price = exist.unitPrice * exist.multiplier * exist.qty;
-                        } else {
-                            cart.push({ 
-                                ...product, 
-                                cartItemId: cartItemId, 
-                                qty: 1, 
-                                multiplier: multiplier,
-                                unitPrice: unitPrice,
-                                piecesCount: multiplier, 
-                                price: unitPrice * multiplier, 
-                                sellType: tipoVenta, 
-                                name: `${product.name} (${tipoVenta.toUpperCase()})` 
-                            });
-                        }
-                        
-                        renderCart();
-                        document.getElementById('barcode-scanner').value = ''; 
-                        searchProductPOS('');
-                    }
-                });
-                return;
-            }
-
-            if (product.type === 'cajetilla') {
-                const boxPrice = Number(product.price) || 0;
-                const piecePrice = Number(product.piecePrice) || 0;
-                const piecesPerBox = Number(product.piecesPerBox) || 20;
-
-                Swal.fire({
-                    title: product.name,
-                    html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
-                           <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} unidades</p>`,
-                    showDenyButton: true, showCancelButton: true,
-                    confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
-                    denyButtonText: `🔄 Suelto ($${piecePrice.toFixed(2)})`,
-                    cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const qtyPieces = piecesPerBox;
-                        const cartItemId = `${product.id}_Caja`;
-                        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                        if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                            Swal.fire('Stock Insuficiente', `No hay suficientes unidades para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} unidades disponibles)`, 'warning');
-                            return;
-                        }
-                        const exist = cart.find(c => c.cartItemId === cartItemId);
-                        if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                            cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
-                        }
-                        renderCart();
-                        document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                    } else if (result.isDenied) {
-                        const qtyPieces = 1;
-                        const cartItemId = `${product.id}_Pieza`;
-                        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                        if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                            Swal.fire('Sin Stock', 'No hay suficientes unidades sueltas disponibles', 'warning');
-                            return;
-                        }
-                        const exist = cart.find(c => c.cartItemId === cartItemId);
-                        if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
-                            cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
-                        }
-                        renderCart();
-                        document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                    }
-                });
-                return;
-            }
-
-            if (product.type === 'cajapieza') {
-                const piecePrice = Number(product.piecePrice) || Number(product.price) || 0;
-                const qtyPieces = 1;
-                const cartItemId = `${product.id}_Pieza`;
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const tipoVenta = result.value;
+                const cartItemId = `${product.id}_${tipoVenta}`;
                 
+                let multiplier = 1;
+                let packPrice = Number(product.price) || 0;
+
+                // Asignación correcta de precio especial según la modalidad de venta
+                if (tipoVenta === 'six') {
+                    multiplier = 6;
+                    packPrice = Number(product.priceSix) > 0 ? Number(product.priceSix) : (packPrice * 6);
+                } else if (tipoVenta === 'caja') {
+                    multiplier = Number(product.piecesPerBox) || 24;
+                    packPrice = Number(product.priceCaja) > 0 ? Number(product.priceCaja) : (packPrice * multiplier);
+                } else {
+                    multiplier = 1;
+                    packPrice = Number(product.price) || 0;
+                }
+
                 const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-                
-                if ((totalPiecesInCart + qtyPieces) > product.stock) {
-                    Swal.fire('Sin Stock', 'No hay suficientes piezas disponibles', 'warning');
+                if ((totalPiecesInCart + multiplier) > product.stock) {
+                    Swal.fire('Stock Insuficiente', `No hay suficientes unidades disponibles (Disponibles: ${product.stock - totalPiecesInCart})`, 'warning');
                     return;
                 }
 
                 const exist = cart.find(c => c.cartItemId === cartItemId);
+                
                 if (exist) { 
                     exist.qty++; 
-                    exist.piecesCount += qtyPieces; 
+                    exist.piecesCount = exist.qty * exist.multiplier;
                 } else {
                     cart.push({ 
                         ...product, 
                         cartItemId: cartItemId, 
                         qty: 1, 
-                        price: piecePrice, 
-                        piecesCount: qtyPieces, 
-                        sellType: 'Pieza', 
-                        name: `${product.name}` 
+                        multiplier: multiplier,
+                        unitPrice: Number(product.price) || 0,
+                        priceSix: Number(product.priceSix) || 0,
+                        priceCaja: Number(product.priceCaja) || 0,
+                        piecesCount: multiplier, 
+                        price: packPrice, 
+                        sellType: tipoVenta, 
+                        name: `${product.name} (${tipoVenta.toUpperCase()})` 
                     });
                 }
                 
                 renderCart();
                 document.getElementById('barcode-scanner').value = ''; 
                 searchProductPOS('');
-                return;
             }
+        });
+        return;
+    }
 
-            if (product.type === 'granel') {
-                Swal.fire({
-                    title: `Venta: ${product.name}`,
-                    html: `
-                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Selecciona una cantidad rápida:</p>
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            <button type="button" onclick="setGranelQty(0.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>½ Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(0.500)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(1.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>1 Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(1.000)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(1.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>1 ½ Kilos/ Litro</span><span class="text-[10px] font-normal text-gray-500">(1.500)</span>
-                            </button>
-                            <button type="button" onclick="setGranelQty(2.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
-                                <span>2 Kilos/ Litro</span><span class="text-[10px] font-normal text-gray-500">(2.000)</span>
-                            </button>
-                        </div>
-                        <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">O ingresa un peso exacto:</label>
-                            <input type="number" id="custom-granel-qty" step="0.001" min="0.001" placeholder="Ej: 0.250 para 250 gramos" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:border-red-500 text-center text-lg">
-                        </div>
-                    `,
-                    showCancelButton: true, confirmButtonText: 'AGREGAR AL CARRITO', cancelButtonText: 'CANCELAR', confirmButtonColor: '#dc2626',
-                    preConfirm: () => {
-                        const qty = parseFloat(document.getElementById('custom-granel-qty').value);
-                        if (!qty || isNaN(qty) || qty <= 0) {
-                            Swal.showValidationMessage('Selecciona un botón o ingresa un peso válido');
-                            return false;
-                        }
-                        return qty;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed && result.value) {
-                        const qty = result.value;
-                        if (qty > product.stock) { Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning'); return; }
-                        const exist = cart.find(c => c.id === id);
-                        if (exist) { exist.qty += qty; exist.piecesCount += qty; } else { cart.push({ ...product, qty: qty, piecesCount: qty, price: Number(product.price) || 0 }); }
-                        renderCart(); document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
-                    }
-                });
-                return;
-            }
+    // --- LÓGICA DE CAJETILLAS ---
+    if (product.type === 'cajetilla') {
+        const boxPrice = Number(product.price) || 0;
+        const piecePrice = Number(product.piecePrice) || 0;
+        const piecesPerBox = Number(product.piecesPerBox) || 20;
 
-            const totalPiecesInCart = cart.filter(c => c.id === id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
-            if (totalPiecesInCart >= product.stock) {
-                Swal.fire('Límite', 'No hay más stock disponible', 'warning');
-                return;
+        Swal.fire({
+            title: product.name,
+            html: `<p class="text-sm font-bold text-gray-600">¿Cómo desea vender este producto?</p>
+                   <p class="text-xs text-gray-400 mt-1">La cajetilla contiene ${piecesPerBox} unidades</p>`,
+            showDenyButton: true, showCancelButton: true,
+            confirmButtonText: `📦 Cajetilla ($${boxPrice.toFixed(2)})`,
+            denyButtonText: `🔄 Suelto ($${piecePrice.toFixed(2)})`,
+            cancelButtonText: 'Cancelar', confirmButtonColor: '#dc2626', denyButtonColor: '#2563eb'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const qtyPieces = piecesPerBox;
+                const cartItemId = `${product.id}_Caja`;
+                const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                    Swal.fire('Stock Insuficiente', `No hay suficientes unidades para completar otra cajetilla (Quedan ${product.stock - totalPiecesInCart} unidades disponibles)`, 'warning');
+                    return;
+                }
+                const exist = cart.find(c => c.cartItemId === cartItemId);
+                if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                    cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: boxPrice, piecesCount: qtyPieces, sellType: 'Cajetilla', name: `${product.name} (CAJETILLA)` });
+                }
+                renderCart();
+                document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+            } else if (result.isDenied) {
+                const qtyPieces = 1;
+                const cartItemId = `${product.id}_Pieza`;
+                const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+                if ((totalPiecesInCart + qtyPieces) > product.stock) {
+                    Swal.fire('Sin Stock', 'No hay suficientes unidades sueltas disponibles', 'warning');
+                    return;
+                }
+                const exist = cart.find(c => c.cartItemId === cartItemId);
+                if (exist) { exist.qty++; exist.piecesCount += qtyPieces; } else {
+                    cart.push({ ...product, cartItemId: cartItemId, qty: 1, price: piecePrice, piecesCount: qtyPieces, sellType: 'Suelto', name: `${product.name} (SUELTO)` });
+                }
+                renderCart();
+                document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
             }
+        });
+        return;
+    }
 
-            const exist = cart.find(c => c.id === id && !c.cartItemId);
-            if(exist) {
-                exist.qty++;
-                exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
-            } else {
-                cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
-            }
-            renderCart();
-            document.getElementById('barcode-scanner').value = '';
-            searchProductPOS('');
+    // --- LÓGICA DE CAJA / PIEZA ESTÁNDAR ---
+    if (product.type === 'cajapieza') {
+        const piecePrice = Number(product.piecePrice) || Number(product.price) || 0;
+        const qtyPieces = 1;
+        const cartItemId = `${product.id}_Pieza`;
+        
+        const totalPiecesInCart = cart.filter(c => c.id === product.id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+        
+        if ((totalPiecesInCart + qtyPieces) > product.stock) {
+            Swal.fire('Sin Stock', 'No hay suficientes piezas disponibles', 'warning');
+            return;
         }
 
-        window.setGranelQty = function(amount) {
-            const input = document.getElementById('custom-granel-qty');
-            if (input) input.value = amount;
-        };
+        const exist = cart.find(c => c.cartItemId === cartItemId);
+        if (exist) { 
+            exist.qty++; 
+            exist.piecesCount += qtyPieces; 
+        } else {
+            cart.push({ 
+                ...product, 
+                cartItemId: cartItemId, 
+                qty: 1, 
+                price: piecePrice, 
+                piecesCount: qtyPieces, 
+                sellType: 'Pieza', 
+                name: `${product.name}` 
+            });
+        }
+        
+        renderCart();
+        document.getElementById('barcode-scanner').value = ''; 
+        searchProductPOS('');
+        return;
+    }
 
+    // --- LÓGICA DE PRODUCTOS A GRANEL ---
+    if (product.type === 'granel') {
+        Swal.fire({
+            title: `Venta: ${product.name}`,
+            html: `
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Selecciona una cantidad rápida:</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button type="button" onclick="setGranelQty(0.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>½ Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(0.500)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(1.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>1 Kilo / Litro</span><span class="text-[10px] font-normal text-gray-500">(1.000)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(1.5)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>1 ½ Kilos/ Litro</span><span class="text-[10px] font-normal text-gray-500">(1.500)</span>
+                    </button>
+                    <button type="button" onclick="setGranelQty(2.0)" class="bg-gray-100 hover:bg-red-50 hover:text-red-600 font-black py-3 px-2 rounded-xl border border-gray-200 transition-all text-xs uppercase flex flex-col items-center">
+                        <span>2 Kilos/ Litro</span><span class="text-[10px] font-normal text-gray-500">(2.000)</span>
+                    </button>
+                </div>
+                <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">O ingresa un peso exacto:</label>
+                    <input type="number" id="custom-granel-qty" step="0.001" min="0.001" placeholder="Ej: 0.250 para 250 gramos" class="w-full p-3 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:border-red-500 text-center text-lg">
+                </div>
+            `,
+            showCancelButton: true, confirmButtonText: 'AGREGAR AL CARRITO', cancelButtonText: 'CANCELAR', confirmButtonColor: '#dc2626',
+            preConfirm: () => {
+                const qty = parseFloat(document.getElementById('custom-granel-qty').value);
+                if (!qty || isNaN(qty) || qty <= 0) {
+                    Swal.showValidationMessage('Selecciona un botón o ingresa un peso válido');
+                    return false;
+                }
+                return qty;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const qty = result.value;
+                if (qty > product.stock) { Swal.fire('Límite', `Solo quedan ${product.stock} disponibles`, 'warning'); return; }
+                const exist = cart.find(c => c.id === id);
+                if (exist) { exist.qty += qty; exist.piecesCount += qty; } else { cart.push({ ...product, qty: qty, piecesCount: qty, price: Number(product.price) || 0 }); }
+                renderCart(); document.getElementById('barcode-scanner').value = ''; searchProductPOS('');
+            }
+        });
+        return;
+    }
+
+    // --- PRODUCTO GENERAL ESTÁNDAR ---
+    const totalPiecesInCart = cart.filter(c => c.id === id).reduce((sum, c) => sum + (c.piecesCount || c.qty), 0);
+    if (totalPiecesInCart >= product.stock) {
+        Swal.fire('Límite', 'No hay más stock disponible', 'warning');
+        return;
+    }
+
+    const exist = cart.find(c => c.id === id && !c.cartItemId);
+    if(exist) {
+        exist.qty++;
+        exist.piecesCount = (exist.piecesCount || (exist.qty - 1)) + 1;
+    } else {
+        cart.push({ ...product, qty: 1, piecesCount: 1, price: Number(product.price) || 0 });
+    }
+    renderCart();
+    document.getElementById('barcode-scanner').value = '';
+    searchProductPOS('');
+}
+
+window.setGranelQty = function(amount) {
+    const input = document.getElementById('custom-granel-qty');
+    if (input) input.value = amount;
+};
         function renderCart() {
             const cartList = document.getElementById('cart-list');
             const cartTotal = document.getElementById('cart-total');
@@ -4697,7 +4785,32 @@ priceInput.addEventListener('input', calcularMargen);
                 }
             });
         }
+// Calcula el total considerando Cajas (24 pzs), Six-packs (6 pzs) y Unidades sueltas
+function calcularTotalCerveza(producto, cantidad) {
+    const precioUnidad = producto.price || 0;
+    const precioSix = producto.priceSix || (precioUnidad * 6);
+    const precioCaja = producto.priceCaja || (precioUnidad * 24);
 
+    let cantidadRestante = cantidad;
+
+    // 1. Cajas completas (24 unidades)
+    const cajas = Math.floor(cantidadRestante / 24);
+    cantidadRestante %= 24;
+
+    // 2. Six-packs completos (6 unidades)
+    const sixes = Math.floor(cantidadRestante / 6);
+    cantidadRestante %= 6;
+
+    // 3. Unidades sueltas sobrantes
+    const unidadesSueltas = cantidadRestante;
+
+    const total = (cajas * precioCaja) + (sixes * precioSix) + (unidadesSueltas * precioUnidad);
+
+    return {
+        total: total,
+        desglose: `${cajas > 0 ? cajas + ' Caja(s) ' : ''}${sixes > 0 ? sixes + ' Six(es) ' : ''}${unidadesSueltas > 0 ? unidadesSueltas + ' Unid.' : ''}`.trim()
+    };
+}
         function calcularTotalSeguro(cart) {
             if (!cart || !Array.isArray(cart)) return 0;
 
