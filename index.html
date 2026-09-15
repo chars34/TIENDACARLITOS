@@ -113,11 +113,12 @@ const WHATSAPP_SOPORTE = {
   numero: "5212371062600",  // México: 52 + 1 + 2371062600
   nombre: "Soporte POS Carlitos"
 };
-const firebaseConfig={apiKey:"AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",authDomain:"tiendacarlitos-a5b1d.firebaseapp.com",projectId:"tiendacarlitos-a5b1d",storageBucket:"tiendacarlitos-a5b1d.firebasestorage.app",messagingSenderId:"653941208919",appId:"1:653941208919:web:42bb4150ccc3f558f53012",measurementId:"G-RKZJMETTW7"},PRECIOCHECK_CONFIG={baseUrl:"https://preciocheck.com/api/v1",apiKey:"pk_77dfb0f2130af25451e86e9b00032e3bfdc10d8d5d53775dea95ca02",enabled:!0},TIENDA_COLORES=[{hex:"#dc2626",dark:"#991b1b",nombre:"Rojo"},{hex:"#2563eb",dark:"#1e40af",nombre:"Azul"},{hex:"#059669",dark:"#065f46",nombre:"Verde"},{hex:"#d97706",dark:"#b45309",nombre:"Ámbar"},{hex:"#7c3aed",dark:"#5b21b6",nombre:"Morado"},{hex:"#db2777",dark:"#9d174d",nombre:"Rosa"},{hex:"#0891b2",dark:"#155e75",nombre:"Cian"},{hex:"#65a30d",dark:"#3f6212",nombre:"Lima"},{hex:"#ea580c",dark:"#9a3412",nombre:"Naranja"},{hex:"#475569",dark:"#1e293b",nombre:"Gris"},{hex:"#0f172a",dark:"#000000",nombre:"Negro"},{hex:"#f59e0b",dark:"#b45309",nombre:"Dorado"}];let TIENDA_ACTUAL=null,firebaseDb=null,firebaseRootRef=null,db={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0,tiendaInfo:null},currentRole=null,carts=[[],[],[]],currentCartIndex=0,selectedRoleAttempt=null,showOnlyLowStock=!1,showOnlyExpired=!1,selectedInventoryCategory=null,scanBuffer="",scanTimeout="",esCargaInicial=!0,syncQueue=JSON.parse(localStorage.getItem("syncQueue_carlitos"))||[];const LIMITE_STOCK_BAJO=5,STORE_KEY="tienda_carlitos_unica",BEEP_AUDIO=new Audio("beep.mp3");function escapeHtml(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}function obtenerTiendaGuardada(){try{var e=localStorage.getItem(STORE_KEY);return e?JSON.parse(e):null}catch(e){return null}}function guardarTiendaLocal(e){localStorage.setItem(STORE_KEY,JSON.stringify(e))}function aplicarColorTienda(e){var t=e||"#dc2626",a=oscurecerColor(t,30),e=hexToRgba(t,.1);document.documentElement.style.setProperty("--tienda-color",t),document.documentElement.style.setProperty("--tienda-color-dark",a),document.documentElement.style.setProperty("--tienda-color-light",e);const o=document.querySelector('meta[name="theme-color"]');o&&o.setAttribute("content",t)}function oscurecerColor(e,t){e=parseInt(e.replace("#",""),16);return"#"+(Math.max(0,Math.floor((e>>16)-t/100*255))<<16|Math.max(0,Math.floor((e>>8&255)-t/100*255))<<8|Math.max(0,Math.floor((255&e)-t/100*255))).toString(16).padStart(6,"0")}function hexToRgba(e,t){e=parseInt(e.replace("#",""),16);return`rgba(${e>>16&255}, ${e>>8&255}, ${255&e}, ${t})`}function renderColorPicker(){const e=document.getElementById("setup-color-picker");if(e){const t=document.getElementById("setup-color")?.value||"#dc2626";e.innerHTML=TIENDA_COLORES.map(e=>`
+const firebaseConfig={apiKey:"AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",authDomain:"tiendacarlitos-a5b1d.firebaseapp.com",projectId:"tiendacarlitos-a5b1d",storageBucket:"tiendacarlitos-a5b1d.firebasestorage.app",messagingSenderId:"653941208919",appId:"1:653941208919:web:42bb4150ccc3f558f53012",measurementId:"G-RKZJMETTW7"},PRECIOCHECK_CONFIG={baseUrl:"https://preciocheck.com/api/v1",apiKey:"pk_77dfb0f2130af25451e86e9b00032e3bfdc10d8d5d53775dea95ca02",enabled:!0},TIENDA_COLORES=[{hex:"#dc2626",dark:"#991b1b",nombre:"Rojo"},{hex:"#2563eb",dark:"#1e40af",nombre:"Azul"},{hex:"#059669",dark:"#065f46",nombre:"Verde"},{hex:"#d97706",dark:"#b45309",nombre:"Ámbar"},{hex:"#7c3aed",dark:"#5b21b6",nombre:"Morado"},{hex:"#db2777",dark:"#9d174d",nombre:"Rosa"},{hex:"#0891b2",dark:"#155e75",nombre:"Cian"},{hex:"#65a30d",dark:"#3f6212",nombre:"Lima"},{hex:"#ea580c",dark:"#9a3412",nombre:"Naranja"},{hex:"#475569",dark:"#1e293b",nombre:"Gris"},{hex:"#0f172a",dark:"#000000",nombre:"Negro"},{hex:"#f59e0b",dark:"#b45309",nombre:"Dorado"}];let TIENDA_ACTUAL=null,firebaseDb=null,firebaseRootRef=null,db={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0,tiendaInfo:null,config:{}},currentRole=null,carts=[[],[],[]],currentCartIndex=0,selectedRoleAttempt=null,showOnlyLowStock=!1,showOnlyExpired=!1,selectedInventoryCategory=null,scanBuffer="",scanTimeout="",esCargaInicial=!0,syncQueue=JSON.parse(localStorage.getItem("syncQueue_carlitos"))||[];const LIMITE_STOCK_BAJO=5,STORE_KEY="tienda_carlitos_unica",BEEP_AUDIO=new Audio("beep.mp3");function escapeHtml(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}function obtenerTiendaGuardada(){try{var e=localStorage.getItem(STORE_KEY);return e?JSON.parse(e):null}catch(e){return null}}function guardarTiendaLocal(e){localStorage.setItem(STORE_KEY,JSON.stringify(e))}function aplicarColorTienda(e){var t=e||"#dc2626",a=oscurecerColor(t,30),e=hexToRgba(t,.1);document.documentElement.style.setProperty("--tienda-color",t),document.documentElement.style.setProperty("--tienda-color-dark",a),document.documentElement.style.setProperty("--tienda-color-light",e);const o=document.querySelector('meta[name="theme-color"]');o&&o.setAttribute("content",t)}function oscurecerColor(e,t){e=parseInt(e.replace("#",""),16);return"#"+(Math.max(0,Math.floor((e>>16)-t/100*255))<<16|Math.max(0,Math.floor((e>>8&255)-t/100*255))<<8|Math.max(0,Math.floor((255&e)-t/100*255))).toString(16).padStart(6,"0")}function hexToRgba(e,t){e=parseInt(e.replace("#",""),16);return`rgba(${e>>16&255}, ${e>>8&255}, ${255&e}, ${t})`}function renderColorPicker(){const e=document.getElementById("setup-color-picker");if(e){const t=document.getElementById("setup-color")?.value||"#dc2626";e.innerHTML=TIENDA_COLORES.map(e=>`
         <button type="button" onclick="seleccionarColorSetup('${e.hex}')" 
                 class="w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${t===e.hex?"border-gray-800 shadow-md scale-110":"border-white"}"
               
-                style="background: ${e.hex};" title="${e.nombre}"></button>`).join("")}}function seleccionarColorSetup(e){const t=document.getElementById("setup-color");t&&(t.value=e),renderColorPicker()}function guardarConfiguracionInicial(){const e=document.getElementById("setup-nombre");var t=document.getElementById("setup-color");const a=(e?.value||"").trim();var o,r=t?.value||"#dc2626";a?(guardarTiendaLocal(t={id:o=`tienda_${a.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").substring(0,20)}_${Date.now().toString().slice(-4)}`,nombre:a,color:r,creada:(new Date).toISOString()}),TIENDA_ACTUAL=t,aplicarColorTienda(r),document.title=a,document.getElementById("login-tienda-nombre").innerText=a.toUpperCase(),document.getElementById("header-tienda-nombre").innerText=a.toUpperCase(),inicializarFirebaseParaTienda(o),document.getElementById("setup-overlay").style.display="none",document.getElementById("login-overlay").style.display="flex",Swal.fire({icon:"success",title:"¡Tienda Configurada!",html:`<div class="text-left"><p><strong>Nombre:</strong> ${escapeHtml(a)}</p></div>`,confirmButtonColor:r})):Swal.fire("Error","Ingresa un nombre para la tienda","warning")}function inicializarFirebaseParaTienda(t){try{firebase.apps.length||firebase.initializeApp(firebaseConfig),firebaseDb=firebase.database(),firebaseRootRef&&(firebaseRootRef.child("miniSuperDb").off(),firebaseRootRef.off()),firebaseRootRef=firebaseDb.ref(`tiendas/${t}`),console.log(`🔥 Firebase: tiendas/${t}`),cargarDatosLocalesDeTienda(t),firebaseRootRef.child("miniSuperDb").on("value", e => {
+                style="background: ${e.hex};" title="${e.nombre}"></button>`).join("")}}function seleccionarColorSetup(e){const t=document.getElementById("setup-color");t&&(t.value=e),renderColorPicker()}function guardarConfiguracionInicial(){const e=document.getElementById("setup-nombre");var t=document.getElementById("setup-color");const a=(e?.value||"").trim();var o,r=t?.value||"#dc2626";a?(guardarTiendaLocal(t={id:o=`tienda_${a.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").substring(0,20)}_${Date.now().toString().slice(-4)}`,nombre:a,color:r,creada:(new Date).toISOString()}),TIENDA_ACTUAL=t,aplicarColorTienda(r),document.title=a,document.getElementById("login-tienda-nombre").innerText=a.toUpperCase(),document.getElementById("header-tienda-nombre").innerText=a.toUpperCase(),inicializarFirebaseParaTienda(o),document.getElementById("setup-overlay").style.display="none",document.getElementById("login-overlay").style.display="flex",Swal.fire({icon:"success",title:"¡Tienda Configurada!",html:`<div class="text-left"><p><strong>Nombre:</strong> ${escapeHtml(a)}</p></div>`,confirmButtonColor:r})):Swal.fire("Error","Ingresa un nombre para la tienda","warning")}function inicializarFirebaseParaTienda(t){try{firebase.apps.length||firebase.initializeApp(firebaseConfig),firebaseDb=firebase.database(),firebaseRootRef&&(firebaseRootRef.child("miniSuperDb").off(),firebaseRootRef.off()),firebaseRootRef=firebaseDb.ref(`tiendas/${t}`),console.log(`🔥 Firebase: tiendas/${t}`),cargarDatosLocalesDeTienda(t),
+         firebaseRootRef.child("miniSuperDb").on("value", e => {
     e = e.val();
     if (e) {
         db = e;
@@ -125,6 +126,16 @@ const firebaseConfig={apiKey:"AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",authDomai
         // ⭐ SOLUCIÓN: Convertir products de Objeto a Arreglo
         if (db.products && !Array.isArray(db.products)) {
             db.products = Object.values(db.products);
+        }
+        
+        // ⭐ SINCRONIZAR PIN DEL DUEÑO DESDE FIREBASE
+        if (db.config && db.config.ownerPin) {
+            const pinActual = localStorage.getItem("ownerPin");
+            const pinNuevo = db.config.ownerPin;
+          if (pinActual !== pinNuevo) {
+    console.log("🔑 PIN del dueño actualizado desde Firebase");
+    localStorage.setItem("ownerPin", pinNuevo);
+}
         }
         
         asegurarEstructuraDatos();
@@ -267,7 +278,7 @@ function enviarPorWhatsApp(numero, mensaje, mostrarConfirmacion) {
 // ═══════════════════════════════════════════════════════════
 let qrTimerInterval = null;
 let qrTokenActual = null;
-
+let alertaCaducidadCerrada = false;
 async function abrirVinculacionQR() {
     if (!TIENDA_ACTUAL) {
         Swal.fire('Error', 'Primero configura tu tienda', 'error');
@@ -725,7 +736,10 @@ function cerrarSesionYPagar(){
   logout();
 }
 
-function claveLocalTienda(e){return`pos_data_${e}`}function cargarDatosLocalesDeTienda(e){e=localStorage.getItem(claveLocalTienda(e));if(e)try{db=JSON.parse(e),asegurarEstructuraDatos();var t=(new Date).toISOString().split("T")[0];db.lastResetDate!==t&&resetDiario()}catch(e){inicializarDatosPorDefecto()}else inicializarDatosPorDefecto();updateInventoryIndicators()}function guardarDatosLocalesDeTienda(e,t){localStorage.setItem(claveLocalTienda(e),JSON.stringify(t))}function inicializarDatosPorDefecto(){db={products:[{id:1,code:"75010011",name:"COCA COLA 600ML",cost:12,price:18,stock:24,type:"pieza",category:"Refrescos"},{id:2,code:"75010022",name:"SABRITAS SAL 40G",cost:10,price:16,stock:3,type:"pieza",category:"Sabritas"},{id:3,code:"75010033",name:"LECHE LALA 1L",cost:20,price:26,stock:12,type:"pieza",category:"Lácteos"}],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[{id:1,nombre:"Carlos",activo:!0},{id:2,nombre:"María",activo:!0},{id:3,nombre:"Juan",activo:!0}],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0}}function resetDiario(){var e=(new Date).toISOString().split("T")[0];db.dailySales=0,db.dailyExpenses=0,db.totalVentasDia=0,db.totalesMetodo={efectivo:0,terminal:0,transferencia:0},db.lastResetDate=e,db.shift&&(db.shift.active=!1),saveData()}function saveData(){db.products||(db.products=[]),Array.isArray(db.salesHistory)||(db.salesHistory=[]),Array.isArray(db.empleados)||(db.empleados=[]),Array.isArray(db.supplierPayments)||(db.supplierPayments=[]),Array.isArray(db.cashDrawersMovements)||(db.cashDrawersMovements=[]),Array.isArray(db.reportesGuardados)||(db.reportesGuardados=[]),Array.isArray(db.shiftHistory)||(db.shiftHistory=[]),db.totalesMetodo||(db.totalesMetodo={efectivo:0,terminal:0,transferencia:0}),db.tiendaInfo=TIENDA_ACTUAL?{id:TIENDA_ACTUAL.id,nombre:TIENDA_ACTUAL.nombre,color:TIENDA_ACTUAL.color}:null,TIENDA_ACTUAL&&guardarDatosLocalesDeTienda(TIENDA_ACTUAL.id,db),firebaseRootRef&&firebaseRootRef.child("miniSuperDb").set(db).catch(()=>{}),updateInventoryIndicators()}function asegurarEstructuraDatos(){var e,t,a={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[{id:1,nombre:"Carlos",activo:!0},{id:2,nombre:"María",activo:!0},{id:3,nombre:"Juan",activo:!0}],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0};for([e,t]of Object.entries(a))void 0!==db[e]&&null!==db[e]||(db[e]=JSON.parse(JSON.stringify(t))),Array.isArray(t)&&!Array.isArray(db[e])&&(db[e]=[]),"object"!=typeof t||Array.isArray(t)||"object"==typeof db[e]&&!Array.isArray(db[e])||(db[e]=JSON.parse(JSON.stringify(t)))}function refrescarUI(){try{updateDashboard(),selectedInventoryCategory&&renderInventory(),renderCart(),updateShiftStatusBadge(),renderCashCutView(),checkExpiryAlerts()}catch(e){console.warn("Error UI:",e)}}function reproducirBeep(e=!0){try{const t=BEEP_AUDIO.cloneNode();t.volume=.9,t.playbackRate=e?1:.6,t.play().catch(()=>{})}catch(e){}}const TURNO_KEY="turnoActivo",HISTORIAL_KEY="historialCortes";function obtenerTurnoActivo(){return db.shift&&db.shift.active?db.shift:{active:!1,initialCash:0,sales:0,cashSales:0,cardSales:0,transferSales:0,totalVentas:0,supplierWithdrawals:0}}async function processReturnWithAuth(){var p='style="color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important; display: block !important; width: 90% !important; margin: 10px auto !important; padding: 8px !important; border-radius: 6px !important;"',u=(await Swal.fire({title:"¿Qué operación deseas hacer?",input:"select",inputOptions:{cash:"💵 Devolución de dinero (Efectivo)",same:"🔄 Cambio por MISMO producto (Garantía)",different:"🛒 Cambio por OTRO producto"},inputPlaceholder:"Selecciona una opción",showCancelButton:!0,confirmButtonText:"Siguiente",cancelButtonText:"Cancelar",confirmButtonColor:"#3b82f6"}))["value"];if(u){var m=(await Swal.fire({title:"Producto a Devolver",html:`
+function claveLocalTienda(e){return`pos_data_${e}`}function cargarDatosLocalesDeTienda(e){e=localStorage.getItem(claveLocalTienda(e));if(e)try{db=JSON.parse(e),asegurarEstructuraDatos();var t=(new Date).toISOString().split("T")[0];db.lastResetDate!==t&&resetDiario()}catch(e){inicializarDatosPorDefecto()}else inicializarDatosPorDefecto();updateInventoryIndicators()}function guardarDatosLocalesDeTienda(e,t){localStorage.setItem(claveLocalTienda(e),JSON.stringify(t))}function inicializarDatosPorDefecto(){db={products:[{id:1,code:"75010011",name:"COCA COLA 600ML",cost:12,price:18,stock:24,type:"pieza",category:"Refrescos"},{id:2,code:"75010022",name:"SABRITAS SAL 40G",cost:10,price:16,stock:3,type:"pieza",category:"Sabritas"},{id:3,code:"75010033",name:"LECHE LALA 1L",cost:20,price:26,stock:12,type:"pieza",category:"Lácteos"}],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[{id:1,nombre:"Carlos",activo:!0},{id:2,nombre:"María",activo:!0},{id:3,nombre:"Juan",activo:!0}],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0}}function resetDiario(){var e=(new Date).toISOString().split("T")[0];db.dailySales=0,db.dailyExpenses=0,db.totalVentasDia=0,db.totalesMetodo={efectivo:0,terminal:0,transferencia:0},db.lastResetDate=e,db.shift&&(db.shift.active=!1),saveData()}function saveData(){db.products||(db.products=[]),Array.isArray(db.salesHistory)||(db.salesHistory=[]),Array.isArray(db.empleados)||(db.empleados=[]),Array.isArray(db.supplierPayments)||(db.supplierPayments=[]),Array.isArray(db.cashDrawersMovements)||(db.cashDrawersMovements=[]),Array.isArray(db.reportesGuardados)||(db.reportesGuardados=[]),Array.isArray(db.shiftHistory)||(db.shiftHistory=[]),db.totalesMetodo||(db.totalesMetodo={efectivo:0,terminal:0,transferencia:0}),db.tiendaInfo=TIENDA_ACTUAL?{id:TIENDA_ACTUAL.id,nombre:TIENDA_ACTUAL.nombre,color:TIENDA_ACTUAL.color}:null,TIENDA_ACTUAL&&guardarDatosLocalesDeTienda(TIENDA_ACTUAL.id,db),firebaseRootRef&&firebaseRootRef.child("miniSuperDb").set(db).catch(()=>{}),updateInventoryIndicators()}
+function asegurarEstructuraDatos(){var e,t,a={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[{id:1,nombre:"Carlos",activo:!0},{id:2,nombre:"María",activo:!0},{id:3,nombre:"Juan",activo:!0}],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0, config: {}};for([e,t]of Object.entries(a))void 0!==db[e]&&null!==db[e]||(db[e]=JSON.parse(JSON.stringify(t))),Array.isArray(t)&&!Array.isArray(db[e])&&(db[e]=[]),"object"!=typeof t||Array.isArray(t)||"object"==typeof db[e]&&!Array.isArray(db[e])||(db[e]=JSON.parse(JSON.stringify(t)))}
+
+function refrescarUI(){try{updateDashboard(),selectedInventoryCategory&&renderInventory(),renderCart(),updateShiftStatusBadge(),renderCashCutView(),checkExpiryAlerts()}catch(e){console.warn("Error UI:",e)}}function reproducirBeep(e=!0){try{const t=BEEP_AUDIO.cloneNode();t.volume=.9,t.playbackRate=e?1:.6,t.play().catch(()=>{})}catch(e){}}const TURNO_KEY="turnoActivo",HISTORIAL_KEY="historialCortes";function obtenerTurnoActivo(){return db.shift&&db.shift.active?db.shift:{active:!1,initialCash:0,sales:0,cashSales:0,cardSales:0,transferSales:0,totalVentas:0,supplierWithdrawals:0}}async function processReturnWithAuth(){var p='style="color: #000000 !important; background-color: #ffffff !important; border: 2px solid #9ca3af !important; display: block !important; width: 90% !important; margin: 10px auto !important; padding: 8px !important; border-radius: 6px !important;"',u=(await Swal.fire({title:"¿Qué operación deseas hacer?",input:"select",inputOptions:{cash:"💵 Devolución de dinero (Efectivo)",same:"🔄 Cambio por MISMO producto (Garantía)",different:"🛒 Cambio por OTRO producto"},inputPlaceholder:"Selecciona una opción",showCancelButton:!0,confirmButtonText:"Siguiente",cancelButtonText:"Cancelar",confirmButtonColor:"#3b82f6"}))["value"];if(u){var m=(await Swal.fire({title:"Producto a Devolver",html:`
                     <div class="text-left">
                         <div class="mb-2 text-sm text-gray-700 font-bold">🔍 Escanea o escribe el código o nombre del producto:</div>
                         <input id="swal-return-barcode" class="swal2-input" ${p} placeholder="Código o Nombre" autofocus>
@@ -862,18 +876,208 @@ function claveLocalTienda(e){return`pos_data_${e}`}function cargarDatosLocalesDe
                     <hr class="my-2">
                     <p class="text-sm font-bold text-emerald-600">${e}</p>
                 </div>
-            `;Swal.fire({icon:"success",title:"✅ Devolución Procesada",html:u,confirmButtonText:"Aceptar",confirmButtonColor:"#10b981",allowOutsideClick:!1})}}}}}async function iniciarNuevoTurno(e=0){var t="owner"===currentRole?"Dueño":localStorage.getItem("empleadoActual")||"Empleado";if(db.shift={active:!0,initialCash:Number(e)||0,sales:0,cashSales:0,cardSales:0,transferSales:0,totalVentas:0,supplierWithdrawals:0,devoluciones:0,startTime:(new Date).toISOString(),verifiedBy:"owner"===currentRole?"owner":"pending",verifiedAt:(new Date).toISOString(),openedBy:currentRole||"employee",abiertoPor:t},saveData(),firebaseDb)try{await firebaseDb.ref("turnoActivo/actual").set(db.shift),console.log("✅ Nuevo turno registrado en Firebase Realtime Database")}catch(e){console.error("⚠️ Error al registrar turno en Firebase:",e)}return renderCashCutView(),updateShiftStatusBadge(),db.shift}function selectRole(e){selectedRoleAttempt=e,document.getElementById("role-selection").classList.add("hidden"),document.getElementById("password-entry").classList.remove("hidden"),document.getElementById("login-pass").value="",document.getElementById("login-pass").focus()}function backToRoles(){selectedRoleAttempt=null,document.getElementById("password-entry").classList.add("hidden"),document.getElementById("role-selection").classList.remove("hidden")}function attemptLogin(){var e,t,a=document.getElementById("login-pass").value.trim();selectedRoleAttempt?(e=TIENDA_ACTUAL?`ownerPin_${TIENDA_ACTUAL.id}`:"ownerPin",t=TIENDA_ACTUAL?`employeePin_${TIENDA_ACTUAL.id}`:"employeePin",localStorage.getItem(e)||localStorage.setItem(e,"admin123"),localStorage.getItem(t)||localStorage.setItem(t,"user123"),e=localStorage.getItem(e),t=localStorage.getItem(t),"owner"===selectedRoleAttempt&&a===e?login("owner"):"employee"===selectedRoleAttempt&&a===t?login("employee"):Swal.fire("Error","PIN Incorrecto","error")):Swal.fire("Error","Selecciona un rol","warning")}function login(e){localStorage.setItem("role",e),currentRole=e,document.getElementById("login-overlay").style.display="none",resetearAlertaCaducidad();const t=document.getElementById("role-indicator");t&&(t.querySelector("span").innerText="owner"===e?"Dueño":"Empleado",t.classList.remove("hidden"),t.classList.add("inline-flex"));const a=document.getElementById("btn-ver-reportes-dashboard");a&&("owner"===e?a.classList.remove("hidden"):a.classList.add("hidden"));const o=document.getElementById("btn-ver-reportes-turno");o&&("owner"===e?o.classList.remove("hidden"):o.classList.add("hidden")),buildNav(),updateShiftStatusBadge(),loadTheme(),setTimeout(checkExpiryAlerts,800),setTimeout(checkExpiryAlerts,2e3),"employee"===e?mostrarSelectorEmpleado():(switchView("view-dashboard"),cargarGraficoVentas(7))}function cambiarPasswordDueño(){"owner"===currentRole?(localStorage.getItem("ownerPin")||localStorage.setItem("ownerPin","admin123"),Swal.fire({title:"🔑 Cambiar Contraseña de Dueño",html:`
-                    <div class="text-left">
-                        <p class="text-sm text-gray-600 mb-2">🔐 Ingresa la <strong>contraseña actual</strong>:</p>
-                        <input type="password" id="swal-current-pass" class="swal2-input" placeholder="Contraseña actual" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
-                        
-                        <p class="text-sm text-gray-600 mt-3">🔑 Ingresa la <strong>nueva contraseña</strong> (mínimo 4 caracteres):</p>
-                        <input type="password" id="swal-new-pass" class="swal2-input" placeholder="Nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
-                        
-                        <p class="text-sm text-gray-600 mt-1">✅ Confirma la <strong>nueva contraseña</strong>:</p>
-                        <input type="password" id="swal-confirm-pass" class="swal2-input" placeholder="Confirmar nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
-                    </div>
-                `,showCancelButton:!0,confirmButtonText:"✅ Cambiar Contraseña",cancelButtonText:"Cancelar",confirmButtonColor:"#dc2626",cancelButtonColor:"#6b7280",allowOutsideClick:!1,preConfirm:()=>{var e=document.getElementById("swal-current-pass").value,t=document.getElementById("swal-new-pass").value,a=document.getElementById("swal-confirm-pass").value,o=localStorage.getItem("ownerPin")||"admin123";return e?e!==o?(Swal.showValidationMessage("❌ Contraseña actual incorrecta"),!1):!t||t.length<4?(Swal.showValidationMessage("❌ La nueva contraseña debe tener al menos 4 caracteres"),!1):t===a||(Swal.showValidationMessage("❌ Las contraseñas no coinciden"),!1):(Swal.showValidationMessage("❌ Ingresa la contraseña actual"),!1)}}).then(e=>{e.isConfirmed&&(e=document.getElementById("swal-new-pass").value,localStorage.setItem("ownerPin",e),Swal.fire({icon:"success",title:"✅ Contraseña Actualizada",text:"La contraseña del dueño ha sido cambiada exitosamente.",confirmButtonColor:"#10b981",timer:3e3}))})):Swal.fire({icon:"error",title:"⛔ Acceso Denegado",text:"Solo el dueño puede cambiar la contraseña.",confirmButtonColor:"#dc2626"})}let alertaCaducidadCerrada=!1;function cerrarAlertaCaducidad(e){e&&(e.stopPropagation(),e.preventDefault()),alertaCaducidadCerrada=!0;const t=document.getElementById("expiry-toast");t&&(t.classList.add("hidden"),t.style.display="none"),console.log("✅ Alerta de caducidad cerrada")}function resetearAlertaCaducidad(){alertaCaducidadCerrada=!1,console.log("🔄 Alerta de caducidad reseteada")}function toggleTheme(){const e=document.body,t=document.getElementById("theme-icon");e.classList.contains("dark-mode")?(e.classList.remove("dark-mode"),t.className="fas fa-moon text-lg",localStorage.setItem("theme","light")):(e.classList.add("dark-mode"),t.className="fas fa-sun text-lg",localStorage.setItem("theme","dark"))}function loadTheme(){var e=localStorage.getItem("theme");const t=document.getElementById("theme-icon");"dark"===e?(document.body.classList.add("dark-mode"),t&&(t.className="fas fa-sun text-lg")):(document.body.classList.remove("dark-mode"),t&&(t.className="fas fa-moon text-lg"))}function logout(){currentRole=null;localStorage.removeItem("role");localStorage.removeItem("empleadoActual");const paymentOverlay=document.getElementById("payment-overlay");if(paymentOverlay&&paymentOverlay.style.display==="flex"){return}document.getElementById("login-overlay").style.display="flex";backToRoles()}const navItems=[{id:"view-dashboard",icon:"fa-chart-pie",text:"Resumen",role:"owner"},{id:"view-pos",icon:"fa-shopping-cart",text:"Caja",role:"all"},{id:"view-cash-cut",icon:"fa-wallet",text:"Turno",role:"employee"},{id:"view-inventory",icon:"fa-boxes",text:"Inventario",role:"owner"},{id:"view-suppliers",icon:"fa-truck-loading",text:"Proveedores",role:"employee"}];function buildNav(){const a=document.getElementById("nav-bar");if(a.innerHTML="","owner"===currentRole){const e=document.createElement("button");e.className="flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav",e.onclick=gestionarEmpleados,e.innerHTML='<i class="fas fa-users text-lg md:text-xl mb-1"></i><span>Empleados</span>',a.appendChild(e)}navItems.forEach(e=>{if("all"===e.role||e.role===currentRole||"view-suppliers"===e.id&&("employee"===currentRole||"owner"===currentRole)){const t=document.createElement("button");t.className="flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav",t.onclick=()=>{switchView(e.id),"view-pos"===e.id&&setTimeout(checkExpiryAlerts,400)},t.dataset.target=e.id,t.innerHTML=`<i class="fas ${e.icon} text-lg md:text-xl mb-1"></i><span>${e.text}</span>`,a.appendChild(t)}})}function switchView(e){if("employee"!==currentRole||["view-pos","view-cash-cut","view-suppliers"].includes(e)){"employee"===currentRole&&"view-pos"===e&&(db.shift&&db.shift.active||(Swal.fire({icon:"warning",title:"Turno Requerido",text:"Debes iniciar tu turno antes de poder ingresar a la caja.",confirmButtonColor:"#2563eb"}),e="view-cash-cut")),document.querySelectorAll("main > div").forEach(e=>e.classList.add("hidden")),document.getElementById(e).classList.remove("hidden"),document.querySelectorAll(".btn-nav").forEach(e=>e.classList.remove("tab-active"));const t=document.querySelector(`.btn-nav[data-target="${e}"]`);t&&t.classList.add("tab-active"),"view-dashboard"===e&&(updateDashboard(),cargarGraficoVentas(7)),"view-pos"===e&&(searchProductPOS(document.getElementById("barcode-scanner")?.value||""),renderCart()),"view-inventory"===e&&(updateInventoryIndicators(),selectedInventoryCategory&&filterInventoryCategory(selectedInventoryCategory)),"view-suppliers"===e&&renderSuppliersHistory(),"view-cash-cut"===e&&renderCashCutView(),setTimeout(checkExpiryAlerts,300)}else Swal.fire({icon:"error",title:"⛔ Acceso Denegado",text:"No tienes permisos para esta sección.",confirmButtonColor:"#dc2626"})}function updateShiftStatusBadge(){const e=document.getElementById("shift-status-badge");var t;e&&(db.shift&&db.shift.active?(t=db.shift.abiertoPor||"Empleado","owner"===db.shift.verifiedBy?(e.innerHTML=`✅ ${t} (Verificado)`,e.className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold"):(e.innerHTML=`⚠️ ${t} (Pendiente)`,e.className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold")):(e.innerHTML="⏸️ Sin Turno",e.className="bg-gray-600 text-gray-300 px-3 py-1 rounded-full text-xs font-bold"))}function gestionarEmpleados(){if("owner"===currentRole){let o='<div class="text-left max-h-60 overflow-y-auto">';db.empleados.forEach((e,t)=>{var a=!1!==e.activo;o+=`<div class="flex justify-between items-center border-b border-gray-100 py-2">
+            `;Swal.fire({icon:"success",title:"✅ Devolución Procesada",html:u,confirmButtonText:"Aceptar",confirmButtonColor:"#10b981",allowOutsideClick:!1})}}}}}async function iniciarNuevoTurno(e=0){var t="owner"===currentRole?"Dueño":localStorage.getItem("empleadoActual")||"Empleado";if(db.shift={active:!0,initialCash:Number(e)||0,sales:0,cashSales:0,cardSales:0,transferSales:0,totalVentas:0,supplierWithdrawals:0,devoluciones:0,startTime:(new Date).toISOString(),verifiedBy:"owner"===currentRole?"owner":"pending",verifiedAt:(new Date).toISOString(),openedBy:currentRole||"employee",abiertoPor:t},saveData(),firebaseDb)try{await firebaseDb.ref("turnoActivo/actual").set(db.shift),console.log("✅ Nuevo turno registrado en Firebase Realtime Database")}catch(e){console.error("⚠️ Error al registrar turno en Firebase:",e)}return renderCashCutView(),updateShiftStatusBadge(),db.shift}function selectRole(e){selectedRoleAttempt=e,document.getElementById("role-selection").classList.add("hidden"),document.getElementById("password-entry").classList.remove("hidden"),document.getElementById("login-pass").value="",document.getElementById("login-pass").focus()}function backToRoles(){selectedRoleAttempt=null,document.getElementById("password-entry").classList.add("hidden"),document.getElementById("role-selection").classList.remove("hidden")}
+        // ═══════════════════════════════════════════════════════════════
+// LOGIN Y CAMBIO DE CONTRASEÑA
+// ═══════════════════════════════════════════════════════════════
+
+
+
+async function attemptLogin() {
+    const pinIngresado = document.getElementById("login-pass").value.trim();
+    
+    if (!selectedRoleAttempt) {
+        return Swal.fire("Error", "Selecciona un rol", "warning");
+    }
+    
+    let ownerPin = "admin123";
+    let employeePin = "user123";
+    
+    try {
+        if (firebaseRootRef) {
+            const snap = await firebaseRootRef.child("miniSuperDb/config").once("value");
+            const config = snap.val() || {};
+           if (config.ownerPin) {
+    ownerPin = config.ownerPin;
+    localStorage.setItem("ownerPin", ownerPin);
+    console.log("🔑 PIN dueño leído desde Firebase");
+}
+            if (config.employeePin) {
+                employeePin = config.employeePin;
+                localStorage.setItem("employeePin", employeePin);
+            }
+        }
+        
+        if (!ownerPin) ownerPin = localStorage.getItem("ownerPin") || "admin123";
+        if (!employeePin) employeePin = localStorage.getItem("employeePin") || "user123";
+        
+    } catch (e) {
+        console.warn("⚠️ Error leyendo PIN desde Firebase:", e);
+        ownerPin = localStorage.getItem("ownerPin") || "admin123";
+        employeePin = localStorage.getItem("employeePin") || "user123";
+    }
+    
+    if (selectedRoleAttempt === "owner" && pinIngresado === ownerPin) {
+        login("owner");
+    } else if (selectedRoleAttempt === "employee" && pinIngresado === employeePin) {
+        login("employee");
+    } else {
+        Swal.fire("Error", "PIN Incorrecto", "error");
+    }
+}
+
+// ⭐ FUNCIÓN LOGIN (la que faltaba)
+function login(e) {
+    localStorage.setItem("role", e);
+    currentRole = e;
+    document.getElementById("login-overlay").style.display = "none";
+    
+    if (typeof resetearAlertaCaducidad === 'function') {
+        resetearAlertaCaducidad();
+    }
+    
+    const t = document.getElementById("role-indicator");
+    if (t) {
+        t.querySelector("span").innerText = "owner" === e ? "Dueño" : "Empleado";
+        t.classList.remove("hidden");
+        t.classList.add("inline-flex");
+    }
+    
+    const a = document.getElementById("btn-ver-reportes-dashboard");
+    if (a) {
+        if ("owner" === e) a.classList.remove("hidden");
+        else a.classList.add("hidden");
+    }
+    
+    const o = document.getElementById("btn-ver-reportes-turno");
+    if (o) {
+        if ("owner" === e) o.classList.remove("hidden");
+        else o.classList.add("hidden");
+    }
+    
+    buildNav();
+    updateShiftStatusBadge();
+    loadTheme();
+    
+    setTimeout(checkExpiryAlerts, 800);
+    setTimeout(checkExpiryAlerts, 2e3);
+    
+    if ("employee" === e) {
+        mostrarSelectorEmpleado();
+    } else {
+        switchView("view-dashboard");
+        cargarGraficoVentas(7);
+    }
+}
+
+// ⭐ FUNCIÓN CAMBIAR CONTRASEÑA (corregida)
+function cambiarPasswordDueño() {
+    if ("owner" !== currentRole) {
+        return Swal.fire({
+            icon: "error",
+            title: "⛔ Acceso Denegado",
+            text: "Solo el dueño puede cambiar la contraseña.",
+            confirmButtonColor: "#dc2626"
+        });
+    }
+    
+    if (!localStorage.getItem("ownerPin")) {
+        localStorage.setItem("ownerPin", "admin123");
+    }
+    
+    Swal.fire({
+        title: "🔑 Cambiar Contraseña de Dueño",
+        html: `
+            <div class="text-left">
+                <p class="text-sm text-gray-600 mb-2">🔐 Ingresa la <strong>contraseña actual</strong>:</p>
+                <input type="password" id="swal-current-pass" class="swal2-input" placeholder="Contraseña actual" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
+                
+                <p class="text-sm text-gray-600 mt-3">🔑 Ingresa la <strong>nueva contraseña</strong> (mínimo 4 caracteres):</p>
+                <input type="password" id="swal-new-pass" class="swal2-input" placeholder="Nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
+                
+                <p class="text-sm text-gray-600 mt-1">✅ Confirma la <strong>nueva contraseña</strong>:</p>
+                <input type="password" id="swal-confirm-pass" class="swal2-input" placeholder="Confirmar nueva contraseña" style="color:#000 !important; background:#fff !important; border:2px solid #9ca3af !important; border-radius:8px !important; padding:12px !important;">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "✅ Cambiar Contraseña",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#6b7280",
+        allowOutsideClick: false,
+        preConfirm: () => {
+            const actual = document.getElementById("swal-current-pass").value;
+            const nueva = document.getElementById("swal-new-pass").value;
+            const confirma = document.getElementById("swal-confirm-pass").value;
+            
+            let pinGuardado = localStorage.getItem("ownerPin") || "admin123";
+            if (db && db.config && db.config.ownerPin) {
+                pinGuardado = db.config.ownerPin;
+            }
+            
+            if (!actual) {
+                Swal.showValidationMessage("❌ Ingresa la contraseña actual");
+                return false;
+            }
+            if (actual !== pinGuardado) {
+                Swal.showValidationMessage("❌ Contraseña actual incorrecta");
+                return false;
+            }
+            if (!nueva || nueva.length < 4) {
+                Swal.showValidationMessage("❌ La nueva contraseña debe tener al menos 4 caracteres");
+                return false;
+            }
+            if (nueva !== confirma) {
+                Swal.showValidationMessage("❌ Las contraseñas no coinciden");
+                return false;
+            }
+            return nueva;
+        }
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        
+        const nuevaPass = result.value;
+        
+        // 1. Guardar en localStorage
+        localStorage.setItem("ownerPin", nuevaPass);
+        
+        // 2. Actualizar db local
+        if (!db.config) db.config = {};
+        db.config.ownerPin = nuevaPass;
+        
+        // 3. Guardar en Firebase
+        if (firebaseRootRef) {
+            firebaseRootRef.child("miniSuperDb/config/ownerPin").set(nuevaPass)
+                .then(() => {
+                    console.log("✅ PIN sincronizado en Firebase");
+                    Swal.fire({
+                        icon: "success",
+                        title: "✅ Contraseña Actualizada",
+                        html: '<div style="text-align:left;font-size:14px;"><p>La contraseña del dueño ha sido cambiada.</p><div style="background:#fef3c7;padding:12px;border-radius:10px;font-size:12px;color:#78350f;margin-top:10px;"><b>⏳ Sincronización en curso</b><br>Los celulares recibirán la nueva contraseña en 10-20 segundos.</div></div>',
+                        confirmButtonText: "Entendido",
+                        confirmButtonColor: "#10b981"
+                    });
+                })
+                .catch(err => {
+                    console.error("❌ Error guardando PIN:", err);
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Advertencia",
+                        text: "La contraseña se cambió localmente pero no se sincronizó con Firebase: " + err.message,
+                        confirmButtonColor: "#f59e0b"
+                    });
+                });
+        } else {
+            Swal.fire({
+                icon: "success",
+                title: "✅ Contraseña Actualizada",
+                text: "Se guardó localmente. Firebase no está disponible.",
+                confirmButtonColor: "#10b981"
+            });
+        }
+    });
+}
+function cerrarAlertaCaducidad(e){e&&(e.stopPropagation(),e.preventDefault()),alertaCaducidadCerrada=!0;const t=document.getElementById("expiry-toast");t&&(t.classList.add("hidden"),t.style.display="none"),console.log("✅ Alerta de caducidad cerrada")}function resetearAlertaCaducidad(){alertaCaducidadCerrada=!1,console.log("🔄 Alerta de caducidad reseteada")}function toggleTheme(){const e=document.body,t=document.getElementById("theme-icon");e.classList.contains("dark-mode")?(e.classList.remove("dark-mode"),t.className="fas fa-moon text-lg",localStorage.setItem("theme","light")):(e.classList.add("dark-mode"),t.className="fas fa-sun text-lg",localStorage.setItem("theme","dark"))}function loadTheme(){var e=localStorage.getItem("theme");const t=document.getElementById("theme-icon");"dark"===e?(document.body.classList.add("dark-mode"),t&&(t.className="fas fa-sun text-lg")):(document.body.classList.remove("dark-mode"),t&&(t.className="fas fa-moon text-lg"))}function logout(){currentRole=null;localStorage.removeItem("role");localStorage.removeItem("empleadoActual");const paymentOverlay=document.getElementById("payment-overlay");if(paymentOverlay&&paymentOverlay.style.display==="flex"){return}document.getElementById("login-overlay").style.display="flex";backToRoles()}const navItems=[{id:"view-dashboard",icon:"fa-chart-pie",text:"Resumen",role:"owner"},{id:"view-pos",icon:"fa-shopping-cart",text:"Caja",role:"all"},{id:"view-cash-cut",icon:"fa-wallet",text:"Turno",role:"employee"},{id:"view-inventory",icon:"fa-boxes",text:"Inventario",role:"owner"},{id:"view-suppliers",icon:"fa-truck-loading",text:"Proveedores",role:"employee"}];function buildNav(){const a=document.getElementById("nav-bar");if(a.innerHTML="","owner"===currentRole){const e=document.createElement("button");e.className="flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav",e.onclick=gestionarEmpleados,e.innerHTML='<i class="fas fa-users text-lg md:text-xl mb-1"></i><span>Empleados</span>',a.appendChild(e)}navItems.forEach(e=>{if("all"===e.role||e.role===currentRole||"view-suppliers"===e.id&&("employee"===currentRole||"owner"===currentRole)){const t=document.createElement("button");t.className="flex-1 min-w-[90px] py-3 md:py-4 px-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 rounded-t-2xl transition-all hover:bg-gray-50 flex flex-col items-center gap-1.5 btn-nav",t.onclick=()=>{switchView(e.id),"view-pos"===e.id&&setTimeout(checkExpiryAlerts,400)},t.dataset.target=e.id,t.innerHTML=`<i class="fas ${e.icon} text-lg md:text-xl mb-1"></i><span>${e.text}</span>`,a.appendChild(t)}})}function switchView(e){if("employee"!==currentRole||["view-pos","view-cash-cut","view-suppliers"].includes(e)){"employee"===currentRole&&"view-pos"===e&&(db.shift&&db.shift.active||(Swal.fire({icon:"warning",title:"Turno Requerido",text:"Debes iniciar tu turno antes de poder ingresar a la caja.",confirmButtonColor:"#2563eb"}),e="view-cash-cut")),document.querySelectorAll("main > div").forEach(e=>e.classList.add("hidden")),document.getElementById(e).classList.remove("hidden"),document.querySelectorAll(".btn-nav").forEach(e=>e.classList.remove("tab-active"));const t=document.querySelector(`.btn-nav[data-target="${e}"]`);t&&t.classList.add("tab-active"),"view-dashboard"===e&&(updateDashboard(),cargarGraficoVentas(7)),"view-pos"===e&&(searchProductPOS(document.getElementById("barcode-scanner")?.value||""),renderCart()),"view-inventory"===e&&(updateInventoryIndicators(),selectedInventoryCategory&&filterInventoryCategory(selectedInventoryCategory)),"view-suppliers"===e&&renderSuppliersHistory(),"view-cash-cut"===e&&renderCashCutView(),setTimeout(checkExpiryAlerts,300)}else Swal.fire({icon:"error",title:"⛔ Acceso Denegado",text:"No tienes permisos para esta sección.",confirmButtonColor:"#dc2626"})}function updateShiftStatusBadge(){const e=document.getElementById("shift-status-badge");var t;e&&(db.shift&&db.shift.active?(t=db.shift.abiertoPor||"Empleado","owner"===db.shift.verifiedBy?(e.innerHTML=`✅ ${t} (Verificado)`,e.className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold"):(e.innerHTML=`⚠️ ${t} (Pendiente)`,e.className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold")):(e.innerHTML="⏸️ Sin Turno",e.className="bg-gray-600 text-gray-300 px-3 py-1 rounded-full text-xs font-bold"))}function gestionarEmpleados(){if("owner"===currentRole){let o='<div class="text-left max-h-60 overflow-y-auto">';db.empleados.forEach((e,t)=>{var a=!1!==e.activo;o+=`<div class="flex justify-between items-center border-b border-gray-100 py-2">
             <span class="font-bold">${escapeHtml(e.nombre)}</span>
             <div class="flex gap-2">
                 <span class="text-xs ${a?"text-green-500":"text-red-500"}">${a?"✅ Activo":"❌ Inactivo"}</span>
