@@ -756,22 +756,49 @@ verificarLicencia();  // ← Fuera del onValue
     cargarDatosLocalesDeTienda(t);
 }
            }
-function verificarLicencia(){
-    if(!firebaseRootRef) return;
+    let licenciaTimeoutActivo = true;
+
+function verificarLicencia() {
+    console.log("🔐 [LICENCIA] Verificando licencia en Firebase...");
+    
+    if (!TIENDA_ACTUAL) {
+        console.log("⚠️ No hay tienda vinculada, omitiendo verificación");
+        return;
+    }
     
     // ⭐ Si no hay internet, permitir acceso (modo offline)
     if (!navigator.onLine) {
         console.log("📴 Sin internet. Modo offline permitido.");
+        licenciaTimeoutActivo = false;
         ocultarPantallaPago();
         return;
     }
     
-    firebaseRootRef.child("licencia").on("value", snapshot => {
+    // ⭐ Marcar que el timeout está activo al inicio
+    licenciaTimeoutActivo = true;
+    
+    // ⭐ Timeout de seguridad: solo se activa si Firebase NO responde en 5s
+    setTimeout(() => {
+        if (licenciaTimeoutActivo) {
+            console.log("⏰ Firebase no respondió en 5s. Modo offline permitido.");
+            ocultarPantallaPago();
+        } else {
+            console.log("✅ Firebase ya respondió. Timeout ignorado.");
+        }
+    }, 5000);
+    
+    // ⭐ Consultar licencia en Firebase
+    const licenciaRef = firebase.database().ref(`tiendas/${TIENDA_ACTUAL.id}/licencia`);
+    
+    licenciaRef.on('value', (snapshot) => {
+        // ⭐ Firebase respondió → desactivar el timeout
+        licenciaTimeoutActivo = false;
+        
         const licencia = snapshot.val();
         
-        if(!licencia){
-            console.log("⚠️ No existe nodo de licencia. Creando uno por defecto...");
-            firebaseRootRef.child("licencia").set({
+        if (!licencia) {
+            console.log("⚠️ No existe nodo de licencia. Asumiendo activa...");
+            licenciaRef.set({
                 estado_licencia: "activa",
                 fecha_vencimiento: "2026-12-31"
             });
@@ -781,33 +808,64 @@ function verificarLicencia(){
         const estado = licencia.estado_licencia;
         const fechaVenc = licencia.fecha_vencimiento;
         
-        console.log("🔐 Estado de licencia:", estado, "| Vence:", fechaVenc);
+        console.log("🔐 Estado:", estado, "| Vence:", fechaVenc);
         
-        if(fechaVenc && estado === "activa"){
+        // ⭐ Verificar si está vencida por fecha
+        if (fechaVenc && estado === "activa") {
             const hoy = new Date();
             const vencimiento = new Date(fechaVenc + "T23:59:59");
-            if(hoy > vencimiento){
-                console.log("❌ Licencia vencida por fecha");
-                mostrarPantallaPago("Tu licencia ha expirado el " + fechaVenc);
+            
+            if (hoy > vencimiento) {
+                console.log("❌ Licencia vencida por fecha:", fechaVenc);
+                mostrarPantallaPago("Tu licencia expiró el " + fechaVenc);
                 return;
             }
         }
         
-        if(estado === "activa" || estado === "demo"){
+        // ⭐ Verificar estado
+        if (estado === "activa" || estado === "demo") {
+            console.log("✅ Licencia activa");
             ocultarPantallaPago();
         } else {
-            mostrarPantallaPago();
+            console.log("❌ Licencia inactiva:", estado);
+            mostrarPantallaPago("Tu licencia está inactiva. Contacta a soporte.");
         }
     });
     
-    // ⭐ Timeout de seguridad: Si Firebase no responde en 5 segundos, permitir acceso
-    setTimeout(() => {
-        console.log("⏰ Firebase no respondió en 5s. Verificando estado...");
-        if (document.getElementById("payment-overlay")?.style.display === "flex") {
-            console.log("📴 Forzando modo offline tras timeout");
-            ocultarPantallaPago();
+    // ⭐ Re-verificar al volver a la app (después de Mercado Pago)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && TIENDA_ACTUAL) {
+            console.log('🔄 App volvió al foco. Re-verificando licencia...');
+            
+            const overlay = document.getElementById('payment-screen');
+            const pantallaBloqueada = overlay && !overlay.classList.contains('hidden-view');
+            
+            if (pantallaBloqueada) {
+                // ⭐ Consultar Firebase UNA VEZ para ver si ya se activó
+                firebase.database().ref(`tiendas/${TIENDA_ACTUAL.id}/licencia`).once('value')
+                    .then(snapshot => {
+                        const lic = snapshot.val();
+                        if (lic && (lic.estado_licencia === 'activa' || lic.estado_licencia === 'demo')) {
+                            const hoy = new Date();
+                            const vencimiento = new Date(lic.fecha_vencimiento + 'T23:59:59');
+                            if (hoy <= vencimiento) {
+                                console.log('✅ Licencia verificada como activa');
+                                ocultarPantallaPago();
+                            } else {
+                                console.log('❌ Licencia vencida');
+                                mostrarPantallaPago('Tu licencia expiró el ' + lic.fecha_vencimiento);
+                            }
+                        } else {
+                            console.log('❌ Licencia inactiva, manteniendo bloqueo');
+                            mostrarPantallaPago('Tu licencia está inactiva. Contacta a soporte.');
+                        }
+                    })
+                    .catch(e => {
+                        console.warn('⚠️ Error verificando licencia al volver:', e);
+                    });
+            }
         }
-    }, 5000);
+    });
 }
 // ═══════════════════════════════════════════════════════════
 // 📱 FUNCIÓN UNIFICADA DE WHATSAPP
