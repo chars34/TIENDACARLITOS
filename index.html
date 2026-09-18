@@ -393,7 +393,208 @@ const WHATSAPP_SOPORTE = {
   numero: "5212371062600",  // México: 52 + 1 + 2371062600
   nombre: "Soporte POS Carlitos"
 };
-const firebaseConfig={apiKey:"AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",authDomain:"tiendacarlitos-a5b1d.firebaseapp.com",projectId:"tiendacarlitos-a5b1d",storageBucket:"tiendacarlitos-a5b1d.firebasestorage.app",messagingSenderId:"653941208919",appId:"1:653941208919:web:42bb4150ccc3f558f53012",measurementId:"G-RKZJMETTW7"},PRECIOCHECK_CONFIG={baseUrl:"https://preciocheck.com/api/v1",apiKey:"pk_77dfb0f2130af25451e86e9b00032e3bfdc10d8d5d53775dea95ca02",enabled:!0},TIENDA_COLORES=[{hex:"#dc2626",dark:"#991b1b",nombre:"Rojo"},{hex:"#2563eb",dark:"#1e40af",nombre:"Azul"},{hex:"#059669",dark:"#065f46",nombre:"Verde"},{hex:"#d97706",dark:"#b45309",nombre:"Ámbar"},{hex:"#7c3aed",dark:"#5b21b6",nombre:"Morado"},{hex:"#db2777",dark:"#9d174d",nombre:"Rosa"},{hex:"#0891b2",dark:"#155e75",nombre:"Cian"},{hex:"#65a30d",dark:"#3f6212",nombre:"Lima"},{hex:"#ea580c",dark:"#9a3412",nombre:"Naranja"},{hex:"#475569",dark:"#1e293b",nombre:"Gris"},{hex:"#0f172a",dark:"#000000",nombre:"Negro"},{hex:"#f59e0b",dark:"#b45309",nombre:"Dorado"}];let TIENDA_ACTUAL=null,firebaseDb=null,firebaseRootRef=null,db={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0,tiendaInfo:null,config:{}},currentRole=null,carts=[[],[],[]],currentCartIndex=0,selectedRoleAttempt=null,showOnlyLowStock=!1,showOnlyExpired=!1,selectedInventoryCategory=null,scanBuffer="",scanTimeout="",esCargaInicial=!0,syncQueue=JSON.parse(localStorage.getItem("syncQueue_carlitos"))||[];const LIMITE_STOCK_BAJO=5,STORE_KEY="tienda_carlitos_unica",BEEP_AUDIO=new Audio("beep.mp3");function escapeHtml(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}function obtenerTiendaGuardada(){try{var e=localStorage.getItem(STORE_KEY);return e?JSON.parse(e):null}catch(e){return null}}function guardarTiendaLocal(e){localStorage.setItem(STORE_KEY,JSON.stringify(e))}function aplicarColorTienda(e){var t=e||"#dc2626",a=oscurecerColor(t,30),e=hexToRgba(t,.1);document.documentElement.style.setProperty("--tienda-color",t),document.documentElement.style.setProperty("--tienda-color-dark",a),document.documentElement.style.setProperty("--tienda-color-light",e);const o=document.querySelector('meta[name="theme-color"]');o&&o.setAttribute("content",t)}function oscurecerColor(e,t){e=parseInt(e.replace("#",""),16);return"#"+(Math.max(0,Math.floor((e>>16)-t/100*255))<<16|Math.max(0,Math.floor((e>>8&255)-t/100*255))<<8|Math.max(0,Math.floor((255&e)-t/100*255))).toString(16).padStart(6,"0")}function hexToRgba(e,t){e=parseInt(e.replace("#",""),16);return`rgba(${e>>16&255}, ${e>>8&255}, ${255&e}, ${t})`}function renderColorPicker(){const e=document.getElementById("setup-color-picker");if(e){const t=document.getElementById("setup-color")?.value||"#dc2626";e.innerHTML=TIENDA_COLORES.map(e=>`
+const firebaseConfig={apiKey:"AIzaSyA1mBLI8HYE5vrjtC0yiGgij2zvocfckac",authDomain:"tiendacarlitos-a5b1d.firebaseapp.com",projectId:"tiendacarlitos-a5b1d",storageBucket:"tiendacarlitos-a5b1d.firebasestorage.app",messagingSenderId:"653941208919",appId:"1:653941208919:web:42bb4150ccc3f558f53012",measurementId:"G-RKZJMETTW7"},PRECIOCHECK_CONFIG={baseUrl:"https://preciocheck.com/api/v1",apiKey:"pk_77dfb0f2130af25451e86e9b00032e3bfdc10d8d5d53775dea95ca02",enabled:!0},TIENDA_COLORES=[{hex:"#dc2626",dark:"#991b1b",nombre:"Rojo"},{hex:"#2563eb",dark:"#1e40af",nombre:"Azul"},{hex:"#059669",dark:"#065f46",nombre:"Verde"},{hex:"#d97706",dark:"#b45309",nombre:"Ámbar"},{hex:"#7c3aed",dark:"#5b21b6",nombre:"Morado"},{hex:"#db2777",dark:"#9d174d",nombre:"Rosa"},{hex:"#0891b2",dark:"#155e75",nombre:"Cian"},{hex:"#65a30d",dark:"#3f6212",nombre:"Lima"},{hex:"#ea580c",dark:"#9a3412",nombre:"Naranja"},{hex:"#475569",dark:"#1e293b",nombre:"Gris"},{hex:"#0f172a",dark:"#000000",nombre:"Negro"},{hex:"#f59e0b",dark:"#b45309",nombre:"Dorado"}];let TIENDA_ACTUAL=null,firebaseDb=null,firebaseRootRef=null,db={products:[],dailySales:0,dailyExpenses:0,lastResetDate:(new Date).toLocaleDateString(),salesHistory:[],shift:{active:!1},supplierPayments:[],cashDrawersMovements:[],reportesGuardados:[],shiftHistory:[],empleados:[],totalesMetodo:{efectivo:0,terminal:0,transferencia:0},totalVentasDia:0,tiendaInfo:null,config:{}},currentRole=null,carts=[[],[],[]],currentCartIndex=0,selectedRoleAttempt=null,showOnlyLowStock=!1,showOnlyExpired=!1,selectedInventoryCategory=null,scanBuffer="",scanTimeout="",esCargaInicial=!0,syncQueue=JSON.parse(localStorage.getItem("syncQueue_carlitos"))||[];const LIMITE_STOCK_BAJO=5,STORE_KEY="tienda_carlitos_unica",BEEP_AUDIO=new Audio("beep.mp3");function escapeHtml(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}function obtenerTiendaGuardada(){try{var e=localStorage.getItem(STORE_KEY);return e?JSON.parse(e):null}catch(e){return null}}function guardarTiendaLocal(e){localStorage.setItem(STORE_KEY,JSON.stringify(e))}function aplicarColorTienda(e){var t=e||"#dc2626",a=oscurecerColor(t,30),e=hexToRgba(t,.1);document.documentElement.style.setProperty("--tienda-color",t),document.documentElement.style.setProperty("--tienda-color-dark",a),document.documentElement.style.setProperty("--tienda-color-light",e);const o=document.querySelector('meta[name="theme-color"]');o&&o.setAttribute("content",t)}function oscurecerColor(e,t){e=parseInt(e.replace("#",""),16);return"#"+(Math.max(0,Math.floor((e>>16)-t/100*255))<<16|Math.max(0,Math.floor((e>>8&255)-t/100*255))<<8|Math.max(0,Math.floor((255&e)-t/100*255))).toString(16).padStart(6,"0")}function hexToRgba(e,t){e=parseInt(e.replace("#",""),16);return`rgba(${e>>16&255}, ${e>>8&255}, ${255&e}, ${t})`}
+// ═══════════════════════════════════════════════════════════
+// 📋 HISTORIAL DE PAGOS A PROVEEDORES
+// ═══════════════════════════════════════════════════════════
+function renderSuppliersHistory() {
+    const container = document.getElementById("suppliers-table-container");
+    if (!container) return;
+    
+    const payments = db.supplierPayments || [];
+    
+    if (payments.length === 0) {
+        container.innerHTML = '<p class="italic text-gray-400 text-xs">Los pagos registrados aparecerán aquí.</p>';
+        return;
+    }
+    
+    // Ordenar por fecha (más reciente primero)
+    const ordenados = [...payments].sort((a, b) => 
+        new Date(b.date || 0) - new Date(a.date || 0)
+    );
+    
+    // Calcular total
+    const total = ordenados.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    
+    let html = '<div class="overflow-x-auto">';
+    html += '<table class="w-full text-left border-collapse">';
+    html += '<thead><tr class="border-b border-gray-100 text-gray-400 text-xs uppercase font-black">';
+    html += '<th class="py-3 px-4">Fecha</th>';
+    html += '<th class="py-3 px-4">Proveedor</th>';
+    html += '<th class="py-3 px-4">Notas</th>';
+    html += '<th class="py-3 px-4 text-right">Monto</th>';
+    html += '</tr></thead><tbody class="divide-y divide-gray-100 text-sm">';
+    
+    ordenados.forEach(p => {
+        const fecha = p.date ? new Date(p.date).toLocaleString('es-MX', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }) : 'Sin fecha';
+        
+        html += '<tr>';
+        html += '<td class="py-3 px-4 text-xs text-gray-500">' + fecha + '</td>';
+        html += '<td class="py-3 px-4 font-bold uppercase">' + escapeHtml(p.supplier || 'Sin nombre') + '</td>';
+        html += '<td class="py-3 px-4 text-gray-500">' + escapeHtml(p.notes || '-') + '</td>';
+        html += '<td class="py-3 px-4 text-right font-black text-red-600">-$' + Number(p.amount || 0).toFixed(2) + '</td>';
+        html += '</tr>';
+    });
+    
+    html += '</tbody>';
+    html += '<tfoot><tr class="border-t-2 border-gray-200">';
+    html += '<td colspan="3" class="py-3 px-4 text-right font-black uppercase text-xs text-gray-500">Total:</td>';
+    html += '<td class="py-3 px-4 text-right font-black text-red-600 text-lg">-$' + total.toFixed(2) + '</td>';
+    html += '</tr></tfoot>';
+    html += '</table>';
+    html += '</div>';
+    
+    container.innerHTML = html;
+    
+    // ⭐ Mostrar/ocultar el botón de borrar historial (solo para dueño)
+    const btnDelete = document.getElementById('btn-delete-supplier-history');
+    if (btnDelete) {
+        if (currentRole === 'owner') {
+            btnDelete.classList.remove('hidden');
+        } else {
+            btnDelete.classList.add('hidden');
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🗑️ BORRAR HISTORIAL DE PROVEEDORES
+// ═══════════════════════════════════════════════════════════
+function clearSupplierHistory() {
+    if (currentRole !== 'owner') {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Acceso Denegado',
+            text: 'Solo el dueño puede borrar el historial.',
+            confirmButtonColor: '#dc2626'
+        });
+    }
+    
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Se borrará TODO el historial de pagos a proveedores. Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, borrar todo',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true
+    }).then(result => {
+        if (result.isConfirmed) {
+            db.supplierPayments = [];
+            if (db.shift) {
+                db.shift.supplierWithdrawals = 0;
+            }
+            saveData();
+            renderSuppliersHistory();
+            renderCashCutView();
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Historial Borrado!',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
+}
+function escapeHtml(e) {
+    return String(e ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function handleSupplierPayment(e) {
+    e.preventDefault();
+    
+    const supplier = document.getElementById("sup-name").value.trim();
+    const amount = parseFloat(document.getElementById("sup-amount").value) || 0;
+    const notes = document.getElementById("sup-notes").value.trim();
+    
+    if (!supplier) {
+        return Swal.fire("Error", "Ingresa el nombre del proveedor", "error");
+    }
+    
+    if (amount <= 0) {
+        return Swal.fire("Error", "Ingresa una cantidad válida", "error");
+    }
+    
+    // Validar que sea empleado con turno activo
+    if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Turno Requerido',
+            text: 'Debes iniciar turno antes de registrar pagos.',
+            confirmButtonColor: '#2563eb'
+        });
+    }
+    
+    // Registrar el pago
+    if (!db.supplierPayments) db.supplierPayments = [];
+    
+    db.supplierPayments.push({
+        id: Date.now(),
+        supplier: supplier,
+        amount: amount,
+        notes: notes,
+        date: new Date().toISOString(),
+        registeredBy: currentRole === 'owner' ? 'Dueño' : (localStorage.getItem('empleadoActual') || 'Empleado')
+    });
+    
+    // Actualizar el turno activo
+    if (db.shift && db.shift.active) {
+        db.shift.supplierWithdrawals = (db.shift.supplierWithdrawals || 0) + amount;
+    }
+    
+    // Actualizar gastos del día
+    db.dailyExpenses = (db.dailyExpenses || 0) + amount;
+    
+    saveData();
+    closeModal('supplier-modal');
+    renderSuppliersHistory();
+    updateDashboard();
+    
+    Swal.fire({
+        icon: 'success',
+        title: '¡Retiro Registrado!',
+        html: '<div style="text-align:left;font-size:14px;">' +
+            '<p><b>Proveedor:</b> ' + escapeHtml(supplier) + '</p>' +
+            '<p><b>Monto:</b> <span style="color:#dc2626; font-weight:900;">-$' + amount.toFixed(2) + '</span></p>' +
+            '</div>',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+function openSupplierPaymentModal() {
+    // Validar turno activo para empleados
+    if (currentRole === 'employee' && (!db.shift || !db.shift.active)) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Turno Requerido',
+            text: 'Debes iniciar turno antes de registrar pagos.',
+            confirmButtonColor: '#2563eb'
+        });
+    }
+    
+    // Limpiar formulario
+    document.getElementById("sup-name").value = "";
+    document.getElementById("sup-amount").value = "";
+    document.getElementById("sup-notes").value = "";
+    
+    // Mostrar modal
+    const modal = document.getElementById("supplier-modal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+}
+function renderColorPicker(){const e=document.getElementById("setup-color-picker");if(e){const t=document.getElementById("setup-color")?.value||"#dc2626";e.innerHTML=TIENDA_COLORES.map(e=>`
         <button type="button" onclick="seleccionarColorSetup('${e.hex}')" 
                 class="w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${t===e.hex?"border-gray-800 shadow-md scale-110":"border-white"}"
               
