@@ -1,19 +1,21 @@
 {
-  "name": "Carlitos",
+  "name": "MI TIENDITA",
   "short_name": "Carlitos",
+  "description": "Sistema de gestión para Mini Super Carlitos",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ff0000",
-  "theme_color": "#ff0000",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
-      "src": "icon_192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon_512.png",
+      "src": "icon-192.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1,0 +1,10 @@
+{
+  "tiendas": {
+    "tienda_abarrotes_maria_2012": {
+      "licencia": {
+        "estado_licencia": "activa",
+        "fecha_vencimiento": "2026-12-31"
+      }
+    }
+  }
+}
